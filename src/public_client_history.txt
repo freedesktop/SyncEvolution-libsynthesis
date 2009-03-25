@@ -1,0 +1,717 @@
+Synthesis SyncML Client for Windows Mobile and PalmOS History
+=============================================================
+
+3.1.6.10  2008-08-08  BETA PREVIEW of Synthesis SyncML Clients for PDA 3.2 (Betas have 3.1.x numbers)
+
+                      The 3.2 release does not have visible new features, but is now based on the
+                      completely revised Synthesis SyncML engine 3.2 which includes a lot of
+                      compatibility, stability and error handling improvements. In particular,
+                      suspend & resume has been made much more tolerant to all sorts of
+                      problems that could occur depending on what server was used, and many
+                      enhancements were made to prevent duplicates (such as support for UID
+                      in events for Windows Mobile 5 and later devices which can support UID
+                      natively).
+
+
+
+3.0.2.23  2008-08-08  Maintainance release:
+
+                      - PDF manual now includes a complete list of explanations for
+                        possible error codes, even rare and technical ones.
+                      - Better handling of case when server tries to add and already existing
+                        item. With some servers, this helps to prevent duplicates.
+                      - Fixed strange error code 10000 that was shown instead of
+                        the real error message/code in some rare circumstances.
+
+
+3.0.2.22  2008-06-17  Compatibility enhancement release:
+
+                      - SyncML client now accepts status 418 ("already exists") during slow
+                        sync and treats it like "ok" status as some servers send this status
+                        instead of regular "ok" or "conflict resolved" statuses (200/201/419).
+                      - Workaround for SGH-i780 which has broken (non-unique) device ID.
+
+
+3.0.2.21  2008-06-16  PalmOS feature release:
+
+                      - The "custom" fields in the PalmOS address book / contacts application
+                        can now be synchronized with servers supporting X-MOZILLA-CUSTOM1..9
+                        fields.
+
+3.0.2.19  2008-05-05  PalmOS Hotfix release:
+
+                      - Fixed problem with servers that do not support categories - this could
+                        cause the Palm device to reset while adding or updating more than 15
+                        device records in a row.
+
+3.0.2.18  2008-04-09  Bugfix release
+
+                      - Fixed bug that could cause daylight savings time shift occur at
+                        the wrong date (e.g. Mexico was treated like CST/CDT, although
+                        daylight savings starts earlier in CST/CDT since 2007 than in Mexico).
+                      - Improved error messages when entering wrong license information
+                        (better indication that problem could be a STD license entered in
+                        a PRO product).
+
+3.0.2.17  2008-04-04  Broken release - Please do not use this (harmless, but does not work)
+
+3.0.2.16  2008-03-19  Bugfix release
+
+                      - Windos mobile: Fixed problem with meetings having attendees without a
+                        valid email address. These meetings were sometimes not stored on
+                        certain WM6 devices and caused errors to be returned to the server.
+                      - Windows mobile: Fixed problem with synchronizing recurring tasks from
+                        server to device (recurrence was not stored, only single task).
+                      - PalmOS: existing categories will no longer be reset when receiving
+                        updates from a server that does not support categories.
+
+
+3.0.2.15  2008-02-05  Maintainance release:
+
+                      Windows Mobile Standard (Smartphone):
+                      - Now allows entering more than 99 days before/after today for
+                        date range.
+
+                      PalmOS:
+                      - Improved Autosync reliability (sometimes pending notifications
+                        like SMS or calendar alarms could cause autosync to stop and
+                        continue only after bringing the SyncML application to the front).
+                      - Improved compatibility with Scheduleworld server (EXDATE recurrence
+                        exceptions are now sent with time part matching the event's start
+                        time instead of sending date only).
+
+                      General:
+                      - Fixed case where database error was reported incorrectly with
+                        error code 10000.
+
+
+3.0.2.13  2007-12-19  PalmOS Hotfix release:
+
+                      - Sometimes the client returned errors when the server tried to
+                        remove records that were already deleted on the client.
+                        Depending on the server implementation, this could cause
+                        sync to abort with error.
+                      - Generally improved error handling - now returns more specific
+                        error codes to server.
+
+3.0.2.12  2007-12-07  Hotfix release:
+
+                      - Windows Mobile: Adding exceptions for an existing recurring event
+                        on the server and syncing to the device now preserves changes
+                        eventually made for some instances of the recurring event.
+
+                      - PalmOS PRO client: AutoSync reliability improved.
+
+                      - Fix for GooSync Smartphone client: Added missing alert text
+                        when trying to exit application with autosync enabled.
+                      - Fix for GooSync PalmOS client: Autosync now works when
+                        GooSync application is not in the foreground.
+
+
+3.0.2.10  2007-09-24  Hotfix release for Windows Mobile PocketPC and Smartphone
+
+                      - Fixed problem with DMU/Push not working with SyncWise/Toffa.
+
+
+3.0.2.9   2007-09-14  Hotfix release for Windows Mobile PocketPC and Smartphone
+
+                      - Fixed problem with certain time zones (such as Brazil or Sydney)
+                        that were not recognized correctly and therefore treated as GMT/UTC,
+                        causing time shifts in the calendar.
+
+          2007-08-21  Hotfix release for PalmOS PRO clients
+
+                      - Fixed problem with AutoSync getting suspended when autosync notification
+                        was due when an another application had a notification pending and
+                        the user chose to open that application (like viewing calendar
+                        entry or incoming SMS).
+
+
+3.0.2.8   2007-08-21  Hotfix release PalmOS clients
+
+                      - Fixed problem with first and second postal address sometimes reverting
+                        to WORK (from HOME or OTHER) when receiving changes/adds from server
+
+          2007-07-26  Hotfix release Smartphone clients
+
+                      - Fixed problem with constant vibration when new mail is received on certain
+                        Smartphone devices (e.g. BlackJack).
+                      - Fixed problem that could block the user interface after choosing "Exit"
+                        from the menu.
+                      - No longer shows false warning "designed for an older Windows Mobile version"
+                        during installation.
+
+
+3.0.2.7   2007-07-07  Hotfix release for PalmOS / Smartphone clients
+
+                      - PalmOS: Fixed a problem that could cause the device to reset while synchronizing
+                        tasks (only for Treo650 and newer, only when adding new tasks from the
+                        server having no description).
+                      - Smartphone PRO: Fixed problem with AutoSync settings which could not be
+                        opened in 3.0.2.6 on some devices.
+
+
+3.0.2.6   2007-06-27  Maintainance and Bugfix release
+
+                      New Features:
+                      - Now understands SyncML 1.1-type WBXML server alerts in addition to
+                        SyncML DS 1.2 SAN.
+                      - Added safety check to prevent ill-behaving servers to change any data on
+                        the device if the device specifies "update server" or "reload server"
+                        sync modes.
+                      - Windows mobile: Enhanced provisioning - some fields in predefined settings
+                        can be made read-only to prevent end users to accidentally changing them.
+
+                      Change in behaviour:
+                      - Database errors (e.g. Status 510) when storing items no longer abort the
+                        datastore sync, but are simply reported as status for the item to
+                        the remote party.
+
+                      Bug Fixes:
+                      - Windows Mobile 5,6: Improved detection of cradled/uncradled state.
+                      - Windows Mobile: Fixed bug with recurrences - some "last-in-month" cases
+                        were sent to server with wrong start date, and sometimes converted
+                        from all-day to timed event.
+                      - Made sure no pending maps from past sessions are sent on a non-resumed
+                        slow sync, as with a slow sync, all previous maps are obsolete anyway.
+                      - Windows Mobile: Added check to prevent events with neither start nor
+                        end date to be saved into Pocket Outlook, but reject them with Status 415.
+
+
+3.0.2.4   2007-05-10  Windows Mobile 6 compatibility and Minor Bugfix release
+
+                      - Official release of Windows Mobile 6 support
+
+                      - Server side change of first or last name was not shown in
+                        the contacts list (but actual first+last name did change). Fixed.
+                      - Only adding or changing a contact picture did not get
+                        synchronized to the server (only if some other part of the
+                        contact was changed also). Fixed.
+
+
+3.0.2.3   2007-05-09  PalmOS Minor Bugfix release
+
+                      - Synchronizing Memos (Notes) on some devices created error 10000.
+                      - Task Completed date shown as COMPLETED now (not DTEND) in vCal.
+
+
+3.0.2.2   2007-05-03  PalmOS Feature and Bugfix release
+
+                      New Features:
+                      - Added Support for Alarms and Recurrence for Tasks.
+
+                      Important PalmOS client Bug Fixes:
+                      - Fixed problem that could cause HotSync to hang sometimes
+                        after using the SyncML client.
+                      - Fixed problem that sometimes caused newer devices like
+                        T|X or Treo 680 to crash and sometimes even enter a
+                        loop of permanent restarts. Underlying cause is a problem
+                        in Palm's code for legacy PIM database support.
+
+
+3.0.1.2   2007-04-04  Maintainance and Bugfix release
+
+                      New Features:
+                      - Added Support for Windows Mobile 6 based devices.
+
+                      Bug Fixes:
+                      - PalmOS client: Unattended AutoSync did not work when KeyGuard
+                        was enabled.
+                      - PalmOS client: provisioning of AutoSync intervals now work.
+                      - PalmOS client: changing private status of entry now correctly
+                        causes updating it on the server.
+                      - Fixed problem that could crash Palm devices under certain
+                        conditions (especially Palm T|X).
+
+
+3.0.0.2   2006-12-06  Bug fixes:
+
+                      - Support for ISO8601 extended format added - needed to parse
+                        vCard BDAY and REV from some servers.
+                      - Fixed problem with application not starting on certain older
+                        PocketPC 2003 devices without built-in phone.
+                      - Fixed problem causing "No SyncML response" with certain servers
+                        when using SSL/https.
+                      - Fixed deleting fields from Palm Contacts.
+                      - PalmOS Autosync: Autosync is now temporarily disabled during
+                        voice calls as otherwise device can get unresponsive.
+
+
+3.0.0.0   2006-11-24  Release of new 3.0 Version of Synthesis SyncML Clients for PDA
+
+                      New Features:
+                      - SyncML 1.2 support in addition to 1.1.2, 1.1.1 and 1.0! The Client
+                        tries to contact the server with SyncML DS 1.2, and automatically
+                        switches back to 1.1 or 1.0 if the server does not support 1.2.
+                      - Support for true push (Server alerted notification, SAN) via
+                        binary SMS for devices with built-in phone.
+                      - Suspend/Resume support - with compliant DS 1.2 servers, any
+                        interupted or manually aborted sync can be resumed at the point
+                        where it was stopped - just by pressing the sync button again.
+                      - a new menu item/taskbar button now shows a log with number of items
+                        added/deleted/updated for each datastore and separately for
+                        client & server, errors occurred and the amount of data bytes
+                        transferred in either direction.
+                      - a new menu item allows checking for updates and offers direct
+                        download/install into the device (wired or wireless), as well
+                        as browsing a pages showing all downloads suitable for the device.
+                      - AutoSync now supported on PalmOS.
+                      - Contact pictures are now fully supported on devices that
+                        have them (Windows Mobile 5 and PalmOS from Treo650 onwards).
+                      - Extra fields in contacts and location field in calendar found
+                        in newer PalmOS devices (Treo 650 and later) now supported.
+                      - PRO version can be tried for 30 days free even if already
+                        tried STD version.
+                      - Added Option to choose SyncML Version (in "Options")
+                        for incompatible SyncML 1.x servers that cannot correctly
+                        reject attempts to use SyncML 1.2. For compatible
+                        servers, protocol version is selected automatically.
+                      - PalmOS client: New menu item "Clean up deleted records"
+                        for those that never use HotSync and want to get rid of
+                        the deleted records that are retained by PalmOS because
+                        they are needed for HotSync (but are otherwise useless).
+
+                      Improvements:
+                      - improved reliability with old servers that
+                        don't have HTTP 1.1 keep-alive. But still,
+                        keep-alive is STRONGLY recommended for
+                        SyncML servers!.
+                      - Better error messages for common cases like misconfigured
+                        server URLs.
+                      - Better sync problem handling - if server rejects some data
+                        (for probably temporary reasons), session is no longer aborted,
+                        but same item will be re-sent in next sync attempt.
+                      - Sync log display now shows number of items
+                        failed in a session with error.
+                      - Much improved debug logging (DBG versions) - colored HTML
+                        with hierarchic structure, which can be dynamically
+                        expanded/collapsed.
+
+                      Documentation:
+                      - Completely reworked manuals, including many hints based
+                        on end-user feedback since the 2.5 release.
+
+                      Bug Fixes:
+                      - PalmOS version now works with Treo 180.
+                      - Workarounds for devices with broken device ID (like MotoQ).
+                      - Windows Mobile client: Busy status of calendar entries is
+                        now completely (all options) synchronized via vCal's TRANSP
+                        property (busy=0, free=1, tentative=2, away=3).
+
+                      Licensing:
+                      - unified license codes for all PDA platforms to avoid
+                        customers buying the wrong license (mainly due
+                        ambiguous naming of MS Windows Mobile platforms)
+
+
+2.5.0.69  2007-02-25  DEMO extension and new 3.x license compatibility release
+
+                      - Free 30-days demo extended to work for evaluation in
+                        2007 (although we recommend using the new 3.x release
+                        unless specific reasons exist to continue using 2.5.x)
+                      - Made fully compatible with new license mechanism introduced
+                        for 3.x versions in February 2007 - 2.5.0.69 clients
+                        can be used with old and new licenses without any
+                        restrictions.
+
+
+2.5.0.68  2006-08-31  Oracle Collaboration Suite compatibility release
+
+                      - Generic workaround for Windows Mobile devices that do not
+                        have a unique device serial number as they should.
+                        This is a required upgrade only for OCS users with certain
+                        devices that otherwise might not work ok with OCS.
+                        However, the release works as well for any other device
+                        and any other SyncML server.
+                      - PalmOS version now works with Treo 180.
+
+
+2.5.0.64  2006-03-03  Minor bugfix release
+
+                      General:
+                      - Sync options (like date range, size limit) now
+                        are correctly combined with sync options manually
+                        added to the server path field (like ./Contacts?/del(3)).
+                      - vCard 3.0 now correctly escapes colons (like in
+                        FN property. This has caused problems when displaying
+                        the name on some systems (e.g. OCS and Outlook)
+                      - Fixed bug that could cause generating empty properties
+                        to servers that do not support the property at all.
+
+
+2.5.0.62  2006-03-03  Minor enhancement and bugfix release
+
+                      Windows Mobile 2003/5.0 PocketPC:
+                      - Added support for square screens like Treo 700w.
+                      - Fixed bug in GUI layout of German localized versions.
+
+                      PalmOS:
+                      - Fixed problem that could cause reboots under
+                        certain circumstances (very many items, tight
+                        memory)
+
+                      General:
+                      - Now waits longer (5 secs rather than 2) between
+                        attempts to connect to the server, to give slow
+                        connection establishing procedures enough time to
+                        complete.2.5.0.61  2006-02-10  Minor bugfix release
+
+                      Windows Mobile 2002, 2003, 5.0:
+                      - Sending email messages with a list of recipients
+                        which mixed plain email addresses with
+                        name <email> type email addresses sometimes
+                        did not get sent to all recipients.
+
+
+2.5.0.60  2006-02-08  Minor bugfix and enhancement release
+
+                      All PDA clients
+                      - unified license codes for all PDA platforms to avoid
+                        customers buying the wrong license (mainly due
+                        ambiguous naming of MS Windows Mobile platforms)
+
+                      Windows Mobile 2002, 2003, 5.0:
+                      - Sending invitation emails via SyncML did not work
+                        and caused "DB Error".
+
+
+2.5.0.59  2006-01-31  Minor bugfix and enhancement release
+
+                      - In Events with a large list of EXDATEs, clients
+                        sometimes did not recognize all EXDATEs.
+
+                      Windows Mobile 5.0:
+                      - fixed problem with pre-configuring license information
+                        via ClientConfigurator.
+
+                      Windows Mobile 2002, 2003, 5.0:
+                      - Added 2 seconds delay between connection retries to
+                        give slow connections more time to establish.
+                      - EXDATEs did not get sent to server in DBG versions
+                        of the client (normal versions were ok)
+                      - Time Transparency was not sent correctly (receiving
+                        was ok).
+
+
+2.5.0.54  2006-01-03  Bugfix and minor enhancement release
+
+                      - Re-Release for extension of demo period (Previous versions did
+                        not work in free demo mode after 2005-12-31).
+
+                      PalmOS:
+                      - Fixed possible problem with large number of objects (>5000).
+                        Note that the maximum of objects per datastore is around 8100
+                        due to PalmOS memory model restrictions.
+                      - Fixed problem introduced with 2.5.0.48 which caused app to
+                        fail on devices that had no settings yet (that is, on those that
+                        haven't had a previous version of the Synthesis SyncML client
+                        installed before.
+                      - Added API to launch a SyncML synchronisation programmatically from
+                        another PalmOS application.
+                      - Fixed problem with non-ASCII chars in contact's email addresses.
+                      - Support for Time Transparency (Busy Status) added for events.
+                      - Fixed issues with allday events and recurrences that sometimes
+                        lead to "Device DB error", especially on Win Mobile 5.
+
+                      PocketPC/Smartphone:
+                      - Fixed problem with with negative Pocket Outlook IDs - which
+                        occur on Windows Mobile 5 only (PocketPC 2003 and 2002 were
+                        not affected).
+
+                      Windows Mobile 5.0:
+                      - Added Support for Windows mobile 5 devices
+
+                      Windows Mobile 2003 SE and 5.0:
+                      - Screen rotation for landscape screen usage now supported.
+
+
+2.5.0.46  2005-07-15  Minor bugfix release
+
+                      PalmOS:
+                      - Fixed problem with events recurring like "every 4th WE in the
+                        Month". This did not work for days later in the month than
+                        3rd MO.
+                      - Reminders, recurrences and recurrence exceptions, once set,
+                        could not be completely removed via SyncML.
+
+
+2.5.0.45  2005-07-15  Minor bugfix release
+
+                      PocketPC and Smartphone:
+                      - Made sure that vCalendar use consistent time zone (either
+                        all time information is UTC or all is localtime, but no mix).
+                      - Improved updating of recurrence exceptions (un-doing a
+                        previously set exception was not possible in all cases).
+
+                      PalmOS:
+                      - Fixed bug introduced with 2.5.0.33 that broke Notes sync on some
+                        Palm devices. Now works again as before 2.5.0.33.
+
+
+2.5.0.44  2005-07-05  Minor feature upgrade and bugfix release
+
+                      General:
+                      - Enhanced support for entering license codes - now user gets
+                        opportunity to edit license details in case of typos that
+                        caused the license not to be accepted in the first attempt.
+                        This avoids annoying re-entering license details.
+                      - Enabled support for using the same TCP connection for the
+                        entire session if server supports "HTTP 1.1 keep-alive". In
+                        all previous versions, the SyncML client closed and re-opened
+                        the connection between requests. This enhances reliability and
+                        speed on networks where opening a connection is likely to fail
+                        (ActiveSync cradle connection) and/or requires a noticeable
+                        amount of time.
+                      - DevInf hardware version (<hwv>) now shows device hardware model name
+                      - DevInf firmware version (<fwv>) now shows device OS version number
+                      - No longer says "Server DB error" when in fact it is "Device DB error".
+                      - Corrected problem with receiving contacts with semicolons in the
+                        name or postal address.
+                      - Under some circumstances, client returned status for chunked items
+                        with wrong CmdRef (CmdID of the first rather than the last chunk).
+
+                      PocketPC and Smartphone:
+                      - Added check to ignore reminders timed after the start of
+                        an event - as PocketOutlook cannot handle these. Before 2.5.0.35,
+                        when a server sent an event with reminder after start, the
+                        session aborted with Error 510.
+                      - ATTENDEEs without valid email address are now assigned the
+                        dummy email address "unknown@internet" as otherwise they cannot
+                        be stored in Pocket Outlook.
+                      - Fixed problem with servers that do update emails in the
+                        inbox (e.g. to set the "read" flag). This could cause that the
+                        email date was changed to a invalid date.
+                      - Added support for space-saving compressed email datatype
+                        "application/x-zipbin-message" v1.1 (Synthesis specific).
+
+                      PalmOS:
+                      - Set MaxMsgSize to 64000 to inform servers not to send objects
+                        larger than 64000 bytes raw size (as PalmOS cannot handle them).
+                      - Improved memory management to prevent problems when syncing
+                        very large number of new items to some low-end Palm devices.
+                      - Fixed problem that could cause hangs when server closed it's
+                        side of the connection unexpectedly. Now the client detects the
+                        situation and automatically re-establishes the connection and
+                        re-tries the current message. This prevents sync sessions to
+                        fail in case of occasional connection dropouts.
+
+
+2.5.0.30  2005-04-20  Minor bugfix release
+
+                      General:
+                      - Compatibility workaround with desknow.com (Nexthaus server) added.
+
+                      Palm:
+                      - Enabled vCard 3.0 support
+
+                      PocketPC2002:
+                      - PRO Version, Autosync: Weekday selection buttons did not work
+                        in PocketPC2002, replaced them by standard checkboxes.
+
+
+2.5.0.27  2005-04-07  Minor bugfix release
+
+                      Palm:
+                      - Fixed bug in SSL implementation that could cause "Receiving error"
+                        and on certain devices (e.g. Treo650) even sudden reboot of the
+                        device when using secure https rather than plain http.
+
+
+2.5.0.26  2005-03-31  Major feature release for PocketPC, PalmOS and Smartphone2003
+
+                      Autosync (PocketPC+Smartphone2003):
+                      - automatic syncing in background keeps data current all the
+                        time
+                      - separate sync time intervals for cradled operation (inexpensive
+                        internet connection) and mobile operation (traffic is expensive)
+                        configurable.
+                      - other conditions for automatic sync include day-of-week and
+                        time-of-day, as well as battery charging status.
+                      - DirectMobileUpdate (DMU) support. With a DMU-capable server,
+                        (space2go.com, toffa.com) real email push is supported -
+                        automatic email sync is started whenever a new email arrives.
+                        Note that this feature is only available with a DMU-enabled
+                        license key.
+
+                      Other new Features:
+                      - PRO: gzip compression for receiving large data such as
+                        emails with attachments - reduces expensive wireless traffic
+                        by a factor up to 2 or even more.
+                      - STD: now supports SSL as well (before, only PRO had SSL)
+                      - Proxy support, automatically using system's proxy settings
+                        in PocketPC or manually entered proxy servers.
+                      - Unified naming of products in DevInf:
+                        <Mod> will now shows the Client's type/variant, without version No like:
+
+                          SySync Client <platform> <feature-set/custom version>
+
+                        For example:
+
+                          "SySync Client PocketPC PRO"
+
+                      - <DevTyp> in DevInf will now shown "pda" for PalmOS and PocketPC
+                        clients, and "smartphone" for SmartPhone2003 clients (rather
+                        than "workstation" as before v2.5.0.22.
+
+                      Bug Fixes:
+                      - Fixed bug that caused trailing non-ASCII-chars to disappear from
+                        multiline fields.
+                      - Better handling of SyncML messages without correct transport
+                        layer content data type (now detects WBXML coded SyncML reliably)
+                      - Improved handling of connection management and all sorts of
+                        errors that can cause connections to fail. Overall stability in
+                        case of poor connections is much better now.
+                      - Fixed memory leaks that could lead to low memory if the
+                        SyncML client was being used without exiting the app for a
+                        long time.
+                      - bugfix for rare situation where client terminated
+                        session apparently "successful" before all data was sent to
+                        the server.
+                      - Fixed problem that cause misinterpretations of non ASCII-chars
+                        in emails.
+
+                      Palm specifics:
+                      - Added support for 5-way navigation key (e.g in Treo 600)
+                      - Added Edit menu to all dialogs except About/Password.
+                      - Added CATEGORIES support for AddressBook, Events and Todo
+                        synchronisation.
+                      - Fixed bug in email that caused incorrect display and sync
+                        of "email read" flag.
+                      - Improved handling of mail without date, outgoing mail
+                        now receives current date as the mail's date if none is set
+                        in the Mail app already.
+                      - AddressBook entries without First or Last Name will no
+                        longer be sent with empty N property in vCard, but
+                        with Last Name set to "unnamed" to conform with vCard.
+                      - Fixed problem that could occasionally make a session
+                        abort with error code 403 for no apparent reason.
+                      - Using phone device ID now if available in device (Treo...)
+                      - Trying to add or update out-of-range (<1904 or >2031)
+                        events/todos will now return a status 415 to the server
+                        instead of wrapping around to a wrong date (e.g. 2037
+                        became 1909).
+
+                      PocketPC/Smartphone2003 specifics:
+                      - Added "Connection Settings..." menu item to explicitly set
+                        preferred connections for Cradled & Mobile operation.
+                      - Added warning when two profiles use the same server account,
+                        as this is likely to cause severe sync troubles.
+                      - Fixed a bug that could cause deleting of emails on the
+                        server under some circumstances (usually low memory)
+                      - restricted number of recipients save for an email message
+                        to 15, as too many recipients can mess up email storage on
+                        the pocketpc.
+                      - Added Notification icon that appears if email sync receives
+                        new emails - Icon can be tapped to open the inbox application.
+                      - Added custom logo and custom app title support for
+                        re-sellers and large account. Requires customisation package
+                        from Synthesis including needed tools and docs to create
+                        clients with a custom logo and title.
+                      - Added basic support for ATTENDEE (Name and email address
+                        will be stored in Pocket Outlook Recipients list for events).
+
+2.1.0.42  2005-01-04  Bugfix release
+                      - Fixes problem that 2.1.0.3 clients do not work in demo mode
+                        or with timed license key any more after 2004-12-31.
+                        Permanent license keys (that is, purchased licenses) are
+                        NOT affected by this bug, only free demo and evaluation.
+
+
+2.1.0.4   2005-04-29  Intermediate preview release
+                      - Added support for HTTP and SOCKS proxy.
+
+
+2.1.0.3   2004-03-18  Feature upgrade release of SyncML clients for PocketPC+PalmOS
+                      Initial preview release of SyncML client for Smartphone2003
+
+                      New Features:
+                      - Smartphone2003 devices now supported (only devices that
+                        have no restriction for installing unsigned software)
+                      - SSL support for PalmOS Version 5.2 and later.
+                      - New main screen with detailed status for each data type
+                        and single-tap possibility to select/deselect datastores
+                        for sync.
+                      - Retry mechanism added - client will now retry sending SyncML
+                        messages to increase stability in case OTA connection is
+                        poor and drops some messages.
+
+                      Bug Fixes:
+                      - Fixed some small recurring event problems, such as
+                        parsing vCalendar data where RRULE appears before DTSTART.
+                      - Reduced retries made at a server when user/password is bad.
+
+                      Palm specifics:
+                      - ALARMs for all-day events were not saved; now we
+                        save them by using 0:00AM as a reference point.
+                      - Support for events spanning more than a single day
+                      - PalmOS: Incoming "TEL;PREF" will be now be mapped to "Main"
+                        number (but only if no other TYPE attr is present).
+                        Presence of "PREF" will additionally still set
+                        displayPhoneForList.
+
+                      PocketPC/Smartphone2003 specifics:
+                      - Support for vCard 3.0 contact format.
+                      - Support for custom sort order in contacts using FN property
+                        (if supported by server)
+
+
+2.0.4.4   2003-12-11  Maintainance release of SyncML clients 2.0 for PocketPC & PalmOS
+                      - Official support for PocketPC2003
+                      - Preview client version for SmartPhone2003
+
+                      - PPC: Added CLASS to events and tasks (normal/private).
+                      - Added new licensing mechanisms to allow issuing licenses
+                        restricted to a certain server type, oem, id or URL.
+                      - Added mechanism for auto-provisioning settings and license.
+                      - Fixed problem in PocketPC that caused large notes for
+                        events and tasks to be omitted instead of just truncated.
+                      - Fixed SyncML SessionID generator, was always 0 until now.
+                      - Server replaces that have a SourceLocURI will now be
+                        implicitly converted to an Add if the addressed object
+                        does not exist yet in the client and a corresponding Map
+                        command will be generated.
+                      - PalmOS client receiving timeout mechanism improved.
+                      - Improved fall-back mechanism to SyncML 1.0 in case
+                        server does not respond properly to the SyncML 1.1
+                        session initiation. Until now, communication errors
+                        could cause the client to switch back to 1.0 permanently
+                        for a 1.1-capable server.
+                      - Added request-resend mechanism to send
+                        same request again if communication fails.
+                      - Fixed bug for "text" item type that could cause email bodies
+                        in MIME/multipart messages not to be recognized by the parser.
+                      - Fixed bug for "text" item type that could cause emails with
+                        attachments, but no body text to omit the attachments on sending.
+                      - Recurrences improved such that recurrence end has the same
+                        time-of-day as DTSTART or DTEND (whichever is present and later)
+                      - Improved support of PocketPC exception appointment data
+                        (now correctly reports renamed or shifted instances of
+                        a recurrence series)
+                      - Fixed problems with exotic recurrence settings on PocketPC
+                        which are not compatible with vCalendar.
+                      - Fixed problem with recurring events, which are defined with
+                        a DTSTART that is NOT on a date where the recurrence occurs.
+                        (Yes, you can enter these on PocketPC...)
+
+
+2.0.1.9   2003-09-04  Maintainance release of SyncML clients 2.0 for PocketPC & PalmOS
+                      - Pre-release support for PocketPC2003
+                      - Fixed bug in 1.1.1-chunk reassembly.
+                      - Made clients try only ONCE again after a 401 (auth failed)
+                        to avoid that strict auth systems lock accounts due to
+                        repeated failing login. Until now, client retried 3 times.
+                      - Fixed tiny bug in RRULE parser that could cause invalid
+                        database entries in PalmOS when receiving ill-formatted
+                        RRULE strings.
+                      - Corrected DB handling in PalmOS which could cause sorting
+                        problems after deleting many records in some cases.
+                      - Fixed bug in PalmOS client that could cause occasional
+                        "Sending Error...".
+
+
+1.1.8.54  2003-07-17  First public Release of PPC2002 and PalmOS PRO clients with
+                      multiple profiles, email support and SSL (on PocketPC).
+
+
+1.1.8     2003-03-12  First public Release of PPC2002 and PalmOS standard clients
+                      for CeBit'03

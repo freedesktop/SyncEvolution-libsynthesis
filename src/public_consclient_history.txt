@@ -1,0 +1,334 @@
+Synthesis SyncML command line Client History
+============================================
+
+3.2.0.0   2008-08-28  Synthesis SyncML Client 3.2 Release Candidate 1
+
+                      - New versioning scheme: odd minor version number denotes beta of
+                        next even minor version number. So 3.1.x are beta versions of 3.2.x.
+
+                      New features:
+
+                      - Completely revised (but mostly transparent for current configs)
+                        time zone handling, adding many features such as per-user
+                        or per-database-field custom time zones. Existing configs need
+                        to be slightly adapted only if using one of the following
+                        (uncommon) script functions: LOCALIZEDASUTC, RELATIVEASUTC,
+                        UTCASRELATIVE, LOCALZONEOFFSET, SETZONEOFFSET, ISRELATIVE and
+                        SETRELATIVE.
+                        Our sample config for the PRO servers until 3.1 used RELATIVEASUTC
+                        two times – configurations based on this sample should simply
+                        eliminate these calls – these are no longer needed in 3.1 onwards.
+                      - Support for unicode ODBC (using <datacharset>UTF-16</datacharset>).
+                      - PRO: Regular expression support in scripts (REGEX_FIND, REGEX_MATCH,
+                        REGEX_SPLIT, REGEX_REPLACE).
+                      - PRO: ISAVAILABLE() script function which allows generating/tuning content
+                        depending on what fields are supported by the remote party.
+                      - PRO: Support for relational links between items of a sync set by
+                        allowing post-processing in <finalisationscript>.
+                      - PRO: Scripts now support WHILE() statement.
+                      - PRO: Many new script functions such as SYNCMLVERS(), EXPLODE(), ABS(),
+                        SIGN(), NUMFORMAT(), DAYUNITS(), MONTHDAYS(), PARSEEMAILSPEC(),
+                        MAKEEMAILSPEC(), SLEEPMS(), TIMESTAMPTODBINT(),
+                        DBINTTOTIMESTAMP(), CONVERTTODATAZONE(),ADDTARGETCGI(),
+                        SETRECORDFILTER(), SETINCLUSIVE(), SETDAYSRANGE(), TARGETSETTING().
+                      - PRO: Enhanced support for calendar content formats – new conversion
+                        modes "valuetype", "tzid", "tz", "daylight", "autodate", "autoenddate",
+                        new script functions to detect/generate all-day events: ALLDAYCOUNT(),
+                        MAKEALLDAY() and to generate and expand recurring events:
+                        RECURRENCE_DATE(), RECURRENCE_COUNT().
+                      - PRO: Scripts now can use 0x1224 style hex literals.
+                      - SyncML max message and object size limits are now configurable
+                        using <maxmsgsize>.
+                      - Enhanced debug logging: colored script source, timestamps with
+                        millisecond resolution, additional block navigation links.
+                      - Config variables that can be passed via command line to parametrize
+                        configuration.
+                      - Conditional config parsing allowing version/platform/configvar
+                        dependent behaviour without modifying config file.
+                      - <ignorectcap> remote rule option for clients with completely broken
+                        CTCap in their device information which would cause the server to
+                        suppress sending data.
+                      - <dspathindevinf>/<dscgiindevinf> remote rule options for clients
+                        (in particular newer Nokia devices) which need the exact datastore
+                        path configured in the client (including path and CGI) to be echoed
+                        in the device Information. Note that these options are on by default,
+                        no extra remote rules are needed except in case another client should
+                        have problems with this behaviour (none known so far).
+                      - PRO ODBC: SETSETDBCONNECTSTRING() and SETDBPASSWORD() functions now allow
+                        per login database selection.
+                      - PRO: New recurrence rule handline functions: MAKE_RRULE() and PARSE_RRULE().
+                      - <requestmintime>/REQUESTMINTIME() now allows to artificially slow down
+	                  server response for testing purposes.
+                      - MIME-DIR types: Added advanced conversion mode "multimix" and enum mode "prefix"
+                        to handle TYPE parameters consisting of a mix of flag-type and
+                        value-type components.
+
+                      Enhancements/Bug fixes:
+
+                      - Fixed compatibility problem with some very old SyncML 1.0 clients which
+                        crash when seeing devInf with <size> and <DataType>. Now suppressing
+                        these for SyncML 1.0 by default (<showtypesizeinctcap10> not set).
+                      - More tolerance with status 418 received from remote.
+                      - PRO: Integer field now properly differentiates between value 0 and "empty".
+                      - <afterconnectscript> now has it's own private script context, as it
+                        can implicitly be called from other scripts - in case of login context
+                        script this caused unpredictable behaviour.
+                      - Many general bug fixes and stability enhancements.
+                      - Many workarounds and improvements added to make client more
+                        tolerant to implementation flaws in foreign servers.
+
+
+
+3.0.2.2   2007-06-14  Feature and Bugfix Release of Synthesis SyncML Client 3.0
+
+                      New features:
+
+                      - Support for unicode content in datatypes (like Nokia's VMSG) with
+                        new <unicodedata> and <bigendian> config options.
+                      - script debug logging is now collapsed by default.
+                      - ODBC: now using SQLRowCount() ODBC function when doing modifications
+                        to the DB to detect when record for UPDATE or DELETE was not found.
+                        Added <ignoreaffectedcount> to disable this check (for example in case
+                        statement is a stored procedure call which does not update the row count).
+
+
+                      Change in behaviour:
+
+                      - Database errors (e.g. Status 510) when storing items no longer abort the
+                        datastore sync, but are simply reported as status for the item to
+                        the remote party. To still force aborting sync in such cases, use
+                        <receiveditemstatusscript>s in datastore or session.
+
+                      Bugfixes:
+
+                      - Fixed problems with <array> map in Linux versions.
+                      - Fixed problem reading data from <array> map having a keyfield attribute.
+                      - Fixed problem with %V substitution in SQL updating all fields instead of
+                        only assigned ones.
+                      - Made sure no pending maps from past sessions are sent on a non-resumed
+                        slow sync, as with a slow sync, all previous maps are obsolete anyway.
+
+
+3.0.0.14  2007-02-28  Minor Bugfix Release of Synthesis SyncML Client 3.0
+
+                      - Fixed problems with detecting correct timezone on some Linux
+                        systems, added new 2007 DST timezone info.
+                      - Fixed problems in scripting with variables defined multiple
+                        times in different scripts (but same script context).
+
+3.0.0.8   2007-02-13  Minor Bugfix Release of Synthesis SyncML Client 3.0
+
+                      - DBApi - improved threading management. In some occasions, problems
+                        could occur with <multithread> on, especially with JAVA plugins.
+                      - DBApi JAVA module class may now be placed within a package (before,
+                        it had to be at the classpath root level).
+                      - Fixed bug that caused SEGV with the DEMO client on some Linux systems.
+                      - Minor improvements in debug logging.
+
+3.0.0.2   2006-12-21  Official Release of Synthesis SyncML Client 3.0
+
+                      Most important new Features:
+
+                      - SyncML DS 1.2 / OMA DS 1.2 support in addition to 1.1.2, 1.1.1 and 1.0!
+                        Existing config of 2.1.x version clients can be used without
+                        changes - and only minimal changes are required to enable suspend/resume.
+                      - Full Suspend/Resume support including resuming partially transmitted
+                        large objects.
+
+                      - New Hierarchically structured, dynamically foldable, nicely colored
+                        HTML logs by default, text or xml format selectable.
+                      - Log output from subthreads can now be either suppressed or logged
+                        into a separate log file configurable via <subthreadmode>.
+
+                      - PRO client includes plugin API for custom database adaptor plugins written
+                        in C/C++ or Java using the Synthesis Database Plugin SDK.
+                      - Demo Client now based on new Database Plugin technology.
+
+                      - Support for B64 encoded binary data, e.g. PHOTO in vCard. New
+                        config sample includes support for contact photos.
+                      - ODBC now supports on-demand reading of large fields (such as the
+                        PHOTO in contacts, or attachment CONTENTS in emails, see sample config)
+                        which is a major efficiency improvement.
+
+                      - Support for sending DS 1.2 <filter> expressions to servers.
+
+                      - Added full support for DS 1.2 MaxOccur/MaxSize/NoTruncate
+                        mechanisms (fully automatically generated devInf).
+                      - Support for ISO8601 extended format added - needed to parse
+                        vCard BDAY and REV from some clients.
+                      - All config tags now support "platform=xxx" attribute (xxx can
+                        be "win32", "linux" or "macosx" at this time). This allows to
+                        have variants for different platforms (e.g. log paths) in
+                        a single config file.
+                      - New <afterconnectscript> for SQL databases that need a per-connection
+                        login statement (like SyBase).
+                      - Enhanced content type detection in cases where HTTP Content-Type
+                        header was wrong or missing in incoming SyncML traffic.
+
+                      Important Changes:
+
+                      - Adds, Replaces and Deletes that receive a non-ok status from the client
+                        no longer abort the session by default, but are simply flagged for
+                        resend in the next session. <resendfailing> can be used to get
+                        the old behaviour back, SETRESEND() allows dynamic decision if
+                        resend or session abort is needed on a per item basis.
+                      - Each Chunk of Large Objects (<moredata/> mechanism) now contains
+                        a <meta><EMI>datapos=x element to indicate the beginning
+                        byte position of the chunk. This is required (but missing in the
+                        SyncML DS 1.2 standard so far) for proper resume after implicit
+                        suspends (connection break).
+                      - WBXML generation: SyncML 1.1 and 1.2 now use space-saving numeric
+                        FPI (Formal Public Identifier) in WBXML instead of textual DTD string.
+                      - <initscript> in <array> is now executed before detail records
+                        are deleted, so returning false will now prevent any change in
+                        the detail records.
+
+2.1.1.19  2006-01-18  Yearly re-release of Synthesis SyncML Client:
+
+                      - Runs without license until end of 2006
+                      - Improved general stabiliy and error messages in special error cases.
+
+
+2.1.1.9   2005-07-07  Minor enhancement and bugfix release of Synthesis SyncML Client:
+
+                      Enhancements:
+                      - Clients now support HTTP 1.1 keep-alive, it is
+                        configurable with <keepconnection>.
+                      - PRO only: <localidscript> in ODBC datastore now allows using a
+                        script for generating local IDs (rather than using an SQL statement).
+                      - High-efficiency data format option (<zippedbindata>, <zipcompressionlevel>)
+                        with built-in gzip compression added. This can be used in situations
+                        where both client and server can be configured to understand this format
+                        or with certain PDA clients from Synthesis AG which have built-in
+                        support for it for large emails (application/x-zipbin-message).
+                      - Added <quotingmode> to ODBC <server> and <datastore> to control how string
+                        literals are quoted. Needed for MySQL which treats backslash as
+                        escape char (C-style).
+                      - Added sync start time, end time and duration information for use in
+                        logs (%ssT, %seT, %sdT).
+
+                      Bugfixes:
+                      - RRULE enddates were not always parsed and displayed correctly (sometimes
+                        a time shift related to the time zone was added).
+                      - Corrected docs: <map> attribute is called "set_no", not "setno".
+                      - "%av" sequence in SQL statements had to be written as "%av(" due to a
+                        bug in the definition table (the extra paranthesis).
+                      - Under some circumstances, client returned status for chunked items
+                        with wrong CmdRef (CmdID of the first rather than the last chunk).
+
+2.1.1.0   2005-03-07  Maintainance Release of Synthesis SyncML Client:
+
+                      Bugfixes:
+                      - Fixed performance eating problem in text-based datatypes
+                        with really large objects (such as multi-Meg email attachments).
+                      - Fixed bug in LargeObject generation: Sometimes, a new
+                        command was issued while the previous command's data was not
+                        completely sent; this caused Error 223 at the receiving end.
+                      - Fixed bug that did not show ODBC error when inserted into
+                        log table failed (only showed "exception").
+                      - Fixed bug that could abort the session when decoding WBXML
+                        documents that contained content consisting of more than one
+                        single WBXML string (or string table reference).
+
+
+2.1.0.1   2005-01-06  Feature Upgrade and Maintainance Release of Synthesis SyncML Client:
+
+                      New features:
+                      - Added support for issuing SQL statements programmatically in
+                        scripts (SQLEXECUTE() etc.).
+                      - SHELLEXECUTE() script function now allows calling external
+                        programs from within a sync session.
+                      - Support for ODBC parameters, allows for calling stored
+                        procedures with in/out/inout params for example for Oracle.
+                      - Added RFC2047 generator/parser to correctly handle non ASCII
+                        special chars in email header fields.
+                      - Added support for vCalendar 2.0-style RRULE syntax.
+                      - scripting: Added SETxxxxx functions for DB options
+                        like date range, item max count, limit, noattachments.
+                      - scripting: <logininitscript> now can return NOTHING
+                        (meaning no auth decision made), TRUE (auth ok, no
+                        further checking needed) or FALSE (auth not ok, no
+                        further checking needed)
+                      - Debug logs now show all SyncML Command references in a unified
+                        format such that e.g. searching a command's status response is
+                        easy (copy command ref into edito's search command).
+                      - Elements of array fields are now shown in logfiles when
+                        internal fields are dumped.
+                      - Added <loginfinishscript>
+                      - Added <finishscript> to ODBC datastores (here we can execute SQL if needed)
+                      - Added <datastorefinishscript> to all datastores
+                      - Added <finishscript> on session level
+                      - Unified naming of products in DevInf:
+                        <Mod> will now shows the Clients type/variant, without version No like:
+
+                          SySync client <platform> <database> <feature-set>
+
+                        For example:
+
+                          "SySync Client Win32 Demo",
+
+                      - Added support for processing and generating custome GET and PUT
+                        SyncML commands (<customendputscript>, ISSUEPUT() and ISSUEGET()).
+                      - Licensing: For OEMs, it is now possible to lock sections of
+                        the config and bind it to a certain license. This prevents
+                        unauthorized modifications of critical config sections by the
+                        end user.
+
+                      Bugfixes:
+                      - Fixed bug in script engine, it was not possible to
+                        declare arrays as local variables.
+                      - Default charset is now UTF-8 when parsing MIME-DIR formats (e.g.
+                        vCard 3.0, but not vCard 2.1, where default is still ANSI)
+                      - Improved algorithm to find Tx type such that it will
+                        now use remote's preferred Rx (first priority) or local's
+                        preferred Tx (second priority) or just a match (third priority)
+                      - Fixed bug in "valueseparator" feature (did not work if separator
+                        was not a semicolon).
+                      - Fixed small bug in vcalendaritemtype parser which would have
+                        caused problems with rarely used RRULEs like "MD1 1- #10".
+                      - Fixed bug in SESSIONVAR() script function: did abort the
+                        script when variable did not exist, now returns UNASSIGNED.
+                      - Fixed bug that caused trailing non-ASCII-chars to disappear from
+                        multiline fields.
+                      - Fixed bug in email body processing which could cause body to
+                        be parsed as empty.
+
+
+2.0.5.1  2004-01-28   Maintainance Release of SyncML Client 2.0:
+                      - Some Script functions where not available from ODBC-datastore
+                        scripts.
+                      - Enhanced datastore name matching for cases where remote
+                        datastores have names that only differ in path elements.
+                      - Enhanced MIME-DIR parser with "delayedparsing" attribute in
+                        <property> to allow parsing vCals that have RRULE before
+                        DTSTART (but DTSTART is required for parsing RRULE).
+                      - added "delayedparsing=1" to RRULE in all sample config files
+                      - Fixed bugs that could cause exceptions when <position> was
+                        used with repeat="array".
+                      - Fixed various small bugs with processing of ODBC <array> mappings
+                      - improved ODBC <array> mappings to allow a "sizefrom"
+                        field to determine the number of detail records to write.
+                      - First Linux version (preview)
+
+
+2.0.4.4   2003-12-11  Maintainance Release of SyncML Client 2.0:
+                      - Fixed bug in comparison of "multiline" fields in scripts
+                        (compare now works with > and < (string ordering)).
+                      - Added <dbconnectionstring> to allow more parameter to
+                        be passed for ODBC connection (e.g needed for MySQL)
+                      - Fixed bug in parsing of RFC822 dates (emails)
+                      - Added "default" and chained remoterule checking with
+                        new "finalrule" tag.
+                      - added <datastoreinitscript> and new functions
+                        to add filter expressions to targetfilter and localdbfilter
+                        in runtime (ADDFILTER, ADDSTATICFILTER, GETFILTER, SETFILTER).
+                      - fixed bug in ISO8601 parsing that could cause mis-interpretation
+                        of non-UTC time in rare cases.
+                      - Added <configidstring> to help identifying config used for
+                        each session in session logs.
+                      - Fixed bug for "text" item type that could cause email bodies
+                        in MIME/multipart messages not to be recognized by the parser.
+                      - Fixed bug for "text" item type that could cause emails with
+                        attachments, but no body text to omit the attachments on sending.
+                      - NORMALIZED() script function returned EMPTY for UNASSIGNED
+                        input; Now it returns UNASSIGNED in this case.

@@ -1,0 +1,102 @@
+*****************************************************************
+ Copyright Notice
+ Copyright (c) Ericsson, IBM, Lotus, Matsushita Communication
+ Industrial Co., Ltd., Motorola, Nokia, Openwave Systems, Inc.,
+ Palm, Inc., Psion, Starfish Software, Symbian, Ltd. (2001).
+ All Rights Reserved.
+ Implementation of all or part of any Specification may require
+ licenses under third party intellectual property rights,
+ including without limitation, patent rights (such a third party
+ may or may not be a Supporter). The Sponsors of the Specification
+ are not responsible and shall not be held responsible in any
+ manner for identifying or failing to identify any or all such
+ third party intellectual property rights.
+
+ THIS DOCUMENT AND THE INFORMATION CONTAINED HEREIN ARE PROVIDED
+ ON AN "AS IS" BASIS WITHOUT WARRANTY OF ANY KIND AND ERICSSON, IBM,
+ LOTUS, MATSUSHITA COMMUNICATION INDUSTRIAL CO. LTD, MOTOROLA,
+ NOKIA, PALM INC., PSION, STARFISH SOFTWARE AND ALL OTHER SYNCML
+ SPONSORS DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+ BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+ HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT
+ SHALL ERICSSON, IBM, LOTUS, MATSUSHITA COMMUNICATION INDUSTRIAL CO.,
+ LTD, MOTOROLA, NOKIA, PALM INC., PSION, STARFISH SOFTWARE OR ANY
+ OTHER SYNCML SPONSOR BE LIABLE TO ANY PARTY FOR ANY LOSS OF
+ PROFITS, LOSS OF BUSINESS, LOSS OF USE OF DATA, INTERRUPTION OF
+ BUSINESS, OR FOR DIRECT, INDIRECT, SPECIAL OR EXEMPLARY, INCIDENTAL,
+ PUNITIVE OR CONSEQUENTIAL DAMAGES OF ANY KIND IN CONNECTION WITH
+ THIS DOCUMENT OR THE INFORMATION CONTAINED HEREIN, EVEN IF ADVISED
+ OF THE POSSIBILITY OF SUCH LOSS OR DAMAGE.
+
+ The above notice and this paragraph must be included on all copies
+ of this document that are made.
+
+*****************************************************************
+                                               Date: 2000/09/27
+
+
+Building the SyncML-DLLs with the GNU compiler on Win32 platforms
+=================================================================
+
+
+
+Installation
+============
+
+To build our DLLs we use the GNU mingw32-msvcrt distribution with GCC 2.95.2.
+You can download it at: http://www.gnu.org
+Run the setup program and install it to a directory of your choice, for example
+at c:\mingw32.
+Now, you are ready to configure your system.
+
+Local Patch
+===========
+
+The af_irda.h include file that is used for compiling the xpt services on Microsoft
+Windows is from the Microsoft Platform SDK, April 2000 edition (later versions
+should work too).  That platform SDK is a free download from Microsoft's web site at
+the following URL:
+
+	http://www.microsoft.com/msdownload/platformsdk/setuplauncher.htm
+
+It is also available of part of an MSDN subscription.
+
+The af_irda.h file isn't included in the MinGW distribution, and the version from
+the Microsoft Platform SDK needs to be modified slightly for use with MinGW.  Since
+the Platform SDK license agreement doesn't permit redistributing af_irda.h or a
+modified version of it, you must install the Platform SDK to get the af_irda.h file
+and then apply the patch contained in the file af_irda.h.patch using the GNU patch
+program, or manually enter the changes indicated in the patch file.  To use the patch
+program to apply the patch, put a copy of the Platform SDK version of af_irda.h in
+the current directory along with the patch file, and run the command:
+
+	patch af_irda.h < af_irda.h.patch
+
+The resulting af_irda.h file should then be placed into one of the MinGW include
+directories, e.g., in the gcc-mingw-2.95.2\i386-mingw32msvc\include directory.
+
+
+
+Configuration
+=============
+
+To avoid conflicts with other compiler on your harddisk you have to set the
+environment variable MINGW32_LOCATION to the directory, where you have installed
+your mingw32-distribution.
+For example:
+	set MINGW32_LOCATION=c:/mingw32
+Attention: because of GNU, you have to use "/" instead of "\"
+That's all, you're now able to build the DLLs.
+
+
+Building DLLs
+=============
+
+Change to directory ...syncml\src\bld in your SyncML-source-tree. Here the
+following build commands are available:
+
+makewin clean:	removes all objects
+makewin sml:	builds the sml-DLL
+makewin xpt:	builds the xpt DLLs
+makewin all:	builds the sml- and xpt-DLLs
