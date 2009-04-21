@@ -827,9 +827,15 @@ string  VStr( string aStr, string value, sInt32 aNth ) {
 } // VStr
 
 
-// Get the value string between "<field>:" and "\n"
+// Get the value string between "<field>:" and "\r?\n"
 string VValue( string aStr, string key ) {
-  return PeeledStr( aStr, key + ":", "\n", 1 );
+  string res = PeeledStr( aStr, key + ":", "\n", 1 );
+
+  // strip optional trailing \r
+  if (!res.empty() && res[res.size() - 1] == '\r')
+    return res.substr(0, res.size() - 1);
+  else
+    return res;
 } // VValue
 
 
