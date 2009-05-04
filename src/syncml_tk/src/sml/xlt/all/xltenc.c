@@ -1072,6 +1072,7 @@ Ret_t xltEncBlock(XltTagID_t tagId, XltRO_t reqOptFlag, const VoidPtr_t pContent
       //set the flag in the (WB)XML document if the flag is in the pContent
       if ((*((Flag_t *) pContent)) & (SmlSftDel_f)) {
         if ((_err = xltGenerateTag(tagId, TT_ALL, enc, pBufMgr, SML_EXT_UNDEFINED)) != SML_ERR_OK) return _err;
+      }
       break;
 
     case TN_MOREDATA:
@@ -1102,9 +1103,10 @@ Ret_t xltEncBlock(XltTagID_t tagId, XltRO_t reqOptFlag, const VoidPtr_t pContent
       }
       break;
 
-    default:  // all leaf nodes (PCDATA#)
-        return xltEncPcdata(tagId, reqOptFlag, pContent, enc, pBufMgr, attFlag);
-    }
+    default:
+    	// all leaf nodes (PCDATA#)
+      return xltEncPcdata(tagId, reqOptFlag, pContent, enc, pBufMgr, attFlag);
+        
     }
     return SML_ERR_OK;
 }
