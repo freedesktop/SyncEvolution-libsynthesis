@@ -68,6 +68,7 @@ class CLine
 
     void InitOptions( int argc, char* argv[] );          // assign command line arguments
     void StrOpt     ( char opt, int  n, string &value ); // Get <n>th option string of <opt>
+    void GetName              ( int  n, string &value );
     bool NextOpt    ( char opt, int &n, string &value ); // Get next  option, if available
 
     void IntOpt     ( char opt, int  n, uInt32 &value );

@@ -231,7 +231,22 @@ void CLine::StrOpt( char opt, int n, string &value )
       } while (*s!='\0' && *s!=' ');
     } // if
   } // for
-} // StrOpt;
+} // StrOpt
+
+
+void CLine::GetName( int n, string &value )
+{
+  int j= 0;
+  
+  for (int i=1; i<fArgc; i++) {
+    string s=     fArgv[ i ];
+    if    (s.find( '-',0 )!=0) { // search for params
+          j++;
+      if (j==n) { value= s; return; }
+    } // if
+  } // for
+} // GetName
+
 
 
 bool CLine::NextOpt( char opt, int &n, string &value )
