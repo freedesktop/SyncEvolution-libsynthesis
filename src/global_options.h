@@ -16,7 +16,7 @@
 #if defined(EXPIRY_YEAR) && defined(SYSER_REGISTRATION)
   #error "it seems that this target still defines it's own private expiry date - please update target_options.h"
 #endif
-#if defined(EXPIRY_YEAR) && EXPIRY_YEAR<2009
+#if defined(EXPIRY_YEAR) && EXPIRY_YEAR<2010
 	#warning "Target has a dangerously early expiry year - please check if it is correct"
 #endif
 // global expiry date (usually applies for unregistered demos or regular products in trial mode)
@@ -55,8 +55,8 @@
 #endif
 
 #ifndef SYSYNC_BUILDNUMBER
-#define SYSYNC_BUILDNUMBER          26
-#define SYSYNC_BUILDNUMBER_TXT     "26"
+#define SYSYNC_BUILDNUMBER          27
+#define SYSYNC_BUILDNUMBER_TXT     "27"
 #endif
 
 
