@@ -235,7 +235,10 @@ enum TStepCmdEnum {
       data from buffer using GetSyncMLBuffer/ReturnSyncMLBuffer) */
   STEPCMD_SENTDATA = 12,
 
-  /** suspend the session */
+  /** suspend the session. Note that this command can be issued out-of order
+      instead of the next pending command (STEPCMD_GOTDATA, STEPCMD_SENTDATA, STEPCMD_STEP)
+      and will always return STEPCMD_OK. The next in-order STEPCMD_xx must be issued
+      in the next step to complete the suspend */
   STEPCMD_SUSPEND = 20,
   /** abort the session */
   STEPCMD_ABORT = 21,
@@ -248,7 +251,9 @@ enum TStepCmdEnum {
   STEPCMD_AUTOSYNC_CHECK = 41,
 /* - output from engine */
   /** engine returns to caller w/o progress info, and should be called
-      again ASAP with STEPCMD_STEP */
+      again ASAP with STEPCMD_STEP or, if the previous call was 
+      STEPCMD_SUSPEND, with the step command that was pending before
+      doing the suspend (for example STEPCMD_GOTDATA, STEPCMD_SENTDATA, STEPCMD_STEP) */
   STEPCMD_OK = 100,
   /** engine returns to caller to show progress, and should be called
       again ASAP with STEPCMD_STEP */

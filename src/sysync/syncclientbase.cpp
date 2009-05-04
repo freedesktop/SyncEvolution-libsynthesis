@@ -239,8 +239,9 @@ TSyError TClientEngineInterface::SessionStep(SessionH aSessionH, uInt16 &aStepCm
       clientSessionP->SuspendSession(LOCERR_USERSUSPEND);
       // also set the flag so subsequent pev_suspendcheck events will result the suspend status
       fSuspendRequested=true;
-      aStepCmd = STEPCMD_STEP; // convert to normal step
-      goto step;
+      aStepCmd = STEPCMD_OK; // this is a out-of-order step, and always just returns STEPCMD_OK.
+      fSessionStatus = 0; // ok for now, subsequent steps will perform the actual suspend
+      goto done; // no more action for now
     case STEPCMD_STEP :
     step:
     // first just return all queued up progress events
@@ -282,6 +283,7 @@ TSyError TClientEngineInterface::SessionStep(SessionH aSessionH, uInt16 &aStepCm
     fSessionStatus = LOCERR_OK;
   }
   #endif
+done:
   // return step status
   return fSessionStatus;
 } // TClientEngineInterface::SessionStep
