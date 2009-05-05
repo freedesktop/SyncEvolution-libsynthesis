@@ -3175,16 +3175,26 @@ bool TMimeDirProfileHandler::MIMEStringToField(
     case CONVMODE_TZ:
       // parse time zone
       if (ISO8601StrToContext(aText, tctx)!=0) {
-        // this is always global for the entire item, so set the item context
-        // (which is then used when parsing dates (which should be delayed to make sure TZ is seen first)
+        // Note: this is always global for the entire item, so set the item context
+        //  (which is then used when parsing dates (which should be delayed to make sure TZ is seen first)
         fItemTimeContext = tctx;
+        if (!TCTX_IS_TZ(tctx)) {
+        	// only offset. Try to symbolize it by passing a DAYLIGHT:FALSE and the offset
+          if (TzDaylightToContext("FALSE", fItemTimeContext, tctx, getSessionZones(), fReceiverTimeContext))
+		        fItemTimeContext = tctx; // there is a symbolized context, keep that
+        }
         fHasExplicitTZ = true; // zone explicitly set, not only copied from session's user zone
         goto timecontext;
       }
       return true; // not set, is ok
     case CONVMODE_DAYLIGHT:
       // parse DAYLIGHT zone description property, prefer user zone (among multiple zones matching the Tz/daylight info)
-      if (TzDaylightToContext(aText,fItemTimeContext,tctx,getSessionZones(),fReceiverTimeContext)) {
+      // - resolve to offset (assuming that item context came from a TZ property, so it will
+      //   be one of the non-DST zones, so reftime does not matter)
+      tctx = fItemTimeContext;
+      TzResolveContext(tctx, getSystemNowAs(TCTX_UTC, getSessionZones()), true, getSessionZones());
+      // - now find matching zone for given offset and DAYLIGHT property string
+      if (TzDaylightToContext(aText,tctx,tctx,getSessionZones(),fReceiverTimeContext)) {
         // this is always global for the entire item, so set the item context
         // (which is then used when parsing dates (which should be delayed to make sure TZ is seen first)
         fItemTimeContext = tctx;
