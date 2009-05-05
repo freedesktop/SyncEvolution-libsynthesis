@@ -140,6 +140,8 @@ int convertData(int argc, const char *argv[])
   // get session to work with
   sessionP =
     static_cast<TSyncSessionDispatch *>(getSyncAppBase())->getSySyToolSession();
+  // configure session
+  sessionP->fRemoteCanHandleUTC = true; // run generator and parser in UTC enabled mode
   
   
   // switch mimimal debugging on
