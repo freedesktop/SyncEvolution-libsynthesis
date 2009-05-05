@@ -23,10 +23,6 @@
   #include "sysync.h"
 #endif
 
-//#ifdef SYSYNC_TOOL
-//  #include "SDK_support.h"
-//#endif
-
 #include "vtimezone.h"
 #include "rrules.h"
 #include "lineartime.h"
@@ -283,13 +279,14 @@ static bool GetTZInfo( cAppCharP     aText,
       cName= VValue( a, VTZ_NAME  ); //            - tz name
 
   if (ISO8601StrToTimestamp( st.c_str(), dtstart, tctx )==0)  return false;
-  if (!RRULE2toInternalR   ( rr.c_str(), dtstart, r, aLogP )) return false;
   if (!Get_Bias( of,ot, cBias ))                              return false;
 
-  string vvv;
-  internalRToRRULE2( vvv, r, false, aLogP );
+  if (RRULE2toInternalR    ( rr.c_str(), dtstart, r, aLogP )) {
+    string             vvv;
+    internalRToRRULE2( vvv, r, false, aLogP );
+    Rtm_to_tChange        ( r, dtstart, c );
+  } // if
 
-  Rtm_to_tChange( r, dtstart, c );
   return true;
 } // GetTZInfo
 
@@ -325,19 +322,17 @@ bool VTIMEZONEtoTZEntry( const char*    aText, // VTIMEZONE string to be parsed
                          string        &aDstName,
                          TDebugLogger*  aLogP)
 {
-                            t.name   = "";
-                            t.ident  = "";
-                            t.dynYear= "CUR";
-  GetTZInfo( aText,VTZ_STD, t.std, t.bias,    aStdName, -1, aLogP );
-  GetTZInfo( aText,VTZ_DST, t.dst, t.biasDST, aDstName, -1, aLogP );
+  short dBias; // the full bias for DST
 
-  if   (t.bias==t.biasDST) ClrDST( t ); // no DST ?
-  else {
-  	//%%% luz: t.biasDST is not defined here. Intent of comparison not clear, usually fails and prevents parsing
-    //if (t.bias + t.biasDST!=biasD) ok= false;
-    //%%% luz: instead I think t.biasDST must be CALCULATED here
-    t.biasDST -= t.bias;
-  } // if
+                                 t.name   = "";
+                                 t.ident  = "";
+                                 t.dynYear= "CUR";
+                                 t.biasDST= 0;
+       GetTZInfo( aText,VTZ_STD, t.std, t.bias, aStdName, -1, aLogP );
+  if (!GetTZInfo( aText,VTZ_DST, t.dst,  dBias, aDstName, -1, aLogP )) dBias= t.bias;
+
+  if  (t.bias ==  dBias) ClrDST( t ); // no DST ?
+  else t.biasDST= dBias - t.bias; // t.biasDST WILL be calculated here
 
   // get TZID as found in VTIMEZONE
   t.name = VValue( aText, VTZ_ID );
@@ -447,7 +442,7 @@ static string HourMinStr( int bias )
 {
   const char*  form;
   if (bias>=0) form= "%+03d%02d";
-  else         form= "%03d%02d"; // for negative values
+  else       { form= "-%02d%02d"; bias= -bias; } // for negative values
 
   char     s[ 10 ];
   sprintf( s, form, bias / MinsPerHour,
@@ -530,14 +525,22 @@ bool internalToVTIMEZONE( timecontext_t  aContext,
   if (testYear==0)    yy= MyYear( g );
   TzResolveMetaContext( aContext, g ); // we need actual zone, not meta-context
 
-  tz_entry         t, tp;
-  GetTZ( aContext, t, g, yy );
-  bool withDST=    t.std.wMonth!=0 &&
-                   t.dst.wMonth!=0;
-  if      (t.ident == "$") { aText= t.name; return true; } // just give it back
-
-  int            t_plus = t.bias; const char* id= " ";
-  if (withDST) { t_plus+= t.biasDST;          id= "s"; } // there is only an offset with DST
+  int       t_plus= 0;
+  tz_entry  t, tp;
+  cAppCharP id;
+  bool      withDST= false;
+  
+  if (GetTZ( aContext, t, g, yy )) {
+    withDST=           t.std.wMonth!=0 &&
+                       t.dst.wMonth!=0;
+    if                (t.ident == "$") { aText= t.name; return true; } // just give it back
+  }
+  else {
+    t.bias= TCTX_MINOFFSET( aContext );
+    t.name= "OFFS" + HourMinStr( t.bias );
+  }
+                 t_plus = t.bias;    id= " ";
+  if (withDST) { t_plus+= t.biasDST; id= "s"; } // there is only an offset with DST
 
                    // time zone start year
   int y_std= 1967; // this info gets lost in the TZ_Entry system
