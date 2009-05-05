@@ -530,7 +530,8 @@ bool internalToVTIMEZONE( timecontext_t  aContext,
   cAppCharP id;
   bool      withDST= false;
   
-  if (GetTZ( aContext, t, g, yy )) {
+  bool tzEnum= GetTZ( aContext, t, g, yy );
+  if  (tzEnum) {
     withDST=           t.std.wMonth!=0 &&
                        t.dst.wMonth!=0;
     if                (t.ident == "$") { aText= t.name; return true; } // just give it back
@@ -561,7 +562,7 @@ bool internalToVTIMEZONE( timecontext_t  aContext,
 
 	// make sure we get the right TZID string according to aPrefIdent
   string tzn = t.name;
-  if (aPrefIdent) {
+  if (aPrefIdent && tzEnum) {
 	  TimeZoneContextToName(aContext, tzn, g, aPrefIdent);
   }
   
