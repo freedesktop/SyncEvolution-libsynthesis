@@ -394,6 +394,10 @@ TSyError TSettingsKeyImpl::SetValueByID(
   // some kind of conversion needed
   // - switch by presented value type
   switch (aValType) {
+		// Set "no value"
+    case VALTYPE_NULL:
+    	sta = SetValueInternal(aID,aArrayIndex,NULL,0);
+      break;
 
     // Text presented
     case VALTYPE_TEXT:
@@ -689,6 +693,7 @@ TSyError TConfigVarKey::SetValueInternal(
   sInt32 aID, sInt32 aArrayIndex,
   cAppPointer aBuffer, memSize aValSize
 ) {
+	if (!aBuffer) return LOCERR_WRONGUSAGE; // cannot handle NULL values
   if (!fEngineInterfaceP->getSyncAppBase()->setConfigVar(fVarName.c_str(),(cAppCharP)aBuffer))
     return DB_NotFound;
   return LOCERR_OK;
@@ -830,6 +835,7 @@ TSyError TStructFieldsKey::SetValueInternal(
   cAppPointer aBuffer, memSize aValSize
 )
 {
+	if (!aBuffer) return LOCERR_WRONGUSAGE; // cannot handle NULL values
 	if (aID & VALID_IDXOFFS_VALTYPE)
   	return DB_Forbidden; // can't write type
   TSyError sta = LOCERR_OK;
