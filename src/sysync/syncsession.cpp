@@ -5098,7 +5098,7 @@ Ret_t TSyncSession::EndMessage(Boolean_t final)
   // Note: do it here because we have processed all commands (alerts) now but
   //       server response alerts are still in the fEndOfMessageCommands queue.
   //       This ensures that clients gets PUT before it gets ALERTs.
-  if (!fRemoteGotDevinf && fRemoteMustSeeDevinf) {
+  if (!fRemoteGotDevinf && mustSendDevInf()) {
     // remote has not got devinf and should see it
     if (!getRootConfig()->fNeverPutDevinf) {
       // PUT devinf now
