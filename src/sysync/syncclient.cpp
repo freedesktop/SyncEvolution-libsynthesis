@@ -906,7 +906,7 @@ localstatus TSyncClient::NextMessage(bool &aDone)
       if (localDS->fSlowSync) anyslowsyncs=true;
     }
     // create Put command if any datastore is doing first time sync / slow sync or devinf Put is externally requested
-    if (mustSendDevInf() || anyfirstsyncs || (anyslowsyncs && static_cast<TClientConfig *>(getRootConfig()->fAgentConfigP)->fPutDevInfAtSlowSync)) {
+    if (fRemoteMustSeeDevinf || mustSendDevInf() || anyfirstsyncs || (anyslowsyncs && static_cast<TClientConfig *>(getRootConfig()->fAgentConfigP)->fPutDevInfAtSlowSync)) {
       TDevInfPutCommand *putcmdP = new TDevInfPutCommand(this);
       issueRootPtr(putcmdP);
     }
