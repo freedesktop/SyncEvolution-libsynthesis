@@ -20,9 +20,9 @@
 
 // expat if not hardcoded config
 #ifndef HARDCODED_CONFIG
-# if HAVE_EXPAT
+# ifdef HAVE_EXPAT
 #include <expat.h>
-# elif HAVE_SYS_XMLTOK
+# elif defined(HAVE_SYS_XMLTOK)
 #include <xmltok/xmlparse.h>
 # else /* HAVE_BUILTIN_XMLTOK */
 #include "xmlparse.h"
