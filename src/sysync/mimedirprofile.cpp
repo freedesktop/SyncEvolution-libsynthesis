@@ -5000,7 +5000,17 @@ void TMimeDirProfileHandler::setProfileMode(sInt32 aMode)
   }
 } // TMimeDirProfileHandler::setProfileMode
 
-
+void TMimeDirProfileHandler::setRemoteRule(const string &aRemoteRuleName)
+{
+  TSessionConfig *scP = getSession()->getSessionConfig();
+  TRemoteRulesList::iterator pos;
+  for(pos=scP->fRemoteRulesList.begin();pos!=scP->fRemoteRulesList.end();pos++) {
+    if((*pos)->fElementName == aRemoteRuleName) {
+      fAppliedRemoteRuleP = *pos;
+      break;
+    }
+  }
+} // TMimeDirProfileHandler::setRemoteRule
 
 // - check mode
 bool TMimeDirProfileHandler::mimeModeMatch(TMimeDirMode aMimeMode)

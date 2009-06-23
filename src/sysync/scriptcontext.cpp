@@ -1985,7 +1985,7 @@ public:
   }
 
 
-  // integer PARSETEXTWITHPROFILE(string textformat, string profileName [, int mode])
+  // integer PARSETEXTWITHPROFILE(string textformat, string profileName [, int mode = 0 = default [, string remoteRuleName = "" = other]])
   static void func_ParseTextWithProfile(TItemField *&aTermP, TScriptContext *aFuncContextP)
   {
   	bool ok = false;
@@ -1999,8 +1999,19 @@ public:
       if (profileHandlerP) {
       	// now we can convert
         // - set the mode code (none = 0 = default)
+        // TODO? Shouldn't this check whether arg #2 was passed at all? If not,
+        // the code will segfault when trying to call getAsInteger()
         profileHandlerP->setProfileMode(aFuncContextP->getLocalVar(2)->getAsInteger());
-  			profileHandlerP->setRelatedDatastore(NULL); // no datastore in particular is related
+        profileHandlerP->setRelatedDatastore(NULL); // no datastore in particular is related
+#ifndef NO_REMOTE_RULES
+        // - try to find remote rule
+        TItemField *field = aFuncContextP->getLocalVar(3);
+        if (field) {
+          field->getAsString(s);
+          if (!s.empty())
+            profileHandlerP->setRemoteRule(s);
+        }
+#endif
         // - convert
 	    	aFuncContextP->getLocalVar(0)->getAsString(s);
         ok = profileHandlerP->parseText(s.c_str(), s.size(), *itemP);
@@ -2012,7 +2023,7 @@ public:
   } // func_ParseTextWithProfile
 
 
-  // string MAKETEXTWITHPROFILE(string profileName [, int mode])
+  // string MAKETEXTWITHPROFILE(string profileName [, int mode [, string remoteRuleName = "" = other] ])
   static void func_MakeTextWithProfile(TItemField *&aTermP, TScriptContext *aFuncContextP)
   {
     if (aFuncContextP->fParentContextP) {
@@ -2027,6 +2038,15 @@ public:
         // - set the mode code (none = 0 = default)
         profileHandlerP->setProfileMode(aFuncContextP->getLocalVar(1)->getAsInteger());
         profileHandlerP->setRelatedDatastore(NULL); // no datastore in particular is related
+#ifndef NO_REMOTE_RULES
+        // - try to find remote rule
+        TItemField *field = aFuncContextP->getLocalVar(2);
+        if (field) {
+          field->getAsString(s);
+          if (!s.empty())
+            profileHandlerP->setRemoteRule(s);
+        }
+#endif
         // - convert, after clearing the string (some generateText() implementations
         // append instead of overwriting)
         s = "";
@@ -2075,8 +2095,8 @@ const uInt8 param_NumFormat[] = { VAL(fty_integer), VAL(fty_integer), OPTVAL(fty
 const uInt8 param_Explode[] = { VAL(fty_string), REFARR(fty_none) };
 const uInt8 param_parseEmailSpec[] = { VAL(fty_string), REF(fty_string), REF(fty_string) };
 const uInt8 param_makeEmailSpec[] = { VAL(fty_string), VAL(fty_string) };
-const uInt8 param_parseTextWithProfile[] = { VAL(fty_string), VAL(fty_string), OPTVAL(fty_integer) };
-const uInt8 param_makeTextWithProfile[] = { VAL(fty_string), OPTVAL(fty_integer) };
+const uInt8 param_parseTextWithProfile[] = { VAL(fty_string), VAL(fty_string), OPTVAL(fty_integer), OPTVAL(fty_string) };
+const uInt8 param_makeTextWithProfile[] = { VAL(fty_string), OPTVAL(fty_integer), OPTVAL(fty_string) };
 
 
 #ifdef REGEX_SUPPORT
@@ -2174,8 +2194,8 @@ const TBuiltInFuncDef BuiltInFuncDefs[] = {
   { "PARSE_RRULE", TBuiltinStdFuncs::func_Parse_RRULE, fty_integer, 8, param_Parse_RRULE },
   { "PARSEEMAILSPEC", TBuiltinStdFuncs::func_ParseEmailSpec, fty_integer, 3, param_parseEmailSpec },
   { "MAKEEMAILSPEC", TBuiltinStdFuncs::func_MakeEmailSpec, fty_string, 2, param_makeEmailSpec },
-  { "PARSETEXTWITHPROFILE", TBuiltinStdFuncs::func_ParseTextWithProfile, fty_integer, 3, param_parseTextWithProfile },
-  { "MAKETEXTWITHPROFILE", TBuiltinStdFuncs::func_MakeTextWithProfile, fty_string, 2, param_makeTextWithProfile },
+  { "PARSETEXTWITHPROFILE", TBuiltinStdFuncs::func_ParseTextWithProfile, fty_integer, 4, param_parseTextWithProfile },
+  { "MAKETEXTWITHPROFILE", TBuiltinStdFuncs::func_MakeTextWithProfile, fty_string, 3, param_makeTextWithProfile },
   { "SYNCMLVERS", TBuiltinStdFuncs::func_SyncMLVers, fty_string, 0, NULL },
   { "ALLDAYCOUNT", TBuiltinStdFuncs::func_AlldayCount, fty_integer, 4, param_AlldayCount },
   { "MAKEALLDAY", TBuiltinStdFuncs::func_MakeAllday, fty_integer, 3, param_MakeAllday },
