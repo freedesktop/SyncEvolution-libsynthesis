@@ -1142,7 +1142,7 @@ TSyError TEngineInterface::InitEngineFile(cAppCharP aConfigFilePath)
 /// @param aReaderFunc[in] callback function which can deliver next chunk of XML config data
 /// @param aContext[in] free context pointer passed back with callback
 /// @return LOCERR_OK on success, SyncML or LOCERR_xxx error code on failure
-TSyError TEngineInterface::InitEngineCB (TXMLConfigReadFunc aReaderFunc, void *aContext)
+TSyError TEngineInterface::InitEngineCB(TXMLConfigReadFunc aReaderFunc, void *aContext)
 {
   // get the global context for pooling ressources like Java VM
   fAppBaseP->fApiInterModuleContext = fCI->gContext;

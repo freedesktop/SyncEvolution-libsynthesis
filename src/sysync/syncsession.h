@@ -505,7 +505,7 @@ public:
     TLocalEngineDS *aForDatastoreP
   );
   // access to session info from commands
-  bool mustSendDevInf(void) { return false; }; // can be overridden to force devinf sending (e.g if list of synced fields has changed since last sync)
+  bool mustSendDevInf(void) { return fRemoteMustSeeDevinf; };
   // - access DevInf (session owned)
   SmlItemPtr_t getLocalDevInfItem(bool aAlertedOnly, bool aWithoutCTCapProps);
   // - analyze devinf of remote party (can be derived to add client or server specific analysis)
