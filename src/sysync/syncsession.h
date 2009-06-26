@@ -298,11 +298,13 @@ public:
   virtual bool syncHdrFailure(bool aTryAgain) = 0;
   // Abort session
   void AbortSession(TSyError aStatusCode, bool aLocalProblem, TSyError aReason=0); // resets session and sets aborted flag to prevent further processing of message
+  void MarkAlertSent(bool sent);
   // Suspend session
   void SuspendSession(TSyError aReason);
   // Session status
   bool isAborted(void) { return fAborted; }; // test abort status
   bool isSuspending(void) { return fSuspended; }; // test if flagged for suspend
+  bool isAlertSent (void) {return fAlertSent; };
   bool isAllSuccess(void); // test if session was completely successful
   void DatastoreFailed(TSyError aStatusCode, bool aLocalProblem=false); // let session know that datastore has failed
   void DatastoreHadErrors(void) { fErrorItemDatastores++; }; // let session know that sync was ok, but some items had errors
@@ -870,6 +872,7 @@ protected:
   bool fMessageRetried; // if set (by TSyncHeader::execute()) we have received a retried message and should resend the last answer
   bool fAborted; // if set, session is being aborted (and will be deleted at EndRequest)
   bool fSuspended; // if set, session is being suspended (stopped processing commands, will send Suspend Alert to remote at next opportunity)
+  bool fAlertSent;
   uInt16 fFailedDatastores;
   uInt16 fErrorItemDatastores;
   TSyError fAbortReasonStatus; // if fAborted, this contains a status code what command has aborted the session
