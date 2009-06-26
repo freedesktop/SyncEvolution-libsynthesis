@@ -3436,7 +3436,7 @@ bool TMimeDirProfileHandler::parseValue(
             p++;
             c=*p;
             if (!c) break; // half escape sequence, ignore
-            else if (c=='n') c='\n';
+            else if (c=='n' || c=='N') c='\n';
             // other escaped chars are shown as themselves
           }
           // add char
