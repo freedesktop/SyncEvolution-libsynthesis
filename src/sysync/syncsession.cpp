@@ -4254,14 +4254,14 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
   for(pos=scP->fRemoteRulesList.begin();pos!=scP->fRemoteRulesList.end();pos++) {
     // compare with devinf (or test for default-rule if aDevInfP is NULL
     if (
-      ((*pos)->fManufacturer.empty() || aDevInfP && strwildcmp(smlPCDataToCharP(aDevInfP->man),(*pos)->fManufacturer.c_str())==0) &&
-      ((*pos)->fModel.empty() || aDevInfP && strwildcmp(smlPCDataToCharP(aDevInfP->mod),(*pos)->fModel.c_str())==0) &&
-      ((*pos)->fOem.empty() || aDevInfP && strwildcmp(smlPCDataToCharP(aDevInfP->oem),(*pos)->fOem.c_str())==0) &&
-      ((*pos)->fFirmwareVers.empty() || aDevInfP && (*pos)->fFirmwareVers==smlPCDataToCharP(aDevInfP->fwv)) &&
-      ((*pos)->fSoftwareVers.empty() || aDevInfP && (*pos)->fSoftwareVers==smlPCDataToCharP(aDevInfP->swv)) &&
-      ((*pos)->fHardwareVers.empty() || aDevInfP && (*pos)->fHardwareVers==smlPCDataToCharP(aDevInfP->hwv)) &&
-      ((*pos)->fDevId.empty() || aDevInfP && (*pos)->fDevId==smlPCDataToCharP(aDevInfP->devid)) &&
-      ((*pos)->fDevTyp.empty() || aDevInfP && (*pos)->fDevTyp==smlPCDataToCharP(aDevInfP->devtyp))
+      ((*pos)->fManufacturer.empty() || (aDevInfP && strwildcmp(smlPCDataToCharP(aDevInfP->man),(*pos)->fManufacturer.c_str())==0)) &&
+      ((*pos)->fModel.empty() || (aDevInfP && strwildcmp(smlPCDataToCharP(aDevInfP->mod),(*pos)->fModel.c_str())==0)) &&
+      ((*pos)->fOem.empty() || (aDevInfP && strwildcmp(smlPCDataToCharP(aDevInfP->oem),(*pos)->fOem.c_str())==0)) &&
+      ((*pos)->fFirmwareVers.empty() || (aDevInfP && (*pos)->fFirmwareVers==smlPCDataToCharP(aDevInfP->fwv))) &&
+      ((*pos)->fSoftwareVers.empty() || (aDevInfP && (*pos)->fSoftwareVers==smlPCDataToCharP(aDevInfP->swv))) &&
+      ((*pos)->fHardwareVers.empty() || (aDevInfP && (*pos)->fHardwareVers==smlPCDataToCharP(aDevInfP->hwv))) &&
+      ((*pos)->fDevId.empty() || (aDevInfP && (*pos)->fDevId==smlPCDataToCharP(aDevInfP->devid))) &&
+      ((*pos)->fDevTyp.empty() || (aDevInfP && (*pos)->fDevTyp==smlPCDataToCharP(aDevInfP->devtyp)))
     ) {
       // found, apply rules
       TRemoteRuleConfig *ruleP = *pos;
