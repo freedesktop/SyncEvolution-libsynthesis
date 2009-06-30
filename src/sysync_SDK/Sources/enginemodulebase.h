@@ -366,7 +366,11 @@ class TEngineModuleBase
     virtual TSyError InsertItemAsKey  ( CContext ac,       KeyH  aItemKey,     cItemID   aID )= 0;
     virtual TSyError UpdateItemAsKey  ( CContext ac,       KeyH  aItemKey,     cItemID   aID,
                                                                                 ItemID updID )= 0;
+
+    virtual TSyError shareLogger() { return LOCERR_NOTIMP; }
 }; // TEngineModuleBase
+
+void SySyncShareLogger(void* aCB);
 
 
 // factory function declaration - must be implemented in the source file of the leaf derivate of TEngineInterface

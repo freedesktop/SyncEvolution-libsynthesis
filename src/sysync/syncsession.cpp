@@ -822,8 +822,8 @@ void TSessionConfig::localResolve(bool aLastPass)
     #endif
     #ifndef HARDCODED_CONFIG
     // - resolve datastores
-    if (fDatastores.size()==0)
-      SYSYNC_THROW(TConfigParseException("At least one 'datastore' must be defined"));
+    // if (fDatastores.size()==0)
+    //  SYSYNC_THROW(TConfigParseException("At least one 'datastore' must be defined"));
     #endif
     TLocalDSList::iterator pos2;
     for(pos2=fDatastores.begin();pos2!=fDatastores.end();pos2++)
@@ -870,7 +870,7 @@ TSyncSession::TSyncSession(
   #endif
   fTerminated(false),
   #ifdef SYDEBUG
-  fSessionLogger(&fSessionZones),
+  fSessionLogger(initLogger(aSyncAppBaseP)),
   #endif
   fSyncAppBaseP(aSyncAppBaseP) // link to owning base (dispatcher/clienbase)
 {
@@ -924,22 +924,25 @@ TSyncSession::TSyncSession(
   fSessionLogger.setEnabled(fSessionDebugLogs); // init from session-level flag @todo: get rid of this special session level flag, handle it all via session logger's fDebugEnabled / getDbgMask()
   fSessionLogger.setMask(getRootConfig()->fDebugConfig.fDebug); // init from config
   fSessionLogger.setOptions(&(getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions));
-  fSessionLogger.installOutput(getSyncAppBase()->newDbgOutputter(false)); // install the output object (and pass ownership!)
-  fSessionLogger.setDebugPath(getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()); // base path
-  fSessionLogger.appendToDebugPath(TARGETID);
-  if (getRootConfig()->fDebugConfig.fSingleSessionLog) {
-    getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions.fAppend=true; // One single log - in this case, we MUST append to current log
-    fSessionLogger.appendToDebugPath("_session"); // only single session log, always with the same name
-  }
-  else {
-    if (getRootConfig()->fDebugConfig.fTimedSessionLogNames) {
-      fSessionLogger.appendToDebugPath("_");
-      string t;
-      TimestampToISO8601Str(t, getSystemNowAs(TCTX_UTC), TCTX_UTC, false, false);
-      fSessionLogger.appendToDebugPath(t.c_str());
+  if (fSessionLoggerP) {
+    // using our own logger, set path
+    fSessionLogger.installOutput(getSyncAppBase()->newDbgOutputter(false)); // install the output object (and pass ownership!)
+    fSessionLogger.setDebugPath(getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()); // base path
+    fSessionLogger.appendToDebugPath(TARGETID);
+    if (getRootConfig()->fDebugConfig.fSingleSessionLog) {
+      getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions.fAppend=true; // One single log - in this case, we MUST append to current log
+      fSessionLogger.appendToDebugPath("_session"); // only single session log, always with the same name
     }
-    fSessionLogger.appendToDebugPath("_s");
-    fSessionLogger.appendToDebugPath(fLocalSessionID.c_str());
+    else {
+      if (getRootConfig()->fDebugConfig.fTimedSessionLogNames) {
+        fSessionLogger.appendToDebugPath("_");
+        string t;
+        TimestampToISO8601Str(t, getSystemNowAs(TCTX_UTC), TCTX_UTC, false, false);
+        fSessionLogger.appendToDebugPath(t.c_str());
+      }
+      fSessionLogger.appendToDebugPath("_s");
+      fSessionLogger.appendToDebugPath(fLocalSessionID.c_str());
+    }
   }
   fSessionLogger.DebugDefineMainThread();
   // initialize session level dump flags
@@ -1046,6 +1049,16 @@ TSyncSession::TSyncSession(
   DebugShowCfgInfo();
 } // TSyncSession::TSyncSession
 
+TDebugLogger &TSyncSession::initLogger(TSyncAppBase *fSyncAppBaseP)
+{
+  if (fSyncAppBaseP->getGlobalLogger()) {
+    fSessionLoggerP = NULL;
+    return *fSyncAppBaseP->getGlobalLogger();
+  } else {
+    fSessionLoggerP = new TDebugLogger(&fSessionZones);
+    return *fSessionLoggerP;
+  }
+}
 
 // destructor
 TSyncSession::~TSyncSession()
@@ -1058,6 +1071,7 @@ TSyncSession::~TSyncSession()
   DEBUGPRINTFX(DBG_OBJINST,("-------- TSyncSession almost destroyed (except implicit member destruction)"));
   #ifdef SYDEBUG
   fSessionLogger.DebugThreadOutputDone();
+  delete fSessionLoggerP;
   #endif
 } // TSyncSession::~TSyncSession
 

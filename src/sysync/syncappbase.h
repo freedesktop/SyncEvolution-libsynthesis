@@ -646,9 +646,28 @@ public:
 private:
   // debug logging
   #ifdef SYDEBUG
-  TDebugLogger fAppLogger; // the logger
+  TDebugLogger &fAppLogger;                // reference to the active logger used by this instances
+  TDebugLogger &initAppLogger();           // determine whether a local or global logger is needed
+  TDebugLogger *fAppLoggerP;               // local logger created by initAppLogger(), if necessary
+  static TDebugLogger *fGlobalAppLoggerP;  // global logger, set by shareLogger()
   #endif
+public:
+  #ifdef SYDEBUG
+  /**
+   * This call installs the local logger created and owned by this
+   * instance of TSyncAppBase as the one used by all instances of
+   * TSyncAppBase which will be created in the future.  This
+   * TSyncAppBase must remain active until the last of these later
+   * TSyncAppBase instances was destroyed. Reference counting would
+   * ensure that the logger stays around as long as it is needed, but
+   * isn't available.
+   */
+  void shareLogger() { fGlobalAppLoggerP = fAppLoggerP; }
+  TDebugLogger *getGlobalLogger() { return fGlobalAppLoggerP; }
+  #endif
+
 }; // TSyncAppBase
+
 
 
 } // namespace sysync

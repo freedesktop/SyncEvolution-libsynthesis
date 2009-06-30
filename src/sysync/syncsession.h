@@ -890,7 +890,9 @@ protected:
 private:
   // debug logging
   #ifdef SYDEBUG
-  TDebugLogger fSessionLogger; // the logger
+  TDebugLogger &fSessionLogger;      // the logger, might have been inherited from app
+  TDebugLogger *fSessionLoggerP;     // true local logger just for the session
+  TDebugLogger &initLogger(TSyncAppBase *fSyncAppBaseP);
   #endif
   // internal vars
   TSyncAppBase *fSyncAppBaseP; // the owning application base (dispatcher/client base)

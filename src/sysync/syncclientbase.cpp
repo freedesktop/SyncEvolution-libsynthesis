@@ -306,6 +306,12 @@ InstanceID_t TClientEngineInterface::getSmlInstanceOfSession(SessionH aSessionH)
   return clientSessionP->getSmlWorkspaceID();
 } // TClientEngineInterface::getSmlInstanceOfSession
 
+TSyError TClientEngineInterface::shareLogger()
+{
+  static_cast<TSyncClientBase *>(getSyncAppBase())->shareLogger();
+  return 0;
+}
+
 #endif // ENGINE_LIBRARY
 
 #endif // ENGINEINTERFACE_SUPPORT

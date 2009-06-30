@@ -328,7 +328,11 @@ void CB_Connect( void* aCB )
   CB_Connect_Tunnel   ( cb );
 } // CB_Connect
 
+void SySyncShareLogger(void* aCB) {
+  URef( aCB )->shareLogger();
+}
 
 } // namespace sysync
+
 
 // eof

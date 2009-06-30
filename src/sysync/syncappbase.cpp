@@ -716,6 +716,10 @@ void TDebugConfig::localResolve(bool aLastPass)
 {
   if (aLastPass) {
     #ifdef SYDEBUG
+    if (!getSyncAppBase()->fAppLoggerP) {
+      // we inherited a logger, don't overwrite settings
+      return;
+    }
     // we have debug
     #ifndef HARDCODED_CONFIG
       // XML config - user options settings are parsed into fSessionDbgLoggerOptions
@@ -1154,7 +1158,7 @@ TSyncAppBase::TSyncAppBase() :
   // reset all callbacks
   #ifdef SYDEBUG
   // app logger
-  ,fAppLogger(&fAppZones)
+  ,fAppLogger(initAppLogger())
   #endif
 {
   // at the moment of creation, this is now the SyncAppBase
@@ -1217,6 +1221,16 @@ TSyncAppBase::TSyncAppBase() :
 
 } // TSyncAppBase::TSyncAppBase
 
+TDebugLogger &TSyncAppBase::initAppLogger()
+{
+  if (fGlobalAppLoggerP) {
+    fAppLoggerP = NULL;
+    return *fGlobalAppLoggerP;
+  } else {
+    fAppLoggerP = new TDebugLogger(&fAppZones);
+    return *fAppLoggerP;
+  }
+}
 
 // destructor
 TSyncAppBase::~TSyncAppBase()
@@ -1253,12 +1267,20 @@ TSyncAppBase::~TSyncAppBase()
   #ifdef SYDEBUG
   // - but first make sure applogger does not refer to it any more
   fAppLogger.setOptions(NULL);
+  // - remove references to local logger and delete it
+  if (fAppLoggerP) {
+    if (fGlobalAppLoggerP == fAppLoggerP)
+      fGlobalAppLoggerP = NULL;
+    delete fAppLoggerP;
+  }
   #endif
   // - now delete
   if (fConfigP) delete fConfigP;
 } // TSyncAppBase::~TSyncAppBase
 
-
+#ifdef SYDEBUG
+TDebugLogger *TSyncAppBase::fGlobalAppLoggerP;
+#endif
 
 #ifndef HARDCODED_CONFIG
 
