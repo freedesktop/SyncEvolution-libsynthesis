@@ -2353,7 +2353,7 @@ static void addSourceLine(uInt16 aLine, const char *aText, string &aScript, bool
 
 
 // Tokenize input string
-void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sInt32 aLine, cAppCharP aScriptText, string &aTScript, const TFuncTable *aContextFuncs, bool aFuncHeader, bool aNoDeclarations)
+void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sInt32 aLine, cAppCharP aScriptText, string &aTScript, const TFuncTable *aContextFuncs, bool aFuncHeader, bool aNoDeclarations, TMacroArgsArray *aMacroArgsP)
 {
   string itm;
   string macro;
@@ -2384,6 +2384,40 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
     // insert source line identification token for start of script for all but completely empty scripts
     addSourceLine(line,text,aTScript,includesource,lastincludedline);
   }
+  // marco argument expansion
+  // Note: $n (with n=1,2,3...9) is expanded before any other processing. To insert e.g. $2 literally, use $$2.
+  //       $n macros that can't be expanded will be left in the text AS IS
+  string itext;
+  if (aMacroArgsP) {
+  	itext = text; // we need a string to substitute macro args in
+    int i = 0;
+    while (i<itext.size()) {
+    	c=itext[i++];
+      if (c=='$') {
+      	// could be macro argument
+        c=itext[i];
+        if (c=='$') {
+        	// $$ expands to $
+          itext.erase(i, 1); // erase second occurrence of $
+          continue;
+        }
+        else if (isdigit(c)) {
+        	int argidx = c-'1';
+          if (argidx>=0 && argidx<aMacroArgsP->size()) {
+          	// found macro argument, replace in input string
+            itext.replace(i-1, 2, (*aMacroArgsP)[argidx]);
+            // no nested macro argument eval, just advance pointer behind replacement text
+            i += (*aMacroArgsP)[argidx].size()-1;
+            // check next char
+            continue;
+          }
+        }
+      }
+    }
+    // now use expanded version of text for tokenizing
+    text = itext.c_str();
+  }
+  // actual tokenisation
   SYSYNC_TRY {
     // process text
     while (*text) {
@@ -2568,6 +2602,31 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
             TStringToStringMap::iterator pos = cfgP->fScriptMacros.find(itm);
             if (pos==cfgP->fScriptMacros.end())
               SYSYNC_THROW(TTokenizeException(aScriptName,"unknown macro",aScriptText,p-1-aScriptText,line));
+            TMacroArgsArray macroArgs;
+            // check for macro arguments
+            if (*text=='(') {
+            	// Macro has Arguments
+              text++;
+              string arg;
+              // Note: closing brackets and commas must be escaped when used as part of a macro argument
+              while (*text) {
+              	c=*text++;
+              	if (c==',' || c==')') {
+                	// end of argument
+                  macroArgs.push_back(arg); // save it in array
+                  arg.erase();
+                  if (c==')') break; // end of macro
+                  continue; // skip comma, next arg
+                }
+                else if (c=='\\') {
+                  if (*text==0) break; // end of string
+                	// escaped - use next char w/o testing for , or )
+                  c=*text++;
+                }
+                // add to argument string
+                arg += c;
+              }
+            }
             // continue tokenizing with macro text
             TScriptContext::Tokenize(
               aAppBaseP,
@@ -2577,7 +2636,8 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
               macro, // produce tokenized macro here
               aContextFuncs, // same context
               false, // not in function header
-              aNoDeclarations // same condition
+              aNoDeclarations, // same condition
+              &macroArgs // macro arguments
             );
             // append tokenized macro to current script
             aTScript+=macro;
