@@ -5000,6 +5000,8 @@ void TMimeDirProfileHandler::setProfileMode(sInt32 aMode)
   }
 } // TMimeDirProfileHandler::setProfileMode
 
+
+#ifndef NO_REMOTE_RULES
 void TMimeDirProfileHandler::setRemoteRule(const string &aRemoteRuleName)
 {
   TSessionConfig *scP = getSession()->getSessionConfig();
@@ -5011,6 +5013,8 @@ void TMimeDirProfileHandler::setRemoteRule(const string &aRemoteRuleName)
     }
   }
 } // TMimeDirProfileHandler::setRemoteRule
+#endif
+
 
 // - check mode
 bool TMimeDirProfileHandler::mimeModeMatch(TMimeDirMode aMimeMode)

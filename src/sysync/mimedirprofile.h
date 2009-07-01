@@ -458,9 +458,9 @@ public:
   // set profile options
   // - mode (for those profiles that have more than one, like MIME-DIR's old/standard)
   virtual void setProfileMode(sInt32 aMode);
-#ifndef NO_REMOTE_RULES
+	#ifndef NO_REMOTE_RULES
   virtual void setRemoteRule(const string &aRemoteRuleName);
-#endif
+	#endif
   // generate Text Data (includes header and footer)
   virtual void generateText(TMultiFieldItem &aItem, string &aString);
   // parse Data item (includes header and footer)
