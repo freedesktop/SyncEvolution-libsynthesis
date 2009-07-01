@@ -89,6 +89,10 @@ public:
   virtual TSyError shareLogger();
   #endif
 
+  virtual TSyError debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunction,
+                             int aDbgLevel, cAppCharP aLinePrefix,
+                             cAppCharP aText);
+
 protected:
 
   /// @brief returns the SML instance for a given session handle

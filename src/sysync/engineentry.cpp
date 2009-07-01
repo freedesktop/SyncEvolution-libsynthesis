@@ -332,6 +332,15 @@ void SySyncShareLogger(void* aCB) {
   URef( aCB )->shareLogger();
 }
 
+void SySyncDebugPuts(void* aCB,
+                     cAppCharP aFile, int aLine, cAppCharP aFunction,
+                     int aDbgLevel, cAppCharP aLinePrefix,
+                     cAppCharP aText)
+{
+  URef( aCB )->debugPuts(aFile, aLine, aFunction,
+                         aDbgLevel, aLinePrefix, aText);
+}
+
 } // namespace sysync
 
 
