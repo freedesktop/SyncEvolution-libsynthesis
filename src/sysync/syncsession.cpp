@@ -924,22 +924,31 @@ TSyncSession::TSyncSession(
   fSessionLogger.setEnabled(fSessionDebugLogs); // init from session-level flag @todo: get rid of this special session level flag, handle it all via session logger's fDebugEnabled / getDbgMask()
   fSessionLogger.setMask(getRootConfig()->fDebugConfig.fDebug); // init from config
   fSessionLogger.setOptions(&(getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions));
-  fSessionLogger.installOutput(getSyncAppBase()->newDbgOutputter(false)); // install the output object (and pass ownership!)
-  fSessionLogger.setDebugPath(getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()); // base path
-  fSessionLogger.appendToDebugPath(TARGETID);
-  if (getRootConfig()->fDebugConfig.fSingleSessionLog) {
-    getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions.fAppend=true; // One single log - in this case, we MUST append to current log
-    fSessionLogger.appendToDebugPath("_session"); // only single session log, always with the same name
-  }
+  if (getRootConfig()->fDebugConfig.fLogSessionsToGlobal) {
+		// pass session output to app global logger
+    fSessionLogger.outputVia(getSyncAppBase()->getDbgLogger());
+    // show start of log
+    PDEBUGPRINTFX(DBG_HOT,("--------- START of embedded log for session ID '%s' ---------", fLocalSessionID.c_str()));
+	}
   else {
-    if (getRootConfig()->fDebugConfig.fTimedSessionLogNames) {
-      fSessionLogger.appendToDebugPath("_");
-      string t;
-      TimestampToISO8601Str(t, getSystemNowAs(TCTX_UTC), TCTX_UTC, false, false);
-      fSessionLogger.appendToDebugPath(t.c_str());
+  	// use separate output for session logs  
+    fSessionLogger.installOutput(getSyncAppBase()->newDbgOutputter(false)); // install the output object (and pass ownership!)
+    fSessionLogger.setDebugPath(getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()); // base path
+    fSessionLogger.appendToDebugPath(TARGETID);
+    if (getRootConfig()->fDebugConfig.fSingleSessionLog) {
+      getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions.fAppend=true; // One single log - in this case, we MUST append to current log
+      fSessionLogger.appendToDebugPath("_session"); // only single session log, always with the same name
     }
-    fSessionLogger.appendToDebugPath("_s");
-    fSessionLogger.appendToDebugPath(fLocalSessionID.c_str());
+    else {
+      if (getRootConfig()->fDebugConfig.fTimedSessionLogNames) {
+        fSessionLogger.appendToDebugPath("_");
+        string t;
+        TimestampToISO8601Str(t, getSystemNowAs(TCTX_UTC), TCTX_UTC, false, false);
+        fSessionLogger.appendToDebugPath(t.c_str());
+      }
+      fSessionLogger.appendToDebugPath("_s");
+      fSessionLogger.appendToDebugPath(fLocalSessionID.c_str());
+    }
   }
   fSessionLogger.DebugDefineMainThread();
   // initialize session level dump flags
@@ -1057,6 +1066,10 @@ TSyncSession::~TSyncSession()
   // debug
   DEBUGPRINTFX(DBG_OBJINST,("-------- TSyncSession almost destroyed (except implicit member destruction)"));
   #ifdef SYDEBUG
+  if (getRootConfig()->fDebugConfig.fLogSessionsToGlobal) {
+    // show end of embedded log
+    PDEBUGPRINTFX(DBG_HOT,("--------- END of embedded log for session ID '%s' ---------", fLocalSessionID.c_str()));
+	}
   fSessionLogger.DebugThreadOutputDone();
   #endif
 } // TSyncSession::~TSyncSession

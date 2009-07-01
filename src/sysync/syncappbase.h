@@ -289,6 +289,8 @@ public:
   bool fSingleSessionLog;
   // if set, ISO8601 timestamp will be added as part of the session log filename
   bool fTimedSessionLogNames;
+  // if set, session logs will be embedded into global log. Note: only reliably works in unthreaded environments
+  bool fLogSessionsToGlobal;
 protected:
   #ifndef HARDCODED_CONFIG
   // parsing
