@@ -1072,6 +1072,7 @@ TSyncSession::~TSyncSession()
   #ifdef SYDEBUG
   fSessionLogger.DebugThreadOutputDone();
   delete fSessionLoggerP;
+  fSessionLoggerP = NULL;
   #endif
 } // TSyncSession::~TSyncSession
 

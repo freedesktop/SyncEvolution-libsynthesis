@@ -1268,14 +1268,20 @@ TSyncAppBase::~TSyncAppBase()
   if (fAppLoggerP) {
     // - but first make sure applogger does not refer to it any more
     fAppLogger.setOptions(NULL);
-    // - remove references to local logger and delete it
-    if (fGlobalAppLoggerP == fAppLoggerP)
-      fGlobalAppLoggerP = NULL;
-    delete fAppLoggerP;
   }
   #endif
   // - now delete
   if (fConfigP) delete fConfigP;
+
+  #ifdef SYDEBUG
+  if (fAppLoggerP) {
+    // - remove references to local logger and delete it
+    if (fGlobalAppLoggerP == fAppLoggerP)
+      fGlobalAppLoggerP = NULL;
+    delete fAppLoggerP;
+    fAppLoggerP = NULL;
+  }
+  #endif
 } // TSyncAppBase::~TSyncAppBase
 
 #ifdef SYDEBUG
