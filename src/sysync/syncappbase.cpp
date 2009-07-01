@@ -1265,10 +1265,10 @@ TSyncAppBase::~TSyncAppBase()
   #endif
   // delete the config now
   #ifdef SYDEBUG
-  // - but first make sure applogger does not refer to it any more
-  fAppLogger.setOptions(NULL);
-  // - remove references to local logger and delete it
   if (fAppLoggerP) {
+    // - but first make sure applogger does not refer to it any more
+    fAppLogger.setOptions(NULL);
+    // - remove references to local logger and delete it
     if (fGlobalAppLoggerP == fAppLoggerP)
       fGlobalAppLoggerP = NULL;
     delete fAppLoggerP;

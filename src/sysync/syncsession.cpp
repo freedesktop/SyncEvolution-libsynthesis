@@ -921,11 +921,11 @@ TSyncSession::TSyncSession(
   #ifdef SYDEBUG
   // initialize session debug logging
   fSessionDebugLogs=getRootConfig()->fDebugConfig.fSessionDebugLogs; /// init from config @todo: get rid of this special session level flag, handle it all via session logger's fDebugEnabled / getDbgMask()
-  fSessionLogger.setEnabled(fSessionDebugLogs); // init from session-level flag @todo: get rid of this special session level flag, handle it all via session logger's fDebugEnabled / getDbgMask()
-  fSessionLogger.setMask(getRootConfig()->fDebugConfig.fDebug); // init from config
-  fSessionLogger.setOptions(&(getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions));
   if (fSessionLoggerP) {
-    // using our own logger, set path
+    // using our own logger, set options
+    fSessionLogger.setEnabled(fSessionDebugLogs); // init from session-level flag @todo: get rid of this special session level flag, handle it all via session logger's fDebugEnabled / getDbgMask()
+    fSessionLogger.setMask(getRootConfig()->fDebugConfig.fDebug); // init from config
+    fSessionLogger.setOptions(&(getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions));
     fSessionLogger.installOutput(getSyncAppBase()->newDbgOutputter(false)); // install the output object (and pass ownership!)
     fSessionLogger.setDebugPath(getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()); // base path
     fSessionLogger.appendToDebugPath(TARGETID);

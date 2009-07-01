@@ -344,6 +344,14 @@ TSyncClient::~TSyncClient()
 {
   // make sure everything is terminated BEFORE destruction of hierarchy begins
   TerminateSession();
+
+  // Close these blocks, regardless whether they are really open.
+  // Normally this is done in TSyncClient/Server, but not for the
+  // last message exchange. This brute-force closing here can
+  // lead to warnings from the logger when it runs into block name
+  // mismatches.
+  PDEBUGENDBLOCK("SyncML_Outgoing");
+  PDEBUGENDBLOCK("SyncML_Incoming");
 } // TSyncClient::~TSyncClient
 
 
