@@ -366,7 +366,34 @@ class TEngineModuleBase
     virtual TSyError InsertItemAsKey  ( CContext ac,       KeyH  aItemKey,     cItemID   aID )= 0;
     virtual TSyError UpdateItemAsKey  ( CContext ac,       KeyH  aItemKey,     cItemID   aID,
                                                                                 ItemID updID )= 0;
+    virtual TSyError debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunction,
+                               int aDbgLevel, cAppCharP aLinePrefix,
+                               cAppCharP aText) { return LOCERR_NOTIMP; }
 }; // TEngineModuleBase
+
+// debug level masks (original definition in sysync_debug.h)
+#define DBG_HOT        0x00000001    // hot information
+#define DBG_ERROR      0x00000002    // Error conditions
+
+/**
+ * @param aFile        source file name from which log entry comes
+ * @param aLine        source file line
+ * @param aFunction    function name
+ * @param aDbgLevel    same bit mask as in the internal TDebugLogger;
+ *                     currently DBG_HOT and DBG_ERROR are defined publicly
+ * @param aLinePrefix  a short string to be displayed in front of each line;
+ *                     the advantage of passing this separately instead of
+ *                     making it a part of aText is that the logger might
+ *                     be able to insert the prefix more efficiently and/or
+ *                     (depending on the log format) with extra formatting
+ * @param aText        the text to be printed, may consist of multiple lines;
+ *                     the log always starts a new line after the text, regardless
+ *                     of how many newlines might be at the end of the text
+ */
+void SySyncDebugPuts(void* aCB,
+                     cAppCharP aFile, int aLine, cAppCharP aFunction,
+                     int aDbgLevel, cAppCharP aLinePrefix,
+                     cAppCharP aText);
 
 
 // factory function declaration - must be implemented in the source file of the leaf derivate of TEngineInterface
