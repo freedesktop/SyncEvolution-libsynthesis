@@ -526,7 +526,8 @@ bool TSettingsKeyImpl::checkFieldAttrs(cAppCharP aName, size_t &aBaseNameSize, s
 {
   aBaseNameSize = strlen(aName);
   aFldID = 0; // basic
-  if (strucmp(aName+aBaseNameSize-strlen(VALSUFF_TYPE),VALSUFF_TYPE)==0) {
+  if (aBaseNameSize >= strlen(VALSUFF_TYPE) &&
+      strucmp(aName+aBaseNameSize-strlen(VALSUFF_TYPE),VALSUFF_TYPE)==0) {
     // value type
     aBaseNameSize-=strlen(VALSUFF_TYPE);
     aFldID += VALID_IDXOFFS_VALTYPE;
