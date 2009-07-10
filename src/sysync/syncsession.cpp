@@ -1444,7 +1444,7 @@ void TSyncSession::InternalResetSessionEx(bool terminationCall)
   fOutgoingMsgID=0; // starting answers with MsgID=1, so must be 0 as it will be incremented before sending a new message
   fAborted=false; // not yet aborted
   fSuspended=false; // not being suspended yet
-  fAlertSent=false;
+  fSuspendAlertSent=false; // no suspend alert sent so far
   fFailedDatastores=0; // none failed
   fErrorItemDatastores=0; // none generated or detected error items
   fInProgress=false; // not yet in progress
@@ -1572,10 +1572,11 @@ void TSyncSession::SuspendSession(TSyError aReason)
 } // TSyncSession::SuspendSession
 
 
-void TSyncSession::MarkAlertSent (bool sent)
+void TSyncSession::MarkSuspendAlertSent(bool aSent)
 {
-    fAlertSent = true;
+  fSuspendAlertSent = aSent;
 }
+
 
 // abort session (that is: flag abortion)
 void TSyncSession::AbortSession(TSyError aStatusCode, bool aLocalProblem, TSyError aReason)
