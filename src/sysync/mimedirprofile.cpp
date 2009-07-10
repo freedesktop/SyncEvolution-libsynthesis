@@ -3046,7 +3046,7 @@ bool TMimeDirProfileHandler::MIMEStringToField(
   string s;
 	// RRULE
   lineartime_t dtstart;
-  timecontext_t startcontext, untilcontext;
+  timecontext_t startcontext = 0, untilcontext = 0;
   char freq;
   char freqmod;
   sInt16 interval;
