@@ -27,6 +27,8 @@ namespace sysync {
 // Engine module base
 class TEngineModuleBase
 {
+    SDK_Interface_Struct fCIBuffer; // used for fCI if the caller of Connect() doesn't set something
+
   public:
              TEngineModuleBase(); // constructor
     virtual ~TEngineModuleBase(); //  destructor
@@ -35,7 +37,8 @@ class TEngineModuleBase
     string     fEngineName;   // name of the SyncML engine to be connected
     CVersion   fPrgVersion;   // program's SDK version
     uInt16     fDebugFlags;   // debug flags to be used
-    bool       fCIisStatic;   // call in structure is statically allocated, must to be deleted
+    bool       fCIisStatic;   // this is kept purely for source code backwards compatibility:
+                              // because fCI is *always* statically allocated
 
     TSyError Connect( string   aEngineName, // connect the SyncML engine
                       CVersion aPrgVersion= 0,
