@@ -2052,6 +2052,9 @@ public:
         s = "";
         profileHandlerP->generateText(*itemP,s);
         aTermP->setAsString(s); // return text generated according to profile
+
+        // - forget
+        delete profileHandlerP;
       }
     }
   } // func_MakeTextWithProfile
