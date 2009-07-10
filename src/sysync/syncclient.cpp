@@ -1044,7 +1044,7 @@ localstatus TSyncClient::NextMessage(bool &aDone)
   bool outgoingfinal;
 
   // check for suspend
-  if (isSuspending()) {
+  if (isSuspending() ) {
     // make sure we send a Suspend Alert
     TAlertCommand *alertCmdP = new TAlertCommand(this,NULL,(uInt16)224);
     // - we just put local and remote URIs here
@@ -1055,6 +1055,7 @@ localstatus TSyncClient::NextMessage(bool &aDone)
     ISSUE_COMMAND_ROOT(this,alertCmdP);
     // outgoing message is final, regardless of any session state
     outgoingfinal=true;
+    MarkAlertSent(true);
   }
   else {
     // Determine if package can be final and if we need an 222 Alert
@@ -1180,7 +1181,7 @@ bool TSyncClient::MessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand &aSta
   }
   // check for suspend: if we are suspended at this point, this means that we have sent the Suspend Alert already
   // in the previous message (due to user suspend request), so we can now terminate the session
-  if (isSuspending()) {
+  if (isSuspending() && isAlertSent()) {
     AbortSession(514,true,LOCERR_USERSUSPEND);
     return false;
   }
