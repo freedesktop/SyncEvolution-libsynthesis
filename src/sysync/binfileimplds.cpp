@@ -751,6 +751,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       // no CRC yet
       newentry.dataCRC=0;
       #endif
+      newentry.flags |= chgl_newadd;
       PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("- does not yet exist in changelog, created new"));
     }
     // now check what to do
@@ -760,6 +761,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     #endif
     // - check if new or changed
     if (chgentryexists) {
+        existingentries[logindex].flags &= ~chgl_newadd;
       // entry exists, could be changed
       #ifndef CHANGEDETECTION_AVAILABLE
       // - check CRC
@@ -1473,7 +1475,10 @@ localstatus TBinfileImplDS::implGetItem(
           }
         }
         // added or changed, syncop is replace
-        myitemP->setSyncOp(sop_replace);
+        if( chglogP->flags & chgl_newadd)
+            myitemP->setSyncOp(sop_soft_add);
+        else
+            myitemP->setSyncOp(sop_replace);
         // make sure item has the localid which was used to retrieve it
         ASSIGN_LOCALID_TO_ITEM(*myitemP,chglogP->dbrecordid);
       }
