@@ -65,10 +65,14 @@ static icalarray *ICALTIMEZONE_GET_BUILTIN_TIMEZONES()
   // now. Redoing this on each invocation allows unloading libical
   // because we won't reuse stale pointers.
   memset(&icalcontext, 0, sizeof(icalcontext));
-  *(void **)&icalcontext.icaltimezone_get_builtin_timezones_p = dlsym(RTLD_DEFAULT, "icaltimezone_get_builtin_timezones");
-  *(void **)&icalcontext.icalarray_element_at_p = dlsym(RTLD_DEFAULT, "icalarray_element_at");
-  *(void **)&icalcontext.icaltimezone_get_component_p = dlsym(RTLD_DEFAULT, "icaltimezone_get_component");
-  *(void **)&icalcontext.icalcomponent_as_ical_string_p = dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
+  icalcontext.icaltimezone_get_builtin_timezones_p =
+    (typeof(icalcontext.icaltimezone_get_builtin_timezones_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_builtin_timezones");
+  icalcontext.icalarray_element_at_p =
+    (typeof(icalcontext.icalarray_element_at_p))dlsym(RTLD_DEFAULT, "icalarray_element_at");
+  icalcontext.icaltimezone_get_component_p =
+    (typeof(icalcontext.icaltimezone_get_component_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_component");
+  icalcontext.icalcomponent_as_ical_string_p =
+    (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
   icalcontext.must_free_strings = dlsym(RTLD_DEFAULT, "ical_memfixes") != NULL;
 
   return icalcontext.icaltimezone_get_builtin_timezones_p ?
