@@ -116,5 +116,5 @@ if test "$enable_shared" = "no"; then
 fi
 AM_CONDITIONAL([COND_STATIC], [test "$enable_shared" = "no"])
 
-AC_CONFIG_FILES(Makefile src/Makefile)
+AC_CONFIG_FILES(Makefile src/Makefile synthesis.pc)
 AC_OUTPUT
