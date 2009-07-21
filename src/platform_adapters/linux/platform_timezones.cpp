@@ -123,7 +123,7 @@ static void ICAL_FREE(char *str)
 # define ICALARRAY_ELEMENT_AT icalarray_element_at
 # define ICALTIMEZONE_GET_COMPONENT icaltimezone_get_component
 
-# ifdef HAVE_LIBICAL
+# if defined(HAVE_LIBICAL) && !defined(HAVE_LIBECAL)
 #  // new-style libical _r version which requires freeing the string
 #  define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string_r
 #  define ICAL_FREE(_x) free(_x)
