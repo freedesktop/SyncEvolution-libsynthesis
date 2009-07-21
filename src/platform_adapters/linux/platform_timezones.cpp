@@ -72,8 +72,18 @@ static icalarray *ICALTIMEZONE_GET_BUILTIN_TIMEZONES()
   icalcontext.icaltimezone_get_component_p =
     (typeof(icalcontext.icaltimezone_get_component_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_component");
   icalcontext.icalcomponent_as_ical_string_p =
-    (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
-  icalcontext.must_free_strings = dlsym(RTLD_DEFAULT, "ical_memfixes") != NULL;
+    (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string_r");
+  if (icalcontext.icalcomponent_as_ical_string_p) {
+    // found icalcomponent_as_ical_string_r() which always requires freeing
+    icalcontext.must_free_strings = TRUE;
+  } else {
+    // fall back to older icalcomponent_as_ical_string() which may or may not
+    // require freeing the returned string; this can be determined by checking
+    // for "ical_memfixes" (EDS libical)
+    icalcontext.icalcomponent_as_ical_string_p =
+      (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
+    icalcontext.must_free_strings = dlsym(RTLD_DEFAULT, "ical_memfixes") != NULL;
+  }
 
   return icalcontext.icaltimezone_get_builtin_timezones_p ?
     icalcontext.icaltimezone_get_builtin_timezones_p() :
@@ -112,12 +122,18 @@ static void ICAL_FREE(char *str)
 # define ICALTIMEZONE_GET_BUILTIN_TIMEZONES icaltimezone_get_builtin_timezones
 # define ICALARRAY_ELEMENT_AT icalarray_element_at
 # define ICALTIMEZONE_GET_COMPONENT icaltimezone_get_component
-# define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string
-# ifdef LIBICAL_MEMFIXES
-  // new-style Evolution libical: memory must be freed by caller
+
+# ifdef HAVE_LIBICAL
+#  // new-style libical _r version which requires freeing the string
+#  define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string_r
 #  define ICAL_FREE(_x) free(_x)
 # else
-#  define ICAL_FREE(_x) free(_x)
+#  ifdef LIBICAL_MEMFIXES
+   // new-style Evolution libical: memory must be freed by caller
+#   define ICAL_FREE(_x) free(_x)
+#  else
+#   define ICAL_FREE(_x) free(_x)
+#  endif
 # endif
 #endif
 
