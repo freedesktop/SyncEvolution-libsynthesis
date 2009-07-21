@@ -128,6 +128,7 @@ static void ICAL_FREE(char *str)
 #  define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string_r
 #  define ICAL_FREE(_x) free(_x)
 # else
+#  define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string
 #  ifdef LIBICAL_MEMFIXES
    // new-style Evolution libical: memory must be freed by caller
 #   define ICAL_FREE(_x) free(_x)
