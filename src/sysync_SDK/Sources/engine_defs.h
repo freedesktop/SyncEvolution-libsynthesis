@@ -270,6 +270,8 @@ enum TStepCmdEnum {
   /** engine needs new data, use GetSyncMLBuffer() to get access to the
       empty buffer where to put data */
   STEPCMD_NEEDDATA = 111,
+  /** engine needs to reset status to resend data */
+  STEPCMD_RESENDDATA = 112,
   /** session done, SAN processed, Autosync checked etc.
       No further action required */
   STEPCMD_DONE = 120,

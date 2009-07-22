@@ -449,6 +449,12 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           aStepCmd = STEPCMD_OK;
           sta = LOCERR_OK;
           break;
+        case STEPCMD_RESENDDATA :
+          fEngineState = ces_dataready;
+          aStepCmd = STEPCMD_SENDDATA;
+          OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendstart,NULL,0,0,0);
+          sta = LOCERR_OK;
+          break;
       } // switch stepCmdIn for ces_processing
       break;
 
