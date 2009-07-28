@@ -798,7 +798,7 @@ bool ContextToTzDaylight( timecontext_t  aContext,
 
 // -----------------------------------------------------------------------------------------
 // Get sequence between <bv> and <ev>
-static string PeeledStr( string aStr, string bv, string ev, sInt32 aNth )
+static string PeeledStr( const string &aStr, const string &bv, const string &ev, sInt32 aNth )
 {
   string::size_type bp= 0;
 
@@ -824,14 +824,14 @@ static string PeeledStr( string aStr, string bv, string ev, sInt32 aNth )
 
 
 // Get the string between "BEGIN:<value>\n" and "END:<value>\n"
-string  VStr( string aStr, string value, sInt32 aNth ) {
+string  VStr( const string &aStr, const string &value, sInt32 aNth ) {
   return PeeledStr( aStr, Property( VTZ_BEGIN, value ),
                           Property( VTZ_END,   value ), aNth );
 } // VStr
 
 
 // Get the value string between "<field>:" and "\r?\n"
-string VValue( string aStr, string key ) {
+string VValue( const string &aStr, const string &key ) {
   string res = PeeledStr( aStr, key + ":", "\n", 1 );
 
   // strip optional trailing \r
