@@ -549,7 +549,7 @@ const char *appendRFC2047AsUTF8(
 )
 {
   const char *p,*q,*r,*w;
-  char c;
+  char c = 0;
   const char *eot = aRFC2047+aSize;
 
   p=aRFC2047;
