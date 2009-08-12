@@ -150,8 +150,8 @@ enum Version {
   VP_GlobMulti           = 0x01050100,
   /** V1.5.2.X : Callback version >= 11 supported: dbapi tunnel  */
   VP_CB_Version11        = 0x01050200,
-  /** V1.5.2.X : Current version, use 'Plugin_Version()'         */
-  VP_CurrentVersion      = 0x01050200,
+  /** V1.6.0.X : Current version, use 'Plugin_Version()'         */
+  VP_CurrentVersion      = 0x01060000,
 /*                                         *                                                            */
   /** -------- : Bad/undefined version                           */
   VP_BadVersion          = 0xffffffff,
