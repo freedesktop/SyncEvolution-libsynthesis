@@ -820,11 +820,6 @@ void TSessionConfig::localResolve(bool aLastPass)
     for(pos=fRemoteRulesList.begin();pos!=fRemoteRulesList.end();pos++)
       (*pos)->Resolve(aLastPass);
     #endif
-    #ifndef HARDCODED_CONFIG
-    // - resolve datastores
-    if (fDatastores.size()==0)
-      SYSYNC_THROW(TConfigParseException("At least one 'datastore' must be defined"));
-    #endif
     TLocalDSList::iterator pos2;
     for(pos2=fDatastores.begin();pos2!=fDatastores.end();pos2++)
       (*pos2)->Resolve(aLastPass);

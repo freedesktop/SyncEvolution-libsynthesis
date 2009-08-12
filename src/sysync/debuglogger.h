@@ -222,11 +222,11 @@ public:
   /// @brief append to debug output path + filename (no extension, please)
   void appendToDebugPath(cAppCharP aPathElement) { fDbgPath += aPathElement; };
   /// @brief get debug output file path (w/o extension)
-  cAppCharP getDebugPath(void) { return fDbgPath.c_str(); };
+  cAppCharP getDebugPath(void) { return fOutputLoggerP ? fOutputLoggerP->getDebugPath() : fDbgPath.c_str(); };
   /// @brief get debug output file name (w/o path or extension)
-  cAppCharP getDebugFilename(void) { size_t n=fDbgPath.find_last_of("\\/:"); return fDbgPath.c_str()+(n!=string::npos ? n+1 : 0); };
+  cAppCharP getDebugFilename(void) { if (fOutputLoggerP) return fOutputLoggerP->getDebugFilename(); size_t n=fDbgPath.find_last_of("\\/:"); return fDbgPath.c_str()+(n!=string::npos ? n+1 : 0); };
   /// @brief get debug output file extension
-  cAppCharP getDebugExt(void) { return fDbgOptionsP ? DbgOutFormatExtensions[fDbgOptionsP->fOutputFormat] : ""; };
+  cAppCharP getDebugExt(void) { return fOutputLoggerP ? fOutputLoggerP->getDebugExt() : fDbgOptionsP ? DbgOutFormatExtensions[fDbgOptionsP->fOutputFormat] : ""; };
   // - normal output
   /// @brief Write text to debug output channel.
   /// Notes:

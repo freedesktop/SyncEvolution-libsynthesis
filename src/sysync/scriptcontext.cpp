@@ -2052,6 +2052,9 @@ public:
         s = "";
         profileHandlerP->generateText(*itemP,s);
         aTermP->setAsString(s); // return text generated according to profile
+
+        // - forget
+        delete profileHandlerP;
       }
     }
   } // func_MakeTextWithProfile
@@ -2390,7 +2393,7 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
   string itext;
   if (aMacroArgsP) {
   	itext = text; // we need a string to substitute macro args in
-    int i = 0;
+    size_t i = 0;
     while (i<itext.size()) {
     	c=itext[i++];
       if (c=='$') {
@@ -2402,7 +2405,7 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
           continue;
         }
         else if (isdigit(c)) {
-        	int argidx = c-'1';
+          size_t argidx = c-'1';
           if (argidx>=0 && argidx<aMacroArgsP->size()) {
           	// found macro argument, replace in input string
             itext.replace(i-1, 2, (*aMacroArgsP)[argidx]);
