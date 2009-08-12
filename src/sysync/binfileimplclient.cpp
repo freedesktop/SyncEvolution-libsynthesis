@@ -2602,22 +2602,39 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
     // use URL from profile
     fRemoteURI=fProfile.serverURI;
   }
-  #endif
-  #ifdef CUSTOM_URI_SUFFIX
-  // - append custom URI suffix stored in serverURI field of profile (if one is set)
-  if (*(fProfile.URIpath))
-  {
-    // - append delimiter first if one defined (CUSTOM_URI_SUFFIX not NULL)
-    const char *p=CUSTOM_URI_SUFFIX;
-    if (p) fRemoteURI.append(p);
-    // - now append custom URI suffix
-    fRemoteURI.append(fProfile.URIpath);
+  #endif // not HARD_CODED_SERVER_URI
+  // check for URI that is a template and need inserts:
+  size_t n;
+  // - %%% check future other inserts here, \u should be last because if there's no \u, standard
+  //   CUSTOM_URI_SUFFIX mechanism may apply in else branch
+  // - \u for URIpath
+  n = fRemoteURI.find("\\u");
+  if (n!=string::npos) {
+  	// URIPath may only not contain any special chars that might help to inject different server URLs
+    string up = fProfile.URIpath;
+    if (up.find_first_of(":/?.&=%,;")!=string::npos)
+    	fRemoteURI.erase(n, 2); // no insert, invalid chars in URIpath
+    else
+	  	fRemoteURI.replace(n, 2, up); // insert URIPath instead of \u
   }
-  #endif
+  #ifdef CUSTOM_URI_SUFFIX
+  else {
+  	// Only if original URI is not a template
+    // - append custom URI suffix stored in serverURI field of profile (if one is set)
+    if (*(fProfile.URIpath))
+    {
+      // - append delimiter first if one defined (CUSTOM_URI_SUFFIX not NULL)
+      const char *p=CUSTOM_URI_SUFFIX;
+      if (p) fRemoteURI.append(p);
+      // - now append custom URI suffix
+      fRemoteURI.append(fProfile.URIpath);
+    }
+  }
+  #endif // CUSTOM_URI_SUFFIX
   #ifdef PROTOCOL_SELECTOR
   fRemoteURI.insert(0,Protocol_Names[fProfile.protocol]);
   fNoCRCPrefixLen=strlen(Protocol_Names[fProfile.protocol]);
-  #endif
+  #endif // PROTOCOL_SELECTOR
   fServerUser=fProfile.serverUser;
   getUnmangled(fServerPassword,fProfile.serverPassword,maxupwsiz);
   // - HTTP auth
@@ -2637,7 +2654,7 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
     getUnmangled(fProxyPassword,fProfile.proxyPassword,maxupwsiz);;
     PDEBUGPRINTFX(DBG_TRANSP,("Sync Profile contains active proxy settings: http=%s, socks=%s, proxyuser=%s",fProxyHost.c_str(), fSocksHost.c_str(), fProxyUser.c_str()));
   }
-  #endif
+  #endif // PROXY_SUPPORT
   // check for forced legacy mode
   fLegacyMode = fProfile.profileFlags & PROFILEFLAG_LEGACYMODE;
   // - get and increment session ID and save for next session
