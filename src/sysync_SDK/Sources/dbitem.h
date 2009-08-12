@@ -115,13 +115,15 @@ class TDBItem : public TDBItemField
 {
     typedef TDBItemField inherited;
   public:
-             TDBItem( void* aCB= NULL ) { len= 1; fCB= aCB; fLoaded= false; } // constructor
-    virtual ~TDBItem() { TDBItem**    act= (TDBItem**)&next;                  //  destructor
+             TDBItem( void* aCB= NULL ) { len= 1; fCB= aCB; fLoaded = false;
+                                                            fChanged= false; } // constructor
+    virtual ~TDBItem() { TDBItem**    act= (TDBItem**)&next;                   //  destructor
                          DeleteNext( *act, fCB, c_str(), true ); }
 
     TDBItemField item;      // the header element
     int          len;       // length of all fields of this item
     bool         fLoaded;   // indicates, if already loaded
+    bool         fChanged;  // indicates, if already changed
 
     string         itemID;
     string       parentID;
