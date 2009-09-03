@@ -875,6 +875,8 @@ localstatus TSyncClient::NextMessage(bool &aDone)
   else {
     // check for proper end of session (caused by MessageEnded analysis)
     if (!fInProgress) {
+      // give an opportunity to let make outgoing message end and flush xml end message 
+      FinishMessage(true, false);  
       // end sync in all datastores (save anchors etc.)
       PDEBUGPRINTFX(DBG_PROTO,("Successful end of session -> calling engFinishDataStoreSync() for datastores now"));
       for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos)
