@@ -2038,7 +2038,7 @@ public:
         // - set the mode code (none = 0 = default)
         profileHandlerP->setProfileMode(aFuncContextP->getLocalVar(1)->getAsInteger());
         profileHandlerP->setRelatedDatastore(NULL); // no datastore in particular is related
-#ifndef NO_REMOTE_RULES
+				#ifndef NO_REMOTE_RULES
         // - try to find remote rule
         TItemField *field = aFuncContextP->getLocalVar(2);
         if (field) {
@@ -2046,7 +2046,7 @@ public:
           if (!s.empty())
             profileHandlerP->setRemoteRule(s);
         }
-#endif
+				#endif
         // - convert, after clearing the string (some generateText() implementations
         // append instead of overwriting)
         s = "";
