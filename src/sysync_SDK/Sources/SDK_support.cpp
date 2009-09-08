@@ -20,7 +20,7 @@
   namespace sysync {
 #endif
 
-#define MyDB "SDK" /* local debug name */
+//#define MyDB "SDK" /* local debug name */
 #define FLen  30   /* max length of (internal) item name */
 
 
@@ -565,7 +565,7 @@ CVersion VersionNr( string s )
   } // for
 
   return v;
-} // VersionStr
+} // VersionNr
 
 
 
@@ -689,6 +689,10 @@ string LineConv( string str, uInt32 maxLen, bool visibleN )
 
   while (NextToken( str,nx, "\n" )) {
     if    (first && str.empty()) return nx;
+
+    string        rema; // cut \r
+    NextToken( nx,rema, "\r" );
+    nx=           rema;
 
     string v=       nx;
     if  (NextToken( nx,value, ":" ) && !nx.empty()) {
@@ -938,8 +942,39 @@ bool GlobContextFound( string dbName, GlobContext* &g )
 
 
 
+/* ---------- Tunnel itemKey --------------------------------- */
+TSyError  OpenTunnel_ItemKey( TunnelWrapper* tw )
+{
+  TSyError err, cer;
+  SDK_UI_Struct* ui= &tw->tCB->ui;
+
+  KeyH                                                    tKey, sKey;
+         err= ui->OpenSessionKey( tw->tCB, tw->tContext,       &sKey,           0 );
+  if   (!err) {
+         err= ui->OpenKeyByPath ( tw->tCB,               &tKey, sKey, "tunnel", 0 );
+    if (!err)  {
+         err= ui->OpenKeyByPath ( tw->tCB, &tw->tItemKey, tKey,       "item",   0 );
+         cer= ui->CloseKey      ( tw->tCB, tKey ); if (!err) err= cer;
+    } // if
+
+         cer= ui->CloseKey      ( tw->tCB, sKey ); if (!err) err= cer;
+  } // if
+
+  return err;
+} // OpenTunnel_ItemKey
+
+
+TSyError CloseTunnel_ItemKey( TunnelWrapper* tw )
+{
+  SDK_UI_Struct* ui= &tw->tCB->ui;
+  return         ui->CloseKey( tw->tCB, tw->tItemKey );
+} // CloseTunnel_ItemKey
+
+
+
 /* ---------- UI callback ------------------------------------ */
 /* Check, if <aCB> structure supports at least extended UI callback */
+/*
 static bool CB_UIX( void* aCB ) { return CB_OK( aCB,8 ); }
 
 
@@ -971,7 +1006,7 @@ TSyError UI_CloseKey( void* aCB, KeyH aKeyH )
 
   return err;
 } // UI_CloseKey
-
+*/
 
 
 #if defined __cplusplus
