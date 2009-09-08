@@ -63,12 +63,13 @@ void TBinFileBase::doDestruct(void)
 
 
 // - set path to binary file containing the database
-void TBinFileBase::setFileInfo(const char *aFilename,uInt32 aVersion,uInt32 aIdWord)
+void TBinFileBase::setFileInfo(const char *aFilename, uInt32 aVersion, uInt32 aIdWord, uInt32 aExpectedRecordSize)
 {
   close();
   fFilename=aFilename;
   fIdWord=aIdWord;
   fVersion=aVersion;
+  fExpectedRecordSize=aExpectedRecordSize;
 } // TBinFileBase::setFileInfo
 
 
@@ -143,6 +144,11 @@ bferr TBinFileBase::open(uInt32 aExtraHeadersize, void *aExtraHeaderP, TUpdateFu
       close();
       return BFE_BADVERSION;
     }
+  }
+  // check record compatibility
+  if (fExpectedRecordSize && fExpectedRecordSize!=fBinFileHeader.recordsize) {
+    close();
+    return BFE_BADSTRUCT;  
   }
   // check extra header compatibility
   if (fBinFileHeader.headersize<sizeof(TBinFileHeader)+fExtraHeaderSize) {

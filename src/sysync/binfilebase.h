@@ -72,8 +72,8 @@ public:
   void destruct(void); // to be called by ALL destructors of derivates.
   virtual ~TBinFileBase();
   // DB file access
-  // - set path to binary file containing the database
-  void setFileInfo(const char *aFilename,uInt32 aVersion,uInt32 aIdWord);
+  // - set path to binary file containing the database (aExpectedRecordSize can be zero if record size is not predetermined by a sizeof())
+  void setFileInfo(const char *aFilename, uInt32 aVersion, uInt32 aIdWord, uInt32 aExpectedRecordSize);
   // - check if open
   bool isOpen(void) { return platformFileIsOpen(); };
   // - try to open existing DB file according to params set with setFileInfo
@@ -132,6 +132,7 @@ private:
   string fFilename;
   uInt32 fIdWord;
   uInt32 fVersion;
+  uInt32 fExpectedRecordSize;
   // cached header
   bool fHeaderDirty; // set if header must be written back to DB file
   bool fExtraHeaderDirty; // set if extra header must be written back to DB file
