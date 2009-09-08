@@ -677,6 +677,8 @@ localstatus TSyncClient::SelectProfile(uInt32 aProfileSelector, bool aAutoSyncSe
   // Reset session after profile change
   // and also remove any datastores we might have
   ResetAndRemoveDatastores();
+  // if tunnel, that's all for now
+  if (aProfileSelector==TUNNEL_PROFILE_ID) return LOCERR_OK;
   // - create and init datastores needed for this session from config
   //   Note: probably config has no sync requests, but they are created later
   //         programmatically
@@ -1838,6 +1840,29 @@ uInt8P TClientParamsKey::getStructAddr(void)
   // prepared for accessing fields in client session object
   return (uInt8P)fClientSessionP;
 } // TClientParamsKey::getStructAddr
+
+
+// open subkey by name (not by path!)
+TSyError TClientParamsKey::OpenSubKeyByName(
+  TSettingsKeyImpl *&aSettingsKeyP,
+  cAppCharP aName, stringSize aNameSize,
+  uInt16 aMode
+) {
+  #ifdef DBAPI_TUNNEL_SUPPORT
+  if (strucmp(aName,"tunnel",aNameSize)==0) {
+    // get tunnel datastore pointer
+    TLocalEngineDS *ds = fClientSessionP->getTunnelDS();
+    if (!ds) return LOCERR_WRONGUSAGE;
+    // opens current session's tunnel key
+    aSettingsKeyP = ds->newTunnelKey(fEngineInterfaceP);
+  }
+  else
+  #endif
+    return inherited::OpenSubKeyByName(aSettingsKeyP,aName,aNameSize,aMode);
+  // opened a key
+  return LOCERR_OK;
+} // TBinFileClientParamsKey::OpenSubKeyByName
+
 
 #endif // ENGINEINTERFACE_SUPPORT
 

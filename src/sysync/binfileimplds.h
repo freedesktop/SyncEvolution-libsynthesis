@@ -905,6 +905,8 @@ private:
   void forgetChangeLog(void);
   /// private helper to prepare for apiSaveAdminData()
   localstatus SaveAdminData(bool aSessionFinished, bool aSuccessful);
+  /// load target record for this datastore
+	localstatus loadTarget(bool aCreateIfMissing, cAppCharP aRemoteDBID=NULL);
   // private utils
   #ifdef OBJECT_FILTERING
   // - Test Filters

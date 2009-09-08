@@ -518,7 +518,7 @@ bool TBinfileImplDS::openChangeLog(void)
     getBinFilesPath(changelogname);
   changelogname += getName();
   changelogname += CHANGELOG_DB_SUFFIX;
-  fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID);
+  fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
   if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader)!=BFE_OK) {
     // create new change log or overwrite incompatible one
     // - init changelog header fields
@@ -543,7 +543,7 @@ bool TBinfileImplDS::openPendingMaps(void)
     getBinFilesPath(pendingmapsname);
   pendingmapsname += getName();
   pendingmapsname += PENDINGMAP_DB_SUFFIX;
-  fPendingMaps.setFileInfo(pendingmapsname.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID);
+  fPendingMaps.setFileInfo(pendingmapsname.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID, sizeof(TPendingMapEntry));
   PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("openPendingMaps: file name='%s'",pendingmapsname.c_str()));
   if (fPendingMaps.open(sizeof(TPendingMapHeader),&fPendingMapHeader)!=BFE_OK) {
     // create new change log or overwrite incompatible one
@@ -925,37 +925,9 @@ error:
 // Simple DB access interface methods
 // ==================================
 
-/// sync login (into this database)
-/// @note might be called several times (auth retries at beginning of session)
-/// @note must update the following saved AND current state variables
-/// - in TLocalEngineDS: fLastRemoteAnchor, (fLastLocalAnchor), fResumeAlertCode, fFirstTimeSync
-///   - for client: fPendingAddMaps
-/// - in TStdLogicDS: fPreviousSyncTime, fCurrentSyncTime
-/// - in TBinfileImplDS: ??? /// @todo document these
-/// - in derived classes: whatever else belongs to dsSavedAdmin and dsCurrentAdmin state
-localstatus TBinfileImplDS::implMakeAdminReady(
-  const char *aDeviceID,    // remote device URI (device ID)
-  const char *aDatabaseID,  // database ID
-  const char *aRemoteDBID  // database ID of remote device
-)
+// load target settings record for this datastore
+localstatus TBinfileImplDS::loadTarget(bool aCreateIfMissing, cAppCharP aRemoteDBID)
 {
-  localstatus sta=LOCERR_OK; // assume ok
-
-  PDEBUGBLOCKDESCCOLL("implMakeAdminReady","Loading target info and pending maps");
-  // - init defaults
-  fLastRemoteAnchor.erase();
-  fPreviousSyncTime=0;
-  fFirstTimeSync=false; // assume not first time
-
-  #if !defined(PRECONFIGURED_SYNCREQUESTS)
-  // for clients without syncrequests in config,
-  // target info must already be present by now (loaded at session's SelectProfile)
-  if (fTargetIndex<0) {
-    PDEBUGENDBLOCK("implMakeAdminReady");
-    return 404; // not found
-  }
-  // we have the target in the fTarget member
-  #else
   uInt32 remotepartyID = static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID;
   TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
   // for server or version with syncrequests in config, we must try to load
@@ -975,19 +947,66 @@ localstatus TBinfileImplDS::implMakeAdminReady(
         ) {
           // this is the target record for our DB, now get it (mark it busy)
           fTargetIndex=recidx;
-          break; // leave handle locked
+          return LOCERR_OK; // target found
         }
       }
     }
+	  // target not found
+    if (aCreateIfMissing) {
+      // create new target record
+      // - init with defaults
+      fConfigP->initTarget(fTarget,remotepartyID,aRemoteDBID,true); // enabled if created here!
+      // - save new record
+      uInt32 ti;
+      targetsBinFileP->newRecord(ti,&fTarget);
+      fTargetIndex = ti;
+      return LOCERR_OK; // created and loaded now    
+    }
+    return 404; // not found
   }
-  // create new one if none found so far
-  if (fTargetIndex<0) {
-    // create new target record
-    // - init with defaults
-    fConfigP->initTarget(fTarget,remotepartyID,aRemoteDBID,true); // enabled if created here!
-    // - save new record
-    targetsBinFileP->newRecord(fTargetIndex,fTarget);
+  return LOCERR_OK; // already loaded
+} // TBinfileImplDS::loadTarget
+
+
+
+/// sync login (into this database)
+/// @note might be called several times (auth retries at beginning of session)
+/// @note must update the following saved AND current state variables
+/// - in TLocalEngineDS: fLastRemoteAnchor, (fLastLocalAnchor), fResumeAlertCode, fFirstTimeSync
+///   - for client: fPendingAddMaps
+/// - in TStdLogicDS: fPreviousSyncTime, fCurrentSyncTime
+/// - in TBinfileImplDS: ??? /// @todo document these
+/// - in derived classes: whatever else belongs to dsSavedAdmin and dsCurrentAdmin state
+localstatus TBinfileImplDS::implMakeAdminReady(
+  cAppCharP aDeviceID,    // remote device URI (device ID)
+  cAppCharP aDatabaseID,  // database ID
+  cAppCharP aRemoteDBID  // database ID of remote device
+)
+{
+  localstatus sta=LOCERR_OK; // assume ok
+
+  PDEBUGBLOCKDESCCOLL("implMakeAdminReady","Loading target info and pending maps");
+  // - init defaults
+  fLastRemoteAnchor.erase();
+  fPreviousSyncTime=0;
+  fFirstTimeSync=false; // assume not first time
+
+  
+  #if !defined(PRECONFIGURED_SYNCREQUESTS)
+  // when sync params are in binfiles, target must be present by now - make sure it is loaded
+	sta=loadTarget(false); 
+  // target info must already be present by now (loaded at session's SelectProfile)
+  if (sta!=LOCERR_OK || fTargetIndex<0) {
+  	// problem loading target record
+  	sta = sta ? sta : 404;
+	  PDEBUGPRINTFX(DBG_ERROR,("Error %d loading target record",sta));
+    PDEBUGENDBLOCK("implMakeAdminReady");
+    return sta;
   }
+  // we have the target in the fTarget member
+  #else
+  // e.g. for clients without syncrequests in config, target record might not exist here, so we allow creating it
+  sta=loadTarget(true, aRemoteDBID);
   #endif
   // Now fTarget has valid target info
   // - if we don't have any remote anchor stored, this must be a first time sync
@@ -1085,7 +1104,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
       getBinFilesPath(fname);
     fname += getName();
     fname += PENDINGITEM_DB_SUFFIX;
-    pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID);
+    pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0); // no expected record size
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
       "opening pending item file: file name='%s'",
       fname.c_str()
@@ -1883,7 +1902,7 @@ void TBinfileImplDS::dsLogSyncResult(void)
     clientCfgP->getBinFilesPath(filepath);
     filepath += LOGFILE_DB_NAME;
     // - open or create
-    logFile.setFileInfo(filepath.c_str(),LOGFILE_DB_VERSION,LOGFILE_DB_ID);
+    logFile.setFileInfo(filepath.c_str(),LOGFILE_DB_VERSION,LOGFILE_DB_ID,sizeof(TLogFileEntry));
     if (logFile.open(0,NULL,NULL)!=BFE_OK) {
       // create new one or overwrite incompatible one
       logFile.create(sizeof(TLogFileEntry),0,NULL,true);
@@ -2157,7 +2176,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
       getBinFilesPath(fname);
     fname += getName();
     fname += PENDINGITEM_DB_SUFFIX;
-    pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID);
+    pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0);
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
       "SaveAdminData: creating pending item file: file name='%s', storing %ld bytes",
       fname.c_str(),

@@ -177,6 +177,7 @@ class TSyncClientBase;
 
 // default profile ID
 #define DEFAULT_PROFILE_ID 0xFFFFFFFF
+#define TUNNEL_PROFILE_ID 0xFFFFFFFE
 
 class TSyncClient: public TSyncSession
 {
@@ -342,7 +343,12 @@ class TClientParamsKey :
 public:
   TClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncClient *aClientSessionP);
   virtual ~TClientParamsKey() {};
-
+  // open subkey by name (not by path!)
+  virtual TSyError OpenSubKeyByName(
+    TSettingsKeyImpl *&aSettingsKeyP,
+    cAppCharP aName, stringSize aNameSize,
+    uInt16 aMode
+  );
 protected:
   // get table describing the fields in the struct
   virtual const TStructFieldInfo *getFieldsTable(void);

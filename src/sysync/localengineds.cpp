@@ -1159,6 +1159,13 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fTempGUIDMap.clear();
   #endif
 
+	/// Init type negotiation
+  /// - for sending data
+  fLocalSendToRemoteTypeP = NULL;
+  fRemoteReceiveFromLocalTypeP = NULL;  
+  /// - for receiving data
+  fLocalReceiveFromRemoteTypeP = NULL;
+  fRemoteSendToLocalTypeP = NULL;
 
   /// Init Filtering @ref dsFiltering
   #ifdef OBJECT_FILTERING

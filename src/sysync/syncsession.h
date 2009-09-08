@@ -293,6 +293,7 @@ public:
   #ifdef DBAPI_TUNNEL_SUPPORT
   // Initialize a datastore tunnel session
   virtual localstatus InitializeTunnelSession(cAppCharP aDatastoreName) { return LOCERR_NOTIMP; }; // is usually implemented in customimplagent, as it depends on DBApi architecture
+  virtual TLocalEngineDS *getTunnelDS() { return NULL; }; // is usually implemented in customimplagent
   #endif
   // called when incoming SyncHdr fails to execute
   virtual bool syncHdrFailure(bool aTryAgain) = 0;

@@ -842,7 +842,7 @@ static TSyError writeGlobalFeatureCheck(
     ? LOCERR_OK : DB_NoContent;
 } // writeGlobalFeatureCheck
 
-// - write a feature number (APPFTR_xxx), if works ok, feature is available, otherwise not
+// - write provisioning string
 static TSyError writeProvisioningString(
   TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
   cAppPointer aBuffer, memSize aValSize
@@ -1089,7 +1089,7 @@ TBinfileLogsKey::TBinfileLogsKey(TEngineInterface *aEngineInterfaceP) :
   fBinfileClientConfigP->getBinFilesPath(filepath);
   filepath += LOGFILE_DB_NAME;
   // - try to open
-  fLogFile.setFileInfo(filepath.c_str(),LOGFILE_DB_VERSION,LOGFILE_DB_ID);
+  fLogFile.setFileInfo(filepath.c_str(),LOGFILE_DB_VERSION,LOGFILE_DB_ID,sizeof(TLogFileEntry));
   fLogFile.open(0,NULL,NULL);
   // Note: errors are not checked here, as no logfile is ok. We'll check before trying to read with isOpen()
 } // TBinfileLogsKey::TBinfileLogsKey
@@ -1390,7 +1390,7 @@ localstatus TBinfileClientConfig::openSettingsDatabases(bool aDoLoose)
   bferr err;
   // - profiles
   usedpath=basepath + PROFILE_DB_NAME;
-  fProfileBinFile.setFileInfo(usedpath.c_str(),PROFILE_DB_VERSION,PROFILE_DB_ID);
+  fProfileBinFile.setFileInfo(usedpath.c_str(),PROFILE_DB_VERSION,PROFILE_DB_ID,sizeof(TBinfileDBSyncProfile));
   err = fProfileBinFile.open(0,NULL,profileUpdateFunc);
   if (err!=BFE_OK) {
     // create new one or overwrite incompatible one if allowed
@@ -1405,7 +1405,7 @@ localstatus TBinfileClientConfig::openSettingsDatabases(bool aDoLoose)
   }
   // - targets
   usedpath=basepath + TARGETS_DB_NAME;
-  fTargetsBinFile.setFileInfo(usedpath.c_str(),TARGETS_DB_VERSION,TARGETS_DB_ID);
+  fTargetsBinFile.setFileInfo(usedpath.c_str(),TARGETS_DB_VERSION,TARGETS_DB_ID,sizeof(TBinfileDBSyncTarget));
   err = fTargetsBinFile.open(0,NULL,targetUpdateFunc);
   if (err!=BFE_OK || newprofiles) {
     // create new one or overwrite incompatible one
@@ -2238,19 +2238,19 @@ void TBinfileClientConfig::cleanChangeLogForDBname(cAppCharP aDBName)
   getBinFilesPath(filename);
   filename += aDBName;
   filename += CHANGELOG_DB_SUFFIX;
-  binfile.setFileInfo(filename.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID);
+  binfile.setFileInfo(filename.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,0);
   binfile.closeAndDelete();
   // delete pending maps
   getBinFilesPath(filename);
   filename += aDBName;
   filename += PENDINGMAP_DB_SUFFIX;
-  binfile.setFileInfo(filename.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID);
+  binfile.setFileInfo(filename.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID,0);
   binfile.closeAndDelete();
   // delete pending item
   getBinFilesPath(filename);
   filename += aDBName;
   filename += PENDINGITEM_DB_SUFFIX;
-  binfile.setFileInfo(filename.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID);
+  binfile.setFileInfo(filename.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0);
   binfile.closeAndDelete();
 } // TBinfileClientConfig::cleanChangeLogForDBname
 
@@ -2563,7 +2563,12 @@ const char * const Protocol_Names[num_transp_protos] = {
 localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAutoSyncSession)
 {
   uInt32 recidx,maxidx;
-
+  
+  // detect special tunnel session's selection
+  bool tunnel = aProfileSelector==TUNNEL_PROFILE_ID;
+  if (tunnel) {
+  	aProfileSelector=DEFAULT_PROFILE_ID;
+  }
   // Note: profile database has already been opened in config resolve()
   if (aProfileSelector==DEFAULT_PROFILE_ID) {
     // default is first one
@@ -2667,6 +2672,8 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
   // Reset session after profile change (especially fRemoteURI)
   // and also remove any datastores we might have
   ResetAndRemoveDatastores();
+  // in case of tunnel, don't touch datastores
+  if (tunnel) return LOCERR_OK;
   // Now iterate trough associated target records and create datastores
   maxidx=fConfigP->fTargetsBinFile.getNumRecords();
   TBinfileDBSyncTarget target;

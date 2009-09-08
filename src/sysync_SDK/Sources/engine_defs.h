@@ -36,13 +36,13 @@ enum TCharsetEnum {
 
 /* ---- line end modes ---- */
 enum TLineendEnum {
-  /** none specified */
+  /** none specified   */
   LEM_NONE = 0,
-  /** 0x0A           */
+  /** LF = 0x0A, Unix, Linux, MacOS X */
   LEM_UNIX = 1,
-  /** 0x0D           */
+  /** CR = 0x0D, Mac OS classic       */
   LEM_MAC = 2,
-  /** 0x0D 0x0A      */
+  /** CRLF = 0x0D 0x0A, Windows, DOS  */
   LEM_DOS = 3,
   /** as in C strings, '\n' which is 0x0A normally
       (but might be 0x0D on some platforms) */
