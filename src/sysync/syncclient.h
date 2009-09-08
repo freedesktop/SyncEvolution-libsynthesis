@@ -51,6 +51,7 @@ typedef enum {
   ces_idle,         ///< client engine is idle and can be initialized with STEPCMD_CLIENTSTART
   ces_generating,   ///< ready to perform next STEPCMD_STEP to generate SyncML messages
   ces_dataready,    ///< data is ready to be sent, waiting for STEPCMD_SENTDATA
+	ces_resending,		///< data already sent, but app indicates with STEPCMD_RESENDDATA that it needed to resend the data
   ces_needdata,     ///< need response data, waiting for STEPCMD_GOTDATA
   ces_processing,   ///< ready to perform next STEPCMD_STEP to process SyncML messages
   ces_done,         ///< session done

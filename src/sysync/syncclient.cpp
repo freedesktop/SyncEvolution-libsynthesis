@@ -450,25 +450,29 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           sta = LOCERR_OK;
           break;
         case STEPCMD_RESENDDATA :
-          fEngineState = ces_dataready;
-          aStepCmd = STEPCMD_SENDDATA;
+        	// instead of having received new data, the network layer has found it needs to re-send the data.
+          // performing the STEPCMD_RESENDDATA just generates a new send start event, but otherwise no engine action
+          fEngineState = ces_resending;
+          aStepCmd = STEPCMD_RESENDDATA; // return the same step command, to differentiate it from STEPCMD_SENDDATA
           OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendstart,NULL,0,0,0);
           sta = LOCERR_OK;
           break;
-      } // switch stepCmdIn for ces_processing
+      } // switch stepCmdIn for ces_needdata
       break;
 
     // Waiting until SyncML data is sent
     case ces_dataready:
+    case ces_resending:
       switch (stepCmdIn) {
         case STEPCMD_SENTDATA :
-          // sent data, now request answer data
+        	// allowed in dataready or resending state
+          // sent (or re-sent) data, now request answer data
           OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendend,NULL,0,0,0);
           fEngineState = ces_needdata;
           aStepCmd = STEPCMD_NEEDDATA;
           sta = LOCERR_OK;
           break;
-      } // switch stepCmdIn for ces_processing
+      } // switch stepCmdIn for ces_dataready
       break;
 
   case numClientEngineStates:
