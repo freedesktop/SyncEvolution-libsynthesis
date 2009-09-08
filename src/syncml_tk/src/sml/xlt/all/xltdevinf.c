@@ -1326,9 +1326,11 @@ Ret_t devinfEncBlock(XltTagID_t tagId, XltRO_t reqOptFlag, const VoidPtr_t pCont
       if ((_err = devinfEncBlock(TN_DEVINF_UTC,     OPTIONAL, &(((SmlDevInfDevInfPtr_t) pContent)->flags),     enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
       if ((_err = devinfEncBlock(TN_DEVINF_NOFM,    OPTIONAL, &(((SmlDevInfDevInfPtr_t) pContent)->flags),     enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
       if ((_err = devinfEncBlock(TN_DEVINF_LARGEOBJECT, OPTIONAL, &(((SmlDevInfDevInfPtr_t) pContent)->flags), enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
+      // According to SyncML standard, the dsList must not be empty. However as some implementations send such devInf,
+      // and the RTK is also used to convert WBXML to XML for human readable message dumps, we now allow
+      // generating such devInf (for the XML log output). 
       dsList = ((SmlDevInfDevInfPtr_t)pContent)->datastore;
       //if (dsList == NULL) return SML_ERR_XLT_MISSING_CONT;
-      //some servers, like memotoo, miss datastore related informations, so ignore them temporary
       if(dsList != NULL) {
           if ((_err = devinfEncBlock(TN_DEVINF_DATASTORE, REQUIRED, dsList->data, enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
           dsList = dsList->next;
