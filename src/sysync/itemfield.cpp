@@ -2021,9 +2021,10 @@ TSyError TItemFieldKey::GetValueInternal(
           if (aID & VALID_FLAG_TZNAME) {
             // time zone name is a text
             sval.erase(); // no zone
-            if (!tsFldP->isFloating()) {
-              // has a zone, get name
-              TimeZoneContextToName(tsFldP->getTimeContext(), sval, tsFldP->getGZones());
+            tctx = tsFldP->getTimeContext();
+            if (!TCTX_IS_UNKNOWN(tctx) || TCTX_IS_DURATION(tctx) || TCTX_IS_DATEONLY(tctx)) {
+              // has a zone (or is duration/dateonly), get name
+              TimeZoneContextToName(tctx, sval, tsFldP->getGZones());
             }
             aValSize = sval.size();
             valPtr = (appPointer)sval.c_str();
