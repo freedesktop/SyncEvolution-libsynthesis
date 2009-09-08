@@ -1327,13 +1327,16 @@ Ret_t devinfEncBlock(XltTagID_t tagId, XltRO_t reqOptFlag, const VoidPtr_t pCont
       if ((_err = devinfEncBlock(TN_DEVINF_NOFM,    OPTIONAL, &(((SmlDevInfDevInfPtr_t) pContent)->flags),     enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
       if ((_err = devinfEncBlock(TN_DEVINF_LARGEOBJECT, OPTIONAL, &(((SmlDevInfDevInfPtr_t) pContent)->flags), enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
       dsList = ((SmlDevInfDevInfPtr_t)pContent)->datastore;
-      if (dsList == NULL) return SML_ERR_XLT_MISSING_CONT;
-      if ((_err = devinfEncBlock(TN_DEVINF_DATASTORE, REQUIRED, dsList->data, enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
-      dsList = dsList->next;
-      while (dsList != NULL) {
-          if ((_err = devinfEncBlock(TN_DEVINF_DATASTORE, OPTIONAL, dsList->data, enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
+      //if (dsList == NULL) return SML_ERR_XLT_MISSING_CONT;
+      //some servers, like memotoo, miss datastore related informations, so ignore them temporary
+      if(dsList != NULL) {
+          if ((_err = devinfEncBlock(TN_DEVINF_DATASTORE, REQUIRED, dsList->data, enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
           dsList = dsList->next;
-      };
+          while (dsList != NULL) {
+              if ((_err = devinfEncBlock(TN_DEVINF_DATASTORE, OPTIONAL, dsList->data, enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
+              dsList = dsList->next;
+          };
+      }
       // for pre DS 1.2, CTCaps are global (i.e at the devInf level):
       if ((_err = devinfEncBlock(TN_DEVINF_CTCAP, OPTIONAL, ((SmlDevInfDevInfPtr_t)pContent)->ctcap, enc, pBufMgr, SML_EXT_DEVINF)) != SML_ERR_OK) return _err;
       // extensions
