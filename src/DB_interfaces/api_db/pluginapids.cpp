@@ -276,7 +276,7 @@ TPluginApiDS::TPluginApiDS(
   fPluginDSConfigP=aConfigP;
   // make a local copy of the typed agent pointer (note that the agent itself does
   // NOT YET have its constructor completely run so we can't just copy the agents pointer)
-  fPluginAgentConfigP = dynamic_cast<TPluginAgentConfig *>(
+  fPluginAgentConfigP = DYN_CAST<TPluginAgentConfig *>(
     aSessionP->getRootConfig()->fAgentConfigP
   );
   if (!fPluginAgentConfigP) SYSYNC_THROW(TSyncException(DEBUGTEXT("TPluginApiDS finds no AgentConfig","api1")));

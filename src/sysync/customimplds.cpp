@@ -295,7 +295,7 @@ bool TCustomDSConfig::localStartElement(const char *aElementName, const char **a
     else {
       // look for field list
       TMultiFieldDatatypesConfig *mfcfgP =
-        dynamic_cast<TMultiFieldDatatypesConfig *>(getSyncAppBase()->getRootConfig()->fDatatypesConfigP);
+        DYN_CAST<TMultiFieldDatatypesConfig *>(getSyncAppBase()->getRootConfig()->fDatatypesConfigP);
       if (!mfcfgP) SYSYNC_THROW(TConfigParseException("no multifield config"));
       TFieldListConfig *cfgP = mfcfgP->getFieldList(ref);
       if (!cfgP)
@@ -911,7 +911,7 @@ TCustomImplDS::TCustomImplDS(
   // make a local copy of the typed agent pointer
   fAgentP=static_cast<TCustomImplAgent *>(fSessionP);
   // make a local copy of the typed agent config pointer
-  fAgentConfigP = dynamic_cast<TCustomAgentConfig *>(
+  fAgentConfigP = DYN_CAST<TCustomAgentConfig *>(
     aSessionP->getRootConfig()->fAgentConfigP
   );
   if (!fAgentConfigP) SYSYNC_THROW(TSyncException(DEBUGTEXT("TCustomImplDS finds no AgentConfig","odds7")));
@@ -1500,7 +1500,7 @@ localstatus TCustomImplDS::implMakeAdminReady(
       TFieldMapList::iterator pos;
       for (pos=fConfigP->fFieldMappings.fFieldMapList.begin(); pos!=fConfigP->fFieldMappings.fFieldMapList.end(); pos++) {
         if ((*pos)->isArray()) {
-          TFieldMapArrayItem *fmaiP = dynamic_cast<TFieldMapArrayItem *>(*pos);
+          TFieldMapArrayItem *fmaiP = DYN_CAST<TFieldMapArrayItem *>(*pos);
           if (fmaiP) {
             // rebuild
             // %%% note, this is not capable of nested arrays yet

@@ -25,7 +25,9 @@ using namespace std;
 
 namespace sysync {
 
+#ifndef ANDROID
 #pragma pack(push,4) // 32bit
+#endif
 
 // general defines for bindatastore
 
@@ -40,7 +42,9 @@ typedef struct {
   uInt32 uniquerecordid; // ever increasing counter to generate unique IDs for records
 } TBinFileHeader;
 
+#ifndef ANDROID
 #pragma pack(pop)
+#endif
 
 typedef uInt16 bferr;
 #define BFE_OK          0 // ok

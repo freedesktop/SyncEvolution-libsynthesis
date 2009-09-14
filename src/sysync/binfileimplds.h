@@ -40,7 +40,9 @@ namespace sysync {
 // Defines
 // =======
 
+#ifndef ANDROID
 #pragma pack(push,4) // 32bit
+#endif
 
 // specific sync
 const uInt16 dbnamelen=32;
@@ -608,7 +610,9 @@ typedef struct {
 #define PROFILE_DB_VERSION_4_SZ offsetof(o_TBinfileDBSyncProfile,URIpath)
 
 
+#ifndef ANDROID
 #pragma pack(pop)
+#endif
 
 
 // datastore config

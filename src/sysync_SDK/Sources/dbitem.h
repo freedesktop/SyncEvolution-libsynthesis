@@ -68,7 +68,11 @@ template <class T> void DeleteNext( T* &next, void* aCB= NULL,
                                     const char* s= "", bool dbg= false )
 // delete the rest of the list <act>
 {
+  #ifndef ANDROID
+  // no rtti support for Android
   if (dbg) DEBUG_Exotic_DB( aCB, "","Delete", "%s (%s)", typeid( T ).name(), s );
+  #endif
+
   if      (next) {
     delete next;
            next= NULL; // don't let it undefined

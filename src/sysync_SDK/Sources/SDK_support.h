@@ -233,14 +233,6 @@ TSyError CloseTunnel_ItemKey( TunnelWrapper* tw );
 
 
 
-/* ---------- UI callback ------------------------------------ */
-/*
-TSyError UI_OpenKeyByPath( void* aCB, KeyH *aKeyH,
-                           KeyH  aParentKeyH, cAppCharP aPath, uInt16 aMode );
-TSyError UI_CloseKey     ( void* aCB, KeyH aKeyH );
-*/
-
-
 } // namespace
 #endif /* SDK_SUPPORT */
 /* eof */

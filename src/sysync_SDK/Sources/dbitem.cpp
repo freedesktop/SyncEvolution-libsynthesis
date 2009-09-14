@@ -638,7 +638,7 @@ void TDBItem::Array_TDB( cAppCharP &q, cAppCharP aKey, TDBItem* hdI, string &aVa
 
     if (!firstElem) {
           s.assign( q, (unsigned int)( qA-q ) );
-      if (s!=aKey)      break;
+      if (!(s==aKey)) break;
 
     //if (strcmp( aKey, s.c_str() )!=0) break; // not the same key
     } // if

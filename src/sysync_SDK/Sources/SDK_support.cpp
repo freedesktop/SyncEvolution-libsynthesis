@@ -873,11 +873,11 @@ bool FlagOK( string aDat, string aKey, bool isYes )
   GetField( aDat, aKey, value );
   bool  ok, emp=  aKey.empty();
 
-  if (isYes) { ok= !emp   && ( value=="yes"
-                          ||   value=="true"
-                          ||   value=="both"  ); }
-  else       { ok=  emp   || ( value!="no"
-                          &&   value!="false" ); }
+  if (isYes) { ok= !emp   &&  ( value=="yes"
+                          ||    value=="true"
+                          ||    value=="both"  ); }
+  else       { ok=  emp   || !( value=="no"
+                          ||    value=="false" ); }
 
 //printf( "value=%-10s isYes=%-5d ok=%-5d aEmp=%-5d aKey='%s'\n",
 //         value.c_str(), isYes, ok, aDat.empty(), aKey.c_str() );
@@ -970,43 +970,6 @@ TSyError CloseTunnel_ItemKey( TunnelWrapper* tw )
   return         ui->CloseKey( tw->tCB, tw->tItemKey );
 } // CloseTunnel_ItemKey
 
-
-
-/* ---------- UI callback ------------------------------------ */
-/* Check, if <aCB> structure supports at least extended UI callback */
-/*
-static bool CB_UIX( void* aCB ) { return CB_OK( aCB,8 ); }
-
-
-TSyError UI_OpenKeyByPath( void* aCB, KeyH *aKeyH,
-                           KeyH aParentKeyH, cAppCharP aPath, uInt16 aMode )
-{
-  TSyError err= LOCERR_NOTIMP;
-
-  DB_Callback cb= (DB_Callback)aCB;
-  if (CB_UIX( aCB )) {
-    err= cb->ui.OpenKeyByPath( cb->callbackRef, aKeyH, aParentKeyH, aPath, aMode );
-    DEBUG_DB( aCB, MyDB, "OpenKeyByPath", "%08X path='%s' mode=%04X err=%d",
-                                            *aKeyH,              aPath, aMode, err );
-  } // if
-
-  return err;
-} // UI_OpenKeyByPath
-
-
-TSyError UI_CloseKey( void* aCB, KeyH aKeyH )
-{
-  TSyError err= LOCERR_NOTIMP;
-
-  DB_Callback cb= (DB_Callback)aCB;
-  if (CB_UIX( aCB )) {
-    err= cb->ui.CloseKey( cb->callbackRef, aKeyH );
-    DEBUG_DB( aCB, MyDB, "CloseKey", "%08X err=%d", aKeyH, err );
-  } // if
-
-  return err;
-} // UI_CloseKey
-*/
 
 
 #if defined __cplusplus
