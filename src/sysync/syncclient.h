@@ -322,6 +322,10 @@ protected:
   // - Client engine state
   TClientEngineState fEngineState;
   #endif // ENGINEINTERFACE_SUPPORT
+  // - client side consecutive Alert 222, used to detect endless loop
+  uInt32 fOutgoingAlertRequests;
+  // Loop detecting time frame to avoid wrong detection of "keep-alive" message
+  lineartime_t fOutgoingAlertStart;
 public:
   // - can be cleared to suppress automatic use of DS 1.2 SINCE/BEFORE filters
   //   (e.g. for date range in func_SetDaysRange())

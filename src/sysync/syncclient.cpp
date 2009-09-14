@@ -32,8 +32,6 @@
   #error "SYSYNC_CLIENT must be defined when compiling syncclient.cpp"
 #endif
 
-
-
 namespace sysync {
 
 
@@ -604,6 +602,8 @@ void TSyncClient::InternalResetSession(void)
   // will be cleared to suppress automatic use of DS 1.2 SINCE/BEFORE filters
   // (e.g. for date range in func_SetDaysRange())
   fServerHasSINCEBEFORE = true;
+	// no outgoing alert 222 sent so far
+  fOutgoingAlertRequests = 0;
 } // TSyncClient::InternalResetSession
 
 
@@ -1101,6 +1101,8 @@ localstatus TSyncClient::NextMessage(bool &aDone)
       }
     }
   }
+  /* A dummy alert indicates this is a message with only alert222 request*/
+  bool dummyAlert = false;
   if (!outgoingfinal) {
     // - send Alert 222 if we need to continue package but have nothing to send
     //   (or ALWAYS_CONTINUE222 defined)
@@ -1108,6 +1110,34 @@ localstatus TSyncClient::NextMessage(bool &aDone)
     if (!fNeedToAnswer)
     #endif
     {
+      /* End-less loop detection
+       * Some servers will never end and triggers client sends
+       * ALERT222 forever. Detect this scenario and abort the session if
+       * detected.
+       * It is still valid for the server to use ALERT222 to "keep-alive" the
+       * connection.
+       * Therefore the loop detection criteria is:
+       * 5 adjecent alerts within 20 seconds
+       */
+      if (!fNeedToAnswer) {
+        dummyAlert = true;
+        if (fOutgoingAlertRequests++ == 0) {
+        	// start of 222 loop detection time
+          fOutgoingAlertStart = getSystemNowAs(TCTX_UTC);
+        } else if (fOutgoingAlertRequests > 5) {
+          lineartime_t curTime = getSystemNowAs(TCTX_UTC);
+          if (curTime - fOutgoingAlertStart < 20*secondToLinearTimeFactor) {
+            PDEBUGPRINTFX(DBG_ERROR,(
+              "Warning: More than 5 consecutive Alert 222 within 20 seconds- "
+              "looks like endless loop, abort session"
+            ));
+            AbortSession(400, false);
+            return getAbortReasonStatus();
+          } else {
+            fOutgoingAlertRequests = 0;
+          }
+        }
+      }
       // not final, and nothing to answer otherwise: create alert-Command to request more info
       TAlertCommand *alertCmdP = new TAlertCommand(this,NULL,(uInt16)222);
       // %%% not clear from spec what has to be in item for 222 alert code
@@ -1120,6 +1150,11 @@ localstatus TSyncClient::NextMessage(bool &aDone)
       ISSUE_COMMAND_ROOT(this,alertCmdP);
     }
   }
+  // We send a response with no dummy alert, so reset the alert detector
+  if (!dummyAlert) {
+    fOutgoingAlertRequests = 0;
+  }
+
   // send custom end-of session puts
   if (!isSuspending() && outgoingfinal && fOutgoingState==psta_map) {
     // End of outgoing map package; let custom PUTs which may transmit some session statistics etc. happen now
