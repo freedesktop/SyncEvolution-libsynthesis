@@ -1693,8 +1693,7 @@ TSyError TEngineInterface::InsertItem(SessionH aSessionH, cAppCharP aItemData, I
 {
 	TLocalEngineDS *ds = reinterpret_cast<TSyncSession *>(aSessionH)->getTunnelDS();
   if (!ds) return LOCERR_WRONGUSAGE; // need properly opened tunnel session/datastore
-  #warning "Wrong entry signature (aID is a return param, must be ItemID, not cItemID) requires ugly cast here - remove when signature is fixed"
-  return ds->TunnelInsertItem(aItemData,(ItemID)aID);
+  return ds->TunnelInsertItem(aItemData,aID);
 } // InsertItem
 
 
@@ -1759,8 +1758,7 @@ TSyError TEngineInterface::InsertItemAsKey(SessionH aSessionH, KeyH aItemKey, It
 {
 	TLocalEngineDS *ds = reinterpret_cast<TSyncSession *>(aSessionH)->getTunnelDS();
   if (!ds) return LOCERR_WRONGUSAGE; // need properly opened tunnel session/datastore
-  #warning "Wrong entry signature (aID is a return param, must be ItemID, not cItemID) requires ugly cast here - remove when signature is fixed"
-  return ds->TunnelInsertItemAsKey(aItemKey,(ItemID)aID);
+  return ds->TunnelInsertItemAsKey(aItemKey,aID);
 } // InsertItemAsKey
 
 
