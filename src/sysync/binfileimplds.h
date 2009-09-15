@@ -141,7 +141,8 @@ typedef struct {
   #define CHANGELOG_DB_SUFFIX "_clg.bfi"
 #endif
 #define CHANGELOG_DB_ID 4
-#define CHANGELOG_DB_VERSION 3
+#define LOWEST_CHANGELOG_DB_VERSION 3
+#define CHANGELOG_DB_VERSION 4
 
 const uInt16 changeIndentifierMaxLen=128;
 
@@ -172,6 +173,11 @@ typedef struct {
   // flags
   uInt8 flags;
   uInt8 dummy;
+
+  // Version 4 fields start here
+  // ===========================
+  // - creation timestamp for the record
+  uInt32 modcount_created;
 } TChangeLogEntry;
 
 
