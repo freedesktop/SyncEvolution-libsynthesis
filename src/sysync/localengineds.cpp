@@ -2990,7 +2990,6 @@ bool TLocalEngineDS::engHandleSyncOpStatus(TStatusCommand *aStatusCmdP,TSyncOpCo
     // case sop_copy: break;
     case sop_wants_replace:
     case sop_replace:
-    case sop_soft_add:
       #ifndef SYSYNC_CLIENT
       if (statuscode==404 || statuscode==410) {
         // obviously, remote item that we wanted to change does not exist any more.
@@ -3011,7 +3010,7 @@ bool TLocalEngineDS::engHandleSyncOpStatus(TStatusCommand *aStatusCmdP,TSyncOpCo
       }
       else
       #endif
-      if (statuscode==201 || (statuscode==200 && sop == sop_soft_add)) {
+      if (statuscode==201) {
         fRemoteItemsAdded++;
         dsConfirmItemOp(sop_add,localID,remoteID,true); // ok as add
       }

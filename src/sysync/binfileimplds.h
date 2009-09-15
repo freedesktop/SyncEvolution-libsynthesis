@@ -152,7 +152,6 @@ const uInt8 chgl_receive_only=0x20;
 const uInt8 chgl_markedforresume=0x10;
 const uInt8 chgl_resend=0x08;
 const uInt8 chgl_modbysync=0x04;
-const uInt8 chgl_newadd=0x02;
 //%%%never used, NOW CONFLICTS WITH chgl_resend and chgl_noresume: const uInt8 chgl_category_mask=0x0F;
 
 // single changelog entry
