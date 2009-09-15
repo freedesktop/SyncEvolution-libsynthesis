@@ -501,6 +501,15 @@ TSyError TSyncClient::generatingStep(uInt16 &aStepCmd, TEngineProgressInfo *aInf
     TerminateSession();
   }
   else if (sta==LOCERR_OK) {
+  	// finished generating outgoing message
+    // - make sure read pointer is set (advanced in case incoming
+    //   message had trailing garbage) to beginning of generated
+    //   answer. With incoming message being clean SyncML without
+    //   garbage, this call is not needed, however with garbage
+    //   it is important because otherwise outgoing message
+    //   would have that garbage inserted before actual message
+    //   start.
+    smlReadOutgoingAgain(getSmlWorkspaceID());
     // next is sending request to server
     fEngineState = ces_dataready;
     aStepCmd = STEPCMD_SENDDATA;
