@@ -3576,7 +3576,7 @@ bool TCustomImplDS::generateTunnelItemData(
   return createdone;
 } // TCustomImplDS::generateTunnelItemData
 
-#endif DBAPI_TUNNEL_SUPPORT
+#endif // DBAPI_TUNNEL_SUPPORT
 
 #endif // DBAPI_TEXTITEMS 
 
