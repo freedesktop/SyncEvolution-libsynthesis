@@ -508,6 +508,28 @@ void TBinfileImplDS::zapChangeLog(void)
 
 
 
+// update change log record contents
+static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *aOldRecordData, void *aNewRecordData, uInt32 aOldSize)
+{
+  if (aOldVersion<LOWEST_CHANGELOG_DB_VERSION || aOldVersion>CHANGELOG_DB_VERSION) return 0; // unknown old version or too new version, cannot update
+  if (aNewVersion!=CHANGELOG_DB_VERSION) return 0; // cannot update to other version than current
+  // create default values for profile
+  if (aOldRecordData && aNewRecordData) {
+    TChangeLogEntry *chglogEntryP = (TChangeLogEntry *)aNewRecordData;
+    // copy old data - beginning of record is identical
+    memcpy(aNewRecordData,aOldRecordData,aOldSize);
+    // now initialize fields that old version didn't have
+    if (aOldVersion<4) {
+      // init new version 4 fields
+      chglogEntryP->modcount_created = 0; // assume created before changelogging history started
+    }
+  }
+  // updated ok (or updateable ok if no data pointers provided)
+  // - return size of new record
+  return sizeof(TChangeLogEntry);
+} // changelogUpdateFunc
+
+
 // returns true if we had a valid changelog
 bool TBinfileImplDS::openChangeLog(void)
 {
@@ -519,7 +541,7 @@ bool TBinfileImplDS::openChangeLog(void)
   changelogname += getName();
   changelogname += CHANGELOG_DB_SUFFIX;
   fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
-  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader)!=BFE_OK) {
+  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) {
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
@@ -747,6 +769,8 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       newentry.flags=0;
       // modified now
       newentry.modcount=fCurrentModCount;
+      // set the creation modcount, this is used to detect a client-side newly added item
+      newentry.modcount_created=fCurrentModCount;
       #ifndef CHANGEDETECTION_AVAILABLE
       // no CRC yet
       newentry.dataCRC=0;
@@ -1393,6 +1417,10 @@ localstatus TBinfileImplDS::implGetItem(
             // - update the mod count such that this record will be detected again in the next non-resumed session
             //   (fCurrentModCount marks entries changed in this session, +1 makes sure these will be detected in the NEXT session)
             chglogP->modcount=fCurrentModCount+1;
+            // also update the creation stamp for new added item
+            if(chglogP->modcount_created > fPreviousToRemoteModCount) {
+              chglogP->modcount_created=fCurrentModCount+1;
+            }
             // - mark it "modified by sync" to prevent it being sent during resume
             chglogP->flags |= chgl_modbysync;
           }
@@ -1491,8 +1519,13 @@ localstatus TBinfileImplDS::implGetItem(
             goto error;
           }
         }
-        // added or changed, syncop is replace
-        myitemP->setSyncOp(sop_replace);
+        // detect wheter the item is new added or changed
+        if(chglogP->modcount_created > fPreviousToRemoteModCount) {
+          myitemP->setSyncOp(sop_add);
+        }
+        else {
+          myitemP->setSyncOp(sop_replace);
+        }
         // make sure item has the localid which was used to retrieve it
         ASSIGN_LOCALID_TO_ITEM(*myitemP,chglogP->dbrecordid);
       }
