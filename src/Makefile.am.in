@@ -107,6 +107,7 @@ else
 libsynthesissdk_la_SOURCES += @LIBSYNTHESISSDK_SOURCES_BOTH@
 endif
 libsynthesissdk_la_CPPFLAGS = \
+	-D_GNU_SOURCE=1 \
 	-I$(srcdir)/sysync_SDK/Sources \
 	-I$(srcdir)/Targets/ReleasedProducts/SDK
 
