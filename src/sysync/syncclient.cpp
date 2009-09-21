@@ -455,11 +455,6 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendstart,NULL,0,0,0);
           sta = LOCERR_OK;
           break;
-        case STEPCMD_SENTDATA :
-          // no state change, keep asking for the data
-          aStepCmd = STEPCMD_NEEDDATA;
-          sta = LOCERR_OK;
-          break;
       } // switch stepCmdIn for ces_needdata
       break;
 
