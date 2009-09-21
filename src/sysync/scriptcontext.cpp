@@ -1253,8 +1253,10 @@ public:
       return PCRE_ERROR_NULL; // -2, regexp did not compile
     }
     else {
-      // regExp is ok and can be executed agains subject
-      return pcre_exec(regex, NULL, aSubject, aSubjLen, aSubjStart, 0, aOutVec, aOVSize);
+      // regExp is ok and can be executed against subject
+      int r = pcre_exec(regex, NULL, aSubject, aSubjLen, aSubjStart, 0, aOutVec, aOVSize);
+      pcre_free(regex);
+      return r;
     }
   } // run_pcre
 
@@ -2298,7 +2300,7 @@ void TScriptContext::clearFields(void)
       if (i>=fNumVars) break; // all instantiated vars done, stop even if more might be defined
       if (fFieldsP[i]) {
         if (!(*pos)->fIsRef)
-          delete fFieldsP[i]; // delete field object (but only if not reference
+          delete fFieldsP[i]; // delete field object (but only if not reference)
         fFieldsP[i]=NULL;
       }
     }

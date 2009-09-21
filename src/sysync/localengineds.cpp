@@ -2424,13 +2424,22 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
       if (
         (
           (
-            (!fLastRemoteAnchor.empty() && fLastRemoteAnchor==aLastRemoteAnchor) || // either anchors must match...
+            (!fLastRemoteAnchor.empty() && 
+            	( (fLastRemoteAnchor==aLastRemoteAnchor)
+                #ifdef SYSYNC_CLIENT
+                || (fSessionP->fLenientMode)
+                #endif
+              )
+            ) || // either anchors must match (or lenient mode for client)...
             (fResuming && *aLastRemoteAnchor==0) // ...or in case of resume, remote not sending anchor is ok as well
           )
           && !fForceSlowSync // ...but no force for slowsync may be set internally
         )
         || fSlowSync // if slow sync is requested by the remote anyway, we don't need to be in sync anyway, so just go on
       ) {
+      	if (fLastRemoteAnchor!=aLastRemoteAnchor && fSessionP->fLenientMode) {
+        	PDEBUGPRINTFX(DBG_ERROR,("Warning - remote anchor mismatch but tolerated in lenient mode"));
+        }
         // sync state ok or Slow sync requested anyway:
         #ifndef SYSYNC_CLIENT
         // we can generate Alert with same code as sent

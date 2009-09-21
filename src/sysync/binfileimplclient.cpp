@@ -2662,6 +2662,8 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
   #endif // PROXY_SUPPORT
   // check for forced legacy mode
   fLegacyMode = fProfile.profileFlags & PROFILEFLAG_LEGACYMODE;
+  // check for lenient mode
+  fLenientMode = fProfile.profileFlags & PROFILEFLAG_LENIENTMODE;
   // - get and increment session ID and save for next session
   //   Note: as auth retries will increment the ID as well, we inc by 5
   //         to avoid repeating the ID too soon

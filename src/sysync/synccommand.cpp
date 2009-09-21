@@ -1326,6 +1326,13 @@ bool TAlertCommand::issue(
 } // TAlertCommand::issue
 
 
+bool TAlertCommand::statusEssential(void)
+{
+	// Alert 222 status is not essential in lenient mode
+  return !(fAlertCode==222 && fSessionP->fLenientMode);
+} // TAlertCommand::statusEssential
+
+ 
 // handle status received for previously issued command
 // returns true if done, false if command must be kept in the status queue
 bool TAlertCommand::handleStatus(TStatusCommand *aStatusCmdP)
@@ -3320,6 +3327,13 @@ bool TGetCommand::issue(
   // return true if command must be queued for status/result response reception
   return queueForResponse();
 } // TGetCommand::issue
+
+
+bool TGetCommand::statusEssential(void)
+{
+	// Alert 222 status is not essential in lenient mode
+  return !(fSessionP->fLenientMode);
+} // TGetCommand::statusEssential
 
 
 // handle status received for previously issued command
