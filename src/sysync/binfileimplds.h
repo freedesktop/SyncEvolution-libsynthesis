@@ -141,8 +141,8 @@ typedef struct {
   #define CHANGELOG_DB_SUFFIX "_clg.bfi"
 #endif
 #define CHANGELOG_DB_ID 4
-#define LOWEST_CHANGELOG_DB_VERSION 3
-#define CHANGELOG_DB_VERSION 4
+#define LOWEST_CHANGELOG_DB_VERSION 2 // note: step from V2 to V3 was only change in header
+#define CHANGELOG_DB_VERSION 4 // create modcount added
 
 const uInt16 changeIndentifierMaxLen=128;
 

@@ -35,6 +35,7 @@ TBinFileBase::TBinFileBase() :
   fExtraHeaderDirty=false;
   fExtraHeaderP=NULL;
   fExtraHeaderSize=0;
+  fFoundVersion=0;
 } // TBinFileBase::TBinFileBase
 
 
@@ -96,12 +97,14 @@ bferr TBinFileBase::open(uInt32 aExtraHeadersize, void *aExtraHeaderP, TUpdateFu
     close();
     return BFE_BADTYPE;
   }
+  // remember the version we found when trying to open
+  fFoundVersion = fBinFileHeader.version;
+  // check need for upgrade
   if (fBinFileHeader.version!=fVersion) {
     // try to update file if update-func is provided
     if (aUpdateFunc) {
       // check if we can update (no data provided for update)
-      uInt32 oldversion=fBinFileHeader.version;
-      uInt32 newrecordsize=aUpdateFunc(oldversion,fVersion,NULL,NULL,0);
+      uInt32 newrecordsize=aUpdateFunc(fFoundVersion,fVersion,NULL,NULL,0);
       if (newrecordsize) {
         // we can update from current to requested version
         // - allocate buffer for all records
@@ -109,21 +112,35 @@ bferr TBinFileBase::open(uInt32 aExtraHeadersize, void *aExtraHeaderP, TUpdateFu
         uInt32 oldrecordsize = fBinFileHeader.recordsize;
         void *oldrecords = malloc(numrecords * oldrecordsize);
         if (!oldrecords) return BFE_MEMORY;
-        // - read all current records into memory
+        // - read all current records into memory (relative to old headersize)
         readRecord(0,oldrecords,numrecords);
-        // - truncate the file
-        truncate();
+        // Update header because extra header might have changed in size
+				if (fExtraHeaderP && (fBinFileHeader.headersize!=sizeof(TBinFileHeader)+fExtraHeaderSize)) {
+        	// (extra) header has changed in size
+          // - read old extra header (or part of it that will be retained in case it shrinks between versions)
+          uInt32 oldEHdrSz = fBinFileHeader.headersize-sizeof(TBinFileHeader);
+				  platformSeekFile(sizeof(TBinFileHeader));
+          platformReadFile(fExtraHeaderP,oldEHdrSz<=fExtraHeaderSize ? oldEHdrSz : fExtraHeaderSize);
+        	// - adjust the overall header size
+	        fBinFileHeader.headersize = sizeof(TBinFileHeader)+fExtraHeaderSize;
+          // - let the update function handle init of the extra header
+      		aUpdateFunc(fFoundVersion,fVersion,NULL,fExtraHeaderP,0);
+          // - make sure new extra header gets written
+          fExtraHeaderDirty = true;
+        }
         // - modify header fields
         fBinFileHeader.version=fVersion; // update version
         fBinFileHeader.recordsize=newrecordsize; // update record size
         fHeaderDirty=true; // header must be updated
-        // - write new header
+        // - write new header (to make sure file is at least as long as header+extraheader)
         flushHeader();
+        // - truncate the file (taking new extra header size into account already, in case it has changed)
+        truncate();
         // - now convert buffered records
         void *newrecord = malloc(newrecordsize);
         for (uInt32 i=0; i<numrecords; i++) {
           // call updatefunc to convert record
-          if (aUpdateFunc(oldversion,fVersion,(void *)((uInt8 *)oldrecords+i*oldrecordsize),newrecord,oldrecordsize)) {
+          if (aUpdateFunc(fFoundVersion,fVersion,(void *)((uInt8 *)oldrecords+i*oldrecordsize),newrecord,oldrecordsize)) {
             // save new record
             uInt32 newi;
             newRecord(newi,newrecord);
@@ -132,6 +149,8 @@ bferr TBinFileBase::open(uInt32 aExtraHeadersize, void *aExtraHeaderP, TUpdateFu
         // - forget buffers
         free(newrecord);
         free(oldrecords);
+        // - flush new header
+        flushHeader();
       }
       else {
         // cannot update
@@ -156,7 +175,8 @@ bferr TBinFileBase::open(uInt32 aExtraHeadersize, void *aExtraHeaderP, TUpdateFu
     return BFE_BADSTRUCT;
   }
   // read extra header
-  if (fExtraHeaderP) {
+  if (fExtraHeaderP && fExtraHeaderSize>0) {
+	  platformSeekFile(sizeof(TBinFileHeader));
     platformReadFile(fExtraHeaderP,fExtraHeaderSize);
     fExtraHeaderDirty=false;
   }
@@ -185,12 +205,14 @@ bferr TBinFileBase::create(uInt32 aRecordsize, uInt32 aExtraHeadersize, void *aE
     fBinFileHeader.numrecords=0;
     fBinFileHeader.allocatedrecords=0;
     fBinFileHeader.uniquerecordid=0;
-    fHeaderDirty=true;
+    fHeaderDirty = true;
     // - link in the new extra header buffer
-    fExtraHeaderP=aExtraHeaderP;
-    fExtraHeaderDirty=true; // make sure it gets written
+    fExtraHeaderP = aExtraHeaderP;
+    fExtraHeaderDirty = true; // make sure it gets written
     // write entire header
     e=flushHeader();
+    // opened with new version
+    fFoundVersion = fVersion;
   }
   else if (e==BFE_OK) {
     // already exists

@@ -515,6 +515,7 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
   if (aNewVersion!=CHANGELOG_DB_VERSION) return 0; // cannot update to other version than current
   // create default values for profile
   if (aOldRecordData && aNewRecordData) {
+  	// update records
     TChangeLogEntry *chglogEntryP = (TChangeLogEntry *)aNewRecordData;
     // copy old data - beginning of record is identical
     memcpy(aNewRecordData,aOldRecordData,aOldSize);
@@ -523,6 +524,19 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
       // init new version 4 fields
       chglogEntryP->modcount_created = 0; // assume created before changelogging history started
     }
+  }
+  else if (aNewRecordData) {
+  	// update extra header
+    TChangeLogHeader *extraHeaderP = (TChangeLogHeader *)aNewRecordData;
+    if (aOldVersion<3) {
+    	// header has got new fields between v2 and v3
+      // Note: these will be updated with data from target fields after actually opening the changelog
+      //       Just init them now
+      extraHeaderP->lastChangeCheckIdentifier[0] = 0;
+      extraHeaderP->lastChangeCheck = noLinearTime;
+    }
+    // updated header ok
+	  return sizeof(TChangeLogHeader);
   }
   // updated ok (or updateable ok if no data pointers provided)
   // - return size of new record
@@ -541,7 +555,7 @@ bool TBinfileImplDS::openChangeLog(void)
   changelogname += getName();
   changelogname += CHANGELOG_DB_SUFFIX;
   fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
-  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) {
+  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) { 
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
@@ -551,6 +565,24 @@ bool TBinfileImplDS::openChangeLog(void)
     fChangeLog.create(sizeof(TChangeLogEntry),sizeof(TChangeLogHeader),&fChgLogHeader,true);
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: changelog did not exist (or bad version) -> created new"));
     return false; // changelog is new, so we need a slow sync
+  }
+  else {
+  	// check if opening was an upgrade from version 2
+    if (fChangeLog.getFoundVersion()<3) {
+    	// version 3 has introduced saving the last-check date/identifiers in the changelog header,
+      // before that the identifiers used where (wrongly) those of the target. So copy
+      // the target info to the new header now. This gives perfect results only for single
+      // profile use, but existing products before update to v3 were single profile so we can
+      // safely assume this will give a smooth transition (without re-send-everything effects).
+      // - dummyIdentifier1 is the former lastSyncIdentifier and contains the token from the last change check towards the DB
+	  	AssignCString(fChgLogHeader.lastChangeCheckIdentifier,fTarget.dummyIdentifier1,changeIndentifierMaxLen);
+      // - lastChangeCheck is the former lastTwoWaySync and contains the timestamp of the last change check towards the DB
+  		fChgLogHeader.lastChangeCheck = fTarget.lastChangeCheck;
+      // - make sure it gets written back
+      fChangeLog.setExtraHeaderDirty();
+      fChangeLog.flushHeader();
+	    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: upgraded changelog from V2 to V4 (new header, new modcount_created)"));
+    }
   }
   return true; // changelog already existed, so we assume it's up-to-date
 } // TBinfileImplDS::openChangeLog
@@ -745,17 +777,19 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
         // found
         #ifdef CHANGEDETECTION_AVAILABLE
         PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-          "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld",
+          "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, modcount_created=%ld",
           (long)logindex,
           (uInt16)existingentries[logindex].flags,
-          (long)existingentries[logindex].modcount
+          (long)existingentries[logindex].modcount,
+          (long)existingentries[logindex].modcount_created
         ));
         #else
         PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-          "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, saved CRC=0x%04hX",
-          logindex,
+          "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, modcount_created=%ld, saved CRC=0x%04hX",
+          (long)logindex,
           (uInt16)existingentries[logindex].flags,
-          existingentries[logindex].modcount,
+          (long)existingentries[logindex].modcount,
+          (long)existingentries[logindex].modcount_created,
           existingentries[logindex].dataCRC
         ));
         #endif
@@ -844,19 +878,21 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       // add it directly to the bin file
       #ifdef NUMERIC_LOCALIDS
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID=%ld, flags=0x%X, modcount=%ld",
-        fChangeLog.getNumRecords(),
+        "new entry %ld : localID=%ld, flags=0x%X, modcount=%ld, modcount_created=%ld",
+        (long)fChangeLog.getNumRecords(),
         newentry.dbrecordid,
         (int)newentry.flags,
-        newentry.modcount
+        (long)newentry.modcount,
+        (long)newentry.modcount_created
       ));
       #else
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID='%s', flags=0x%X, modcount=%ld",
+        "new entry %ld : localID='%s', flags=0x%X, modcount=%ld, modcount_created=%ld",
         fChangeLog.getNumRecords(),
         newentry.dbrecordid,
         (int)newentry.flags,
-        newentry.modcount
+        (long)newentry.modcount
+        (long)newentry.modcount_created
       ));
       #endif
       */
@@ -912,19 +948,21 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     for (uInt32 si=0; si<numexistinglogentries; si++) {
       #ifdef NUMERIC_LOCALIDS
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "%ld : localID=%ld, flags=0x%X, modcount=%ld",
-        si,
-        existingentries[si].dbrecordid,
-        (int)existingentries[si].flags,
-        existingentries[si].modcount
-      ));
-      #else
-      DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "%ld : localID='%s', flags=0x%X, modcount=%ld",
+        "%ld : localID=%ld, flags=0x%X, modcount=%ld, modcount_created=%ld",
         (long)si,
         existingentries[si].dbrecordid,
         (int)existingentries[si].flags,
-        (long)existingentries[si].modcount
+        (long)existingentries[si].modcount,
+        (long)existingentries[si].modcount_created
+      ));
+      #else
+      DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+        "%ld : localID='%s', flags=0x%X, modcount=%ld, modcount_created=%ld",
+        (long)si,
+        existingentries[si].dbrecordid,
+        (int)existingentries[si].flags,
+        (long)existingentries[si].modcount,
+        (long)existingentries[si].modcount_created
       ));
       #endif
     }
@@ -1849,18 +1887,20 @@ bool TBinfileImplDS::implProcessItem(
     if (logindex<0) {
       // new added item
       ASSIGN_LOCALID_TO_FLD(affectedentryP->dbrecordid,localid);
+      // also record the time this entry was created
+	    affectedentryP->modcount_created=fCurrentModCount;
       // save it
       #ifdef NUMERIC_LOCALIDS
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID=%ld, flags=0x%X, modcount=%ld",
-        fChangeLog.getNumRecords(),
+        "new entry %ld : localID=%ld, flags=0x%X, modcount=modcount_created=%ld",
+        (long)fChangeLog.getNumRecords(),
         affectedentryP->dbrecordid,
         (int)affectedentryP->flags,
-        affectedentryP->modcount
+        (long)affectedentryP->modcount
       ));
       #else
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID='%s', flags=0x%X, modcount=%ld",
+        "new entry %ld : localID='%s', flags=0x%X, modcount=modcount_created=%ld",
         (long)fChangeLog.getNumRecords(),
         affectedentryP->dbrecordid,
         (int)affectedentryP->flags,
@@ -2044,19 +2084,21 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
       for (uInt32 si=0; si<fLoadedChangeLogEntries; si++) {
         #ifdef NUMERIC_LOCALIDS
         PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-          "%ld : localID=%ld, flags=0x%X, modcount=%ld",
-          si,
-          fLoadedChangeLog[si].dbrecordid,
-          (int)fLoadedChangeLog[si].flags,
-          fLoadedChangeLog[si].modcount
-        ));
-        #else
-        PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-          "%ld : localID='%s', flags=0x%X, modcount=%ld",
+          "%ld : localID=%ld, flags=0x%X, modcount=%ld, modcount_created=%ld",
           (long)si,
           fLoadedChangeLog[si].dbrecordid,
           (int)fLoadedChangeLog[si].flags,
-          (long)fLoadedChangeLog[si].modcount
+          (long)fLoadedChangeLog[si].modcount,
+          (long)fLoadedChangeLog[si].modcount_created
+        ));
+        #else
+        PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+          "%ld : localID='%s', flags=0x%X, modcount=%ld, modcount_created=%ld",
+          (long)si,
+          fLoadedChangeLog[si].dbrecordid,
+          (int)fLoadedChangeLog[si].flags,
+          (long)fLoadedChangeLog[si].modcount,
+          (long)fLoadedChangeLog[si].modcount_created
         ));
         #endif
       }
