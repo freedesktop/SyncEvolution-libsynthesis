@@ -1083,6 +1083,13 @@ void TSyncSession::TerminateSession(void)
     DEBUGPRINTFX(DBG_EXOTIC,("TSyncSession::TerminateSession: calling InternalResetSession"));
     InternalResetSessionEx(true);
     DEBUGPRINTFX(DBG_EXOTIC,("TSyncSession::TerminateSession: InternalResetSession called"));
+	  #ifdef SCRIPT_SUPPORT
+    // remove the session script context
+    if (fSessionScriptContextP) {
+    	delete fSessionScriptContextP;
+      fSessionScriptContextP = NULL;
+    }
+    #endif
     // remove all local datastores
     TLocalDataStorePContainer::iterator pos1;
     int n=fLocalDataStores.size();
@@ -1111,8 +1118,8 @@ void TSyncSession::TerminateSession(void)
       PDEBUGPRINTFX(DBG_PROFILE,("Session CPU usage statistics: (system/user/total)"));
       // sections
       for (i=0; i<numTPTypes; i++) {
-        sy=TP_GETSYSTEMMS(fTPInfo,(TTP_Types)i);
-        us=TP_GETUSERMS(fTPInfo,(TTP_Types)i);
+        sy = TP_GETSYSTEMMS(fTPInfo,(TTP_Types)i);
+        us = TP_GETUSERMS(fTPInfo,(TTP_Types)i);
         PDEBUGPRINTFX(DBG_PROFILE,(
           "- %-20s : %10ld /%10ld /%10ld ms",
           TP_TypeNames[i],
@@ -1122,8 +1129,8 @@ void TSyncSession::TerminateSession(void)
         ));
       }
       // total
-      sy=TP_GETTOTALSYSTEMMS(fTPInfo);
-      us=TP_GETTOTALUSERMS(fTPInfo);
+      sy = TP_GETTOTALSYSTEMMS(fTPInfo);
+      us = TP_GETTOTALUSERMS(fTPInfo);
       PDEBUGPRINTFX(DBG_PROFILE,(
         "- TOTAL                : %10ld /%10ld /%10ld ms",
         sy,
@@ -1131,7 +1138,7 @@ void TSyncSession::TerminateSession(void)
         sy+us
       ));
       // Real time
-      uInt32 rt=TP_GETREALTIME(fTPInfo);
+      uInt32 rt = TP_GETREALTIME(fTPInfo);
       PDEBUGPRINTFX(DBG_PROFILE,(
         "- Real Time            : %10ld ms",
         rt
@@ -1265,16 +1272,9 @@ void TSyncSession::InternalResetSessionEx(bool terminationCall)
   fLogEnabled = getSessionConfig()->fLogEnabled;
   #endif
   #ifdef SCRIPT_SUPPORT
-  // delete the script context if any
-  /* %%% don't re-initialize the session context
-  if (fSessionScriptContextP) {
-    delete fSessionScriptContextP;
-    fSessionScriptContextP=NULL;
-  }
-  */
-  /* %%% new approach: retain session variables if InternalResetSessionEx() is called more than once in the same session
-   *     (which is normal procedure in clients, where SelectProfile calls ResetSession)
-   */
+  // retain session variables if InternalResetSessionEx() is called more than once in the same session
+  // (which is normal procedure in clients, where SelectProfile calls ResetSession)
+  // Note: fSessionScriptContextP will be deleted in the destructor
   if (!fSessionScriptContextP) {
     if (!terminationCall && !fTerminated) {
       // prepare session-level scripts
