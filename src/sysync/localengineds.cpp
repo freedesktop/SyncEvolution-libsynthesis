@@ -2956,13 +2956,13 @@ bool TLocalEngineDS::engHandleSyncOpStatus(TStatusCommand *aStatusCmdP,TSyncOpCo
   switch (sop) {
     case sop_wants_add:
     case sop_add:
-      if (statuscode==201) {
+      if (statuscode<300 || statuscode==419) {
+      	// All ok status 2xx as well as special "merged" 419 is ok for an add:
+      	// Whatever remote said, I know this is an add and so I counts this as such
+        // (even if the remote somehow merged it with existing data,
+        // it is obviously a new item in my sync set with this remote)
         fRemoteItemsAdded++;
         dsConfirmItemOp(sop_add,localID,remoteID,true); // ok added
-      }
-      else if (statuscode==200) {
-        fRemoteItemsUpdated++;
-        dsConfirmItemOp(sop_replace,localID,remoteID,true); // ok replaced
       }
       else if (
         statuscode==418 &&
