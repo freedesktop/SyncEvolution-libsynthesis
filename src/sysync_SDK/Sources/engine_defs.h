@@ -404,7 +404,14 @@ enum TProgressEventEnum {
       extra2=incoming bytes) */
   PEV_DSSTATS_D = 30,
   /** engine is in process of suspending */
-  PEV_SUSPENDING = 31
+  PEV_SUSPENDING = 31,
+
+  /**
+   * range of event codes that can be used by applications for their
+   * own purposes
+   */
+  PEV_CUSTOM_START = 128,
+  PEV_CUSTOM_END = 255
 };
 
 
