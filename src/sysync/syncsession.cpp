@@ -3029,6 +3029,16 @@ void TSyncSession::addEncoding(string &aString)
 } // TSyncSession::addEncoding
 
 
+// set encoding for session
+void TSyncSession::setEncoding(SmlEncoding_t aEncoding)
+{
+  Ret_t err=smlSetEncoding(fSmlWorkspaceID,aEncoding);
+  if (err==SML_ERR_OK) {
+  	fEncoding = aEncoding;
+  }
+} // TSyncSession::setEncoding
+
+
 // find remote datastore by (remote party specified) URI
 TRemoteDataStore *TSyncSession::findRemoteDataStore(const char *aDatastoreURI)
 {

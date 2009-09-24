@@ -325,6 +325,7 @@ public:
   InstanceID_t getSmlWorkspaceID(void) { return fSmlWorkspaceID; };
   const char *getEncodingName(void); // encoding suffix in MIME type
   SmlEncoding_t getEncoding(void) { return fEncoding; }; // current encoding
+  void setEncoding(SmlEncoding_t aEncoding); // set encoding for session
   void addEncoding(string &aString); // add current encoding spec to given (type-)string
   sInt32 getSmlWorkspaceFreeBytes(void) { return ((sInt32) smlGetFreeBuffer(fSmlWorkspaceID)); };
   #ifdef ENGINEINTERFACE_SUPPORT

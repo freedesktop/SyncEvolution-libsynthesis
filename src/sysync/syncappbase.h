@@ -486,6 +486,10 @@ public:
   Ret_t getSmlInstanceUserData(InstanceID_t aInstanceID, void **aUserDataPP);
   Ret_t setSmlInstanceUserData(InstanceID_t aInstanceID, void *aUserDataP);
   void freeSmlInstance(InstanceID_t aInstance);
+	// determine encoding from beginning of SyncML message data
+	static SmlEncoding_t encodingFromData(cAppPointer aData, memSize aDataSize);
+	// determine encoding from Content-Type: header value
+	static SmlEncoding_t encodingFromContentType(cAppCharP aTypeString);
   // virtual handlers for SyncML toolkit callbacks, must be separately derived for server/client cases
   // - Start/End Message: derived method in server case actually creates session
   virtual Ret_t StartMessage(

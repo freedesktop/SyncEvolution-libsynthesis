@@ -50,6 +50,7 @@ void TEngineCommConfig::clear(void)
 {
   // init defaults
   fSessionIDCGIPrefix = "sessionid=";
+  fSessionIDCGI = true;
   // clear inherited  
   inherited::clear();
 } // TEngineCommConfig::clear
@@ -63,6 +64,8 @@ bool TEngineCommConfig::localStartElement(const char *aElementName, const char *
   // checking the elements
   if (strucmp(aElementName,"sessionidcgiprefix")==0)
     expectString(fSessionIDCGIPrefix);
+  if (strucmp(aElementName,"sessionidcgi")==0)
+    expectBool(fSessionIDCGI);
   else
     return inherited::localStartElement(aElementName,aAttributes,aLine);
   // ok
@@ -135,7 +138,8 @@ void TEngineSessionDispatch::generateRespURI(
 )
 {
   TEngineCommConfig *commCfgP = static_cast<TEngineCommConfig *>(getRootConfig()->fCommConfigP);
-  if (aLocalURI && aSessionID && commCfgP) {
+  if (aLocalURI && aSessionID && commCfgP && commCfgP->fSessionIDCGI) {
+  	// include session ID as CGI into RespURI
     aRespURI=aLocalURI;
     // see if there is already a sessionid in this localURI
     sInt16 n=aRespURI.find(commCfgP->fSessionIDCGIPrefix);
@@ -340,7 +344,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
       // - create session object
       sessionP =
         static_cast<TServerConfig *>(sessionDispatchP->getRootConfig()->fAgentConfigP)
-          ->CreateServerSession(NULL,aSessionName);
+          ->CreateServerSession(NULL,SessionIDString.c_str());
       if (sessionP) {
       	// assign to handle
         sessionHandleP->fServerSessionP = sessionP;

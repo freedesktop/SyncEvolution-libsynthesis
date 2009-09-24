@@ -396,13 +396,14 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
   switch (fEngineState) {
 
     // Idle state
-    case ces_done :
+    case ces_done : {
       // session done, nothing happens any more
       aStepCmd = STEPCMD_DONE;
       sta = LOCERR_OK;
       break;
+    }
 
-    case ces_idle :
+    case ces_idle : {
       // in idle, we can only start a session
       switch (stepCmdIn) {
         case STEPCMD_CLIENTSTART:
@@ -417,36 +418,53 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           break;
       } // switch stepCmdIn for ces_idle
       break;
+    }
 
     // Ready for generation steps
-    case ces_generating:
+    case ces_generating: {
       switch (stepCmdIn) {
         case STEPCMD_STEP :
           sta = generatingStep(aStepCmd,aInfoP);
           break;
       } // switch stepCmdIn for ces_generating
       break;
+    }
 
     // Ready for processing steps
-    case ces_processing:
+    case ces_processing: {
       switch (stepCmdIn) {
         case STEPCMD_STEP :
           sta = processingStep(aStepCmd,aInfoP);
           break;
       } // switch stepCmdIn for ces_processing
       break;
+    }
 
     // Waiting for SyncML data
-    case ces_needdata:
+    case ces_needdata: {
       switch (stepCmdIn) {
-        case STEPCMD_GOTDATA :
+        case STEPCMD_GOTDATA : {
           // got data, now start processing it
           OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_recvend,NULL,0,0,0);
+          // check content type now
+          MemPtr_t data = NULL;
+          MemSize_t datasize;
+          smlPeekMessageBuffer(getSmlWorkspaceID(), false, &data, &datasize);
+          // check content type
+          SmlEncoding_t enc = TSyncAppBase::encodingFromData(data, datasize);
+          if (enc!=getEncoding()) {
+            PDEBUGPRINTFX(DBG_ERROR,("Incoming data is not SyncML"));
+            sta = LOCERR_BADCONTENT; // bad content type
+				    aStepCmd = STEPCMD_ERROR;
+            break;
+          }
+          // content type ok - switch to processing mode
           fIgnoreMsgErrs=false; // do not ignore errors by default
           fEngineState = ces_processing;
           aStepCmd = STEPCMD_OK;
           sta = LOCERR_OK;
           break;
+        }
         case STEPCMD_RESENDDATA :
         	// instead of having received new data, the network layer has found it needs to re-send the data.
           // performing the STEPCMD_RESENDDATA just generates a new send start event, but otherwise no engine action
@@ -457,10 +475,11 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           break;
       } // switch stepCmdIn for ces_needdata
       break;
+    }
 
     // Waiting until SyncML data is sent
     case ces_dataready:
-    case ces_resending:
+    case ces_resending: {
       switch (stepCmdIn) {
         case STEPCMD_SENTDATA :
         	// allowed in dataready or resending state
@@ -472,10 +491,12 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           break;
       } // switch stepCmdIn for ces_dataready
       break;
+    }
 
-  case numClientEngineStates:
+  	case numClientEngineStates: {
       // invalid
       break;
+    }
 
   } // switch fEngineState
 

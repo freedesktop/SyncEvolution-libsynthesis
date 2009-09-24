@@ -97,6 +97,7 @@ public:
   TEngineCommConfig(TConfigElement *aParentElementP);
   virtual ~TEngineCommConfig();
   // config vars
+  bool fSessionIDCGI;
   string fSessionIDCGIPrefix;
 protected:
   // check config elements

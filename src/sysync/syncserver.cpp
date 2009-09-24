@@ -290,12 +290,14 @@ TServerConfig::~TServerConfig()
 void TServerConfig::clear(void)
 {
   // init defaults
-  fRequestedAuth=auth_md5;
-  fRequiredAuth=auth_md5;
-  fAutoNonce=true;
+  fRequestedAuth = auth_md5;
+  fRequiredAuth = auth_md5;
+  fAutoNonce = true;
   fConstantNonce.erase();
   fExternalURL.erase();
-  fMaxGUIDSizeSent=32; // reasonable size, but prevent braindamaged Exchange-size IDs to be sent
+  fMaxGUIDSizeSent = 32; // reasonable size, but prevent braindamaged Exchange-size IDs to be sent
+  fUseRespURI = true;
+  fRespURIOnlyWhenDifferent = true;
   // clear inherited  
   inherited::clear();
   // modify timeout after inherited sets it
@@ -322,6 +324,10 @@ bool TServerConfig::localStartElement(const char *aElementName, const char **aAt
 		expectString(fExternalURL);
   else if (strucmp(aElementName,"maxguidsizesent")==0)
     expectUInt16(fMaxGUIDSizeSent);
+  else if (strucmp(aElementName,"sendrespuri")==0)
+    expectBool(fUseRespURI);
+  else if (strucmp(aElementName,"respurionlywhendifferent")==0)
+    expectBool(fRespURIOnlyWhenDifferent);
   // - none known here
   else
     return inherited::localStartElement(aElementName,aAttributes,aLine);
@@ -356,11 +362,12 @@ TSyncServer::TSyncServer(
   TSyncSession(aAppBaseP,aSessionID)  
   #ifdef ENGINEINTERFACE_SUPPORT
   ,fEngineState(ses_needdata)
+  ,fRequestSize(0)
   #endif
 {
   // init answer buffer
   fBufferedAnswer=NULL;
-  fBufferedAnswerSize=0;  
+  fBufferedAnswerSize=0;
   // reset data counts
   fIncomingBytes=0;
   fOutgoingBytes=0;
@@ -368,8 +375,10 @@ TSyncServer::TSyncServer(
   InternalResetSession();
   // save session handle
   fSessionHandleP = aSessionHandleP; // link to handle
-  // create all locally available datastores from config
+	// get config defaults
   TServerConfig *configP = static_cast<TServerConfig *>(aAppBaseP->getRootConfig()->fAgentConfigP);
+  fUseRespURI = configP->fUseRespURI;
+  // create all locally available datastores from config
   TLocalDSList::iterator pos;
   for (pos=configP->fDatastores.begin(); pos!=configP->fDatastores.end(); pos++) {
     // create the datastore
@@ -443,7 +452,6 @@ bool TSyncServer::syncHdrFailure(bool aTryAgain)
 
 
 // undefine these only for tests. Introduced to find problem with T68i
-#define USE_RESPURI
 #define RESPURI_ONLY_WHEN_NEEDED
 
 // create a RespURI string. If none needed, return NULL
@@ -451,24 +459,24 @@ SmlPcdataPtr_t TSyncServer::newResponseURIForRemote(void)
 {
   // do it in a transport-independent way, therefore let dispatcher do it
   string respURI; // empty string
-  #ifdef USE_RESPURI
-  getSyncAppBase()->generateRespURI(
-    respURI,  // remains unaffected if no RespURI could be calculated
-    fInitialLocalURI.c_str(), // initial URI used by remote to send first message
-    fLocalSessionID.c_str()  // server generated unique session ID
-  );
-  // Omit RespURI if local URI as seen by client is identical
-  #ifdef RESPURI_ONLY_WHEN_NEEDED
-  // %%% attempt to make T68i work
-  if (respURI==fLocalURI) {
-    respURI.erase();
-    DEBUGPRINTFX(DBG_SESSION,(
-      "Generated RespURI and sourceLocURI are equal (%s)-> RespURI omitted",
-      fLocalURI.c_str()
-    ));
+  if (fUseRespURI) {  
+    getSyncAppBase()->generateRespURI(
+      respURI,  // remains unaffected if no RespURI could be calculated
+      fInitialLocalURI.c_str(), // initial URI used by remote to send first message
+      fLocalSessionID.c_str()  // server generated unique session ID
+    );
+    // Omit RespURI if local URI as seen by client is identical
+    if (getServerConfig()->fRespURIOnlyWhenDifferent) {
+      // create RespURI only if different from original URI
+      if (respURI==fLocalURI) {
+        respURI.erase();
+        DEBUGPRINTFX(DBG_SESSION,(
+          "Generated RespURI and sourceLocURI are equal (%s)-> RespURI omitted",
+          fLocalURI.c_str()
+        ));
+      }
+    }
   }
-  #endif
-  #endif
   // Note: returns NULL if respURI is empty string
   return newPCDataOptString(respURI.c_str());
 } // newResponseURIForRemote
@@ -1415,16 +1423,47 @@ TSyError TSyncServer::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
     // Waiting for SyncML request data
     case ses_needdata:
       switch (stepCmdIn) {
-        case STEPCMD_GOTDATA :
-          // got data, now start processing it
+        case STEPCMD_GOTDATA : {
+        	// got data, check content type
+          MemPtr_t data = NULL;
+          smlPeekMessageBuffer(getSmlWorkspaceID(), false, &data, &fRequestSize); // get request size      
+          SmlEncoding_t enc = TSyncAppBase::encodingFromData(data, fRequestSize);
+					if (getEncoding()==SML_UNDEF) {
+          	// no encoding known so far - use what we found from looking at data
+            PDEBUGPRINTFX(DBG_ERROR,(
+            	"Incoming data had no or invalid content type, Determined encoding by looking at data: %s",
+              SyncMLEncodingNames[enc]
+            ));
+            setEncoding(enc);
+          }
+          else if (getEncoding()!=enc) {
+          	// already known encoding does not match actual encoding
+            PDEBUGPRINTFX(DBG_ERROR,(
+            	"Warning: Incoming data encoding mismatch: expected=%s, found=%s",
+              SyncMLEncodingNames[getEncoding()],
+              SyncMLEncodingNames[enc]
+            ));
+          }
+          if (getEncoding()==SML_UNDEF) {
+          	// if session encoding is still unknown at this point, reject data as non-SyncML
+            PDEBUGPRINTFX(DBG_ERROR,("Incoming data is not SyncML"));
+            sta = LOCERR_BADCONTENT; // bad content type
+				    aStepCmd = STEPCMD_ERROR;
+            // Note: we do not abort the session here - app could have a retry strategy and re-enter
+            //       this step with better data
+            break;            
+          }
+          // content type ok - switch to processing mode
           fEngineState = ses_processing;
           aStepCmd = STEPCMD_OK;
           sta = LOCERR_OK;
           break;
+        }
       } // switch stepCmdIn for ces_processing
       break;
 
     // Waiting until SyncML answer data is sent
+    // (only when session needs to continue, otherwise we are in ses_done)
     case ses_dataready:
       switch (stepCmdIn) {
         case STEPCMD_SENTDATA :
@@ -1474,11 +1513,6 @@ TSyError TSyncServer::processingStep(uInt16 &aStepCmd, TEngineProgressInfo *aInf
   localstatus sta = LOCERR_WRONGUSAGE;
   InstanceID_t myInstance = getSmlWorkspaceID();
   Ret_t rc;
-  
-  // %%% non-functional at this time
-  sta = LOCERR_NOTIMP;
-  /*
-  #error "%%% figure out encoding if we are starting a new session here"
 
   // now process next command
   PDEBUGPRINTFX(DBG_EXOTIC,("Calling smlProcessData(NEXT_COMMAND)"));
@@ -1519,42 +1553,41 @@ TSyError TSyncServer::processingStep(uInt16 &aStepCmd, TEngineProgressInfo *aInf
     aStepCmd = STEPCMD_OK;
     sta = LOCERR_OK;
   }
-  */
   // done
   return sta;
 } // TSyncServer::processingStep
 
 
 
-// Step that generates SyncML answer data
+// Step that generates (rest of) SyncML answer data at end of request
 TSyError TSyncServer::generatingStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
 {
-  localstatus sta = LOCERR_WRONGUSAGE;
-  bool done;
+  bool done, hasdata;
+  string respURI;
 
-  // %%% non-functional at this time
-  sta = LOCERR_NOTIMP;
-  /*
-  #error "%%% figure out encoding if we are starting a new session here"
-
-  //%%% at this time, generate next message in one step
-  sta = NextMessage(done);
-  if (done) {
-    // done with session, with or without error
-    fEngineState = ces_done; // blocks any further activity with the session
-    aStepCmd = STEPCMD_DONE;
-    // terminate session to provoke all end-of-session progress events
-    TerminateSession();
-  }
-  else if (sta==LOCERR_OK) {
-    // next is sending request to server
-    fEngineState = ces_dataready;
+	// finish request
+	done = EndRequest(hasdata, respURI, fRequestSize);
+  // check different exit points
+  if (hasdata) {
+  	// there is data to be sent
     aStepCmd = STEPCMD_SENDDATA;
-    OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendstart,NULL,0,0,0);
+    fEngineState = ses_dataready;
   }
-  */
+  else {
+  	// no more data to send
+  	aStepCmd = STEPCMD_OK; // need one more step to finish
+  }
+  // in any case, if done, all susequent steps will return STEPCMD_DONE
+  if (done) {
+  	// Session is done
+  	TerminateSession();
+    // subsequent steps will all return STEPCMD_DONE
+  	fEngineState = ses_done;
+  }
+  // request reset
+  fRequestSize = 0;
   // return status
-  return sta;
+  return LOCERR_OK;
 } // TSyncServer::generatingStep
 
 
@@ -1641,6 +1674,58 @@ TSyError writeAbortStatus(
 
 
 
+// - read content type string
+static TSyError readContentType(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
+  string contentType = SYNCML_MIME_TYPE;
+  mykeyP->fServerSessionP->addEncoding(contentType);
+  return TStructFieldsKey::returnString(
+    contentType.c_str(),
+    aBuffer,aBufSize,aValSize
+  );
+} // readContentType
+
+
+// - write content type string
+static TSyError writeContentType(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  string contentType((cAppCharP)aBuffer,aValSize);
+  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
+  mykeyP->fServerSessionP->setEncoding(TSyncAppBase::encodingFromContentType(contentType.c_str()));
+  return LOCERR_OK;
+} // writeContentType
+
+
+// - read respURI enable flag
+static TSyError readSendRespURI(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnInt(mykeyP->fServerSessionP->fUseRespURI, sizeof(bool), aBuffer, aBufSize, aValSize);
+} // readSendRespURI
+
+
+// - write respURI enable flag
+static TSyError writeSendRespURI(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
+	mykeyP->fServerSessionP->fUseRespURI = *((uInt8P)aBuffer);
+  return LOCERR_OK;
+} // writeSendRespURI
+
+
 // accessor table for server session key
 static const TStructFieldInfo ServerParamFieldInfos[] =
 {  
@@ -1648,6 +1733,8 @@ static const TStructFieldInfo ServerParamFieldInfos[] =
   { "localSessionID", VALTYPE_TEXT, false, 0, 0, &readLocalSessionID, NULL },
   { "initialLocalURI", VALTYPE_TEXT, false, 0, 0, &readInitialLocalURI, NULL },
   { "abortStatus", VALTYPE_INT16, true, 0, 0, &readAbortStatus, &writeAbortStatus },
+  { "contenttype", VALTYPE_TEXT, true, 0, 0, &readContentType, &writeContentType },
+  { "sendrespuri", VALTYPE_INT8, true, 0, 0, &readSendRespURI, &writeSendRespURI },
 };
 
 // get table describing the fields in the struct

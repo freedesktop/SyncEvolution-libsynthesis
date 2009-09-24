@@ -72,6 +72,9 @@ public:
   string fExternalURL;
   // - max size of GUID sent if client does not specify a MaxGUIDSize in devInf. 0=unlimited
   uInt16 fMaxGUIDSizeSent;
+  // - respURI
+  bool fUseRespURI;
+  bool fRespURIOnlyWhenDifferent;
 protected:
   // check config elements
   #ifndef HARDCODED_CONFIG
@@ -144,6 +147,8 @@ public:
   /// @brief Get new session key to access details of this session
   virtual appPointer newSessionKey(TEngineInterface *aEngineInterfaceP);
   #endif // ENGINEINTERFACE_SUPPORT
+  // respuri
+  bool fUseRespURI;
 protected:
   // access to config
   TServerConfig *getServerConfig(void);
@@ -175,6 +180,8 @@ protected:
   TSyError processingStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP);
   // - Server engine state
   TServerEngineState fEngineState;
+  // - request size
+  MemSize_t fRequestSize;
   #endif // ENGINEINTERFACE_SUPPORT
   // set if map command received in this session
   bool fMapSeen;

@@ -2496,6 +2496,52 @@ void TSyncAppBase::freeSmlInstance(InstanceID_t aInstance)
 } // TSyncAppBase::freeSmlInstance
 
 
+// determine encoding from beginning of SyncML message data
+SmlEncoding_t TSyncAppBase::encodingFromData(cAppPointer aData, memSize aDataSize)
+{
+	SmlEncoding_t enc = SML_UNDEF;
+  if (aData && aDataSize>=5) {
+  	// check for WBXML intro sequences
+    if (
+      (memcmp((cAppCharP)aData,"\x02\x00\x00",3)==0) || // WBXML V2 + Public identifier as string
+      (memcmp((cAppCharP)aData,"\x02\xA4\x01",3)==0) || // WBXML V2 + Public identifier 0x1201 for SyncML 1.2
+      (memcmp((cAppCharP)aData,"\x02\x9F\x53",3)==0) || // WBXML V2 + Public identifier 0x0FD3 for SyncML 1.1
+      (memcmp((cAppCharP)aData,"\x02\x9F\x51",3)==0)    // WBXML V2 + Public identifier 0x0FD1 for SyncML 1.0
+    )
+      enc=SML_WBXML;
+    else {
+    	// could be XML
+      // - skip UTF-8 BOM if there is one
+      cUInt8P p = (cUInt8P)aData;
+      if (p[0]==0xEF && p[1]==0xBB && p[2]==0xBF)
+      	p+=3; // skip the BOM
+      // now check for XML
+	    if (strnncmp((cAppCharP)p,"<?xml",5)==0) enc=SML_XML;
+  	}
+  }
+  return enc;
+} // TSyncAppBase::encodingFromData
+
+
+// determine encoding from Content-Type: header value
+SmlEncoding_t TSyncAppBase::encodingFromContentType(cAppCharP aTypeString)
+{
+	sInt16 enc = SML_UNDEF;
+  if (aTypeString) {
+    stringSize l=strlen(SYNCML_MIME_TYPE SYNCML_ENCODING_SEPARATOR);
+    if (strucmp(aTypeString,SYNCML_MIME_TYPE SYNCML_ENCODING_SEPARATOR,l)==0) {
+      // is SyncML, check encoding
+      cAppCharP p = strchr(aTypeString,';');
+      sInt16 cl = p ? p-aTypeString-l : 0; // length of encoding string (charset could be appended here)  
+      StrToEnum(SyncMLEncodingMIMENames,numSyncMLEncodings,enc,aTypeString+l,cl);
+    }
+  }
+  return static_cast<SmlEncoding_t>(enc);
+} // TSyncAppBase::encodingFromContentType
+
+
+
+
 // save app state (such as settings in datastore configs etc.)
 void TSyncAppBase::saveAppState(void)
 {
