@@ -455,6 +455,13 @@ TSyError TSyncClient::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
           if (enc!=getEncoding()) {
             PDEBUGPRINTFX(DBG_ERROR,("Incoming data is not SyncML"));
             sta = LOCERR_BADCONTENT; // bad content type
+            #ifdef SYDEBUG
+            if (data) DumpSyncMLBuffer(data,datasize,false,SML_ERR_UNSPECIFIC);
+            #endif    
+            // abort the session (causing proper error events to be generated and reported back)
+            AbortSession(sta, true);
+            // session is now done
+            fEngineState = ces_done;
 				    aStepCmd = STEPCMD_ERROR;
             break;
           }
