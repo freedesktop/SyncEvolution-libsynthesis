@@ -186,7 +186,6 @@ c_SRC_serverEngine=\
 cpp_SRC_serverEngine=\
   $(PLATFORM_EXT)\
   $(SERVERENGINE)\
-  $(BINFILES)\
   $(ODBC_DB)\
   $(API_DB)
 
