@@ -2230,7 +2230,7 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
     // NOTE for client case:
     //   ALL instantiated datastores have already sent an Alert to the server by now here
 
-    // check DS 1.2 filter
+    // check DS 1.2 <filter>
     sta = engProcessDS12Filter(aTargetFilter);
     if (sta != LOCERR_OK) {
       aStatusCommand.setStatusCode(sta);

@@ -2213,7 +2213,7 @@ void TSyncSession::ContinuePackage(
     pos=aNextMessageCommands.begin();
     if (pos==aNextMessageCommands.end()) break; // done
     // take command out of the list
-    TSmlCommand *cmdP=(*pos);
+    cmdP=(*pos);
     aNextMessageCommands.erase(pos);
     // issue it (without luck, might land in the queue again --> %%% endless retry??)
     if (!issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) break;
@@ -2510,9 +2510,9 @@ Ret_t TSyncSession::processHeader(TSyncHeader *aSyncHdrP)
                 // there was at least one queued syncend executed AFTER end of incoming sync package
                 // This means that we must finalize the sync-from-remote phase for the datastores here
                 // (as it was suppressed when the incoming sync package had ended)
-                TLocalDataStorePContainer::iterator pos;
-                for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-                  (*pos)->engEndOfSyncFromRemote(true);
+                TLocalDataStorePContainer::iterator dspos;
+                for (dspos=fLocalDataStores.begin(); dspos!=fLocalDataStores.end(); ++dspos) {
+                  (*dspos)->engEndOfSyncFromRemote(true);
                 }
               }
               else {
@@ -2521,10 +2521,10 @@ Ret_t TSyncSession::processHeader(TSyncHeader *aSyncHdrP)
               // now issue next package commands if any
               if (fNewOutgoingPackage) {
                 PDEBUGPRINTFX(DBG_SESSION,("New package: Sending %ld commands that were generated earlier for this package",(long)fNextPackageCommands.size()));
-                TSmlCommandPContainer::iterator pos;
-                for (pos=fNextPackageCommands.begin(); pos!=fNextPackageCommands.end(); pos++) {
+                TSmlCommandPContainer::iterator nppos;
+                for (nppos=fNextPackageCommands.begin(); nppos!=fNextPackageCommands.end(); nppos++) {
                   // issue it (might land in NextMessageCommands)
-                  issueRootPtr((*pos));
+                  issueRootPtr((*nppos));
                 }
                 // done sending next package commands
                 fNextPackageCommands.clear(); // clear list
@@ -3530,9 +3530,9 @@ localstatus TSyncSession::initSync(
   #endif
   #ifdef OBJECT_FILTERING
   if (sta==LOCERR_OK) {
-    // %%% parse DS 1.2 <filter>
+    // %%% check for DS 1.2 <filter> in <Sync> command as well (we do parse <filter> in <Alert> already)
     #if !defined _MSC_VER || defined WINCE
-    #warning "tbd%%%:  parse <filter>"
+    #warning "tbd %%%: check for DS 1.2 <filter> in <Sync> command as well (we do parse <filter> in <Alert> already)"
     #endif
   }
   #endif
@@ -4694,10 +4694,10 @@ TSmlCommand *TSyncSession::processAlertItem(
         );
         // echo next anchor sent with item back in status
         // %%% specs say that only next anchor must be echoed, SCTS echoes both
-        SmlItemPtr_t aItemP = newItem(); // empty item
+        SmlItemPtr_t itemP = newItem(); // empty item
         // NOTE: anchor is MetInf, but is echoed in DATA part of item, not META!
-        aItemP->data = newMetaAnchor(nextRemoteAnchor,NULL); // only next (like specs)
-        aStatusCommand.addItem(aItemP); // add it to status
+        itemP->data = newMetaAnchor(nextRemoteAnchor,NULL); // only next (like specs)
+        aStatusCommand.addItem(itemP); // add it to status
       }
       break;
     case 224 :
