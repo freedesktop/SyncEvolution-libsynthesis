@@ -337,7 +337,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
           time(NULL);
         sid =
           ((sid >> 16) & 0xFFFF) + ((sid << 47) & 0x7FFF000000000000LL) + // aaaa00000000dddd
-          (((uInt32)sessionHandleP) << 16); // 0000bbbbcccc0000
+          (((uInt32)(uInt64)sessionHandleP) << 16); // 0000bbbbcccc0000
         // - make a string of it
         StringObjPrintf(SessionIDString,"%lld",sid);
       }
