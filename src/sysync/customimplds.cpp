@@ -1046,10 +1046,12 @@ localstatus TCustomImplDS::dsBeforeStateChange(TLocalEngineDSState aOldState,TLo
     	while (fFinalisationQueue.size()>0) {
         // process finalisation script
         TMultiFieldItem *itemP = *(fFinalisationQueue.begin());
+	    	PDEBUGBLOCKFMTCOLL(("Finalizing","Finalizing item","LocalID=%s",itemP->getLocalID()));
         TScriptContext::execute(
         	fScriptContextP,fConfigP->fFieldMappings.fFinalisationScript,fConfigP->getDSFuncTableP(),fAgentP,
           itemP,true // pass the item from the queue, is writable (mainly to allow fields to be passed as by-ref params)
         );
+	      PDEBUGENDBLOCK("Finalizing");
         // no longer needed
         delete itemP;
         // remove from queue
