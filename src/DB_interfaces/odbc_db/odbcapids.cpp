@@ -1226,7 +1226,7 @@ void TODBCApiDS::writeArray(bool aDelete, bool aInsert, SQLHSTMT aStatement, TMu
   TODBCFieldMapArrayItem *fmaiP = dynamic_cast<TODBCFieldMapArrayItem *>(aMapItemP);
   PDEBUGPRINTFX(DBG_DATA+DBG_DBAPI+DBG_EXOTIC,("Writing Array, fmaiP=0x%lX",(long)fmaiP));
   if (!fmaiP) return; // do nothing
-  PDEBUGPRINTFX(DBG_DATA+DBG_DBAPI+DBG_EXOTIC,("Writing Array for field '%s'",fmaiP->getName()));
+  PDEBUGPRINTFX(DBG_DATA+DBG_DBAPI+DBG_EXOTIC,("Writing Array"));
   // Check initscript first. If it returns false, we do not insert anything
   bool doit;
   #ifdef SCRIPT_SUPPORT
