@@ -894,6 +894,7 @@ TSyncSession::TSyncSession(
   TP_START(fTPInfo,TP_general);
   DEBUGPRINTFX(DBG_EXOTIC,("TSyncSession::TSyncSession: Profiling initialized"));
   // set fields
+  fEncoding = SML_UNDEF;
   fLocalAbortReason = true; // unless set otherwise 
   fAbortReasonStatus = 0;
   fSessionIsBusy = false; // not busy by default
