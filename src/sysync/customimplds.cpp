@@ -1188,7 +1188,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
     MapEntryTypeNames[aEntryType],
     aLocalID && *aLocalID ? aLocalID : "<none>",
     aRemoteID ? (*aRemoteID ? aRemoteID : "<set none>") : "<do not change>",
-    aMapFlags,
+    (long)aMapFlags,
     (int)aDelete
   ));
   // - if there is a localID, search map entry (even if it is deleted)
@@ -1202,7 +1202,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
           "- found entry by entrytype/localID='%s' - remoteid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
           aLocalID,
           (*pos).remoteid.c_str(),
-          (*pos).mapflags,
+          (long)(*pos).mapflags,
           (int)(*pos).changed,
           (int)(*pos).deleted,
           (int)(*pos).added,
@@ -1227,7 +1227,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
           "- found entry by remoteID='%s' - localid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
           aRemoteID,
           (*pos).localid.c_str(),
-          (*pos).mapflags,
+          (long)(*pos).mapflags,
           (int)(*pos).changed,
           (int)(*pos).deleted,
           (int)(*pos).added,
@@ -1294,7 +1294,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
     // now item exists, set details
     (*pos).deleted=false; // in case we had it deleted before, but not yet saved
     // clear those flags shown in aClearFlags (by default: all) and set those in aMapFlags
-    (*pos).mapflags = (*pos).mapflags & ~aClearFlags | aMapFlags;
+    (*pos).mapflags = ((*pos).mapflags & ~aClearFlags) | aMapFlags;
     // now remove all other items with same remoteID (except if we have no or empty remoteID)
     if (aEntryType==mapentry_normal && aRemoteID && *aRemoteID) {
       // %%% note: this is strictly necessary only for add, but cleans up for update
@@ -1305,7 +1305,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
           PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
             "- cleanup: removing same remoteID from other entry with localid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
             (*pos2).localid.c_str(),
-            (*pos2).mapflags,
+            (long)(*pos2).mapflags,
             (int)(*pos2).changed,
             (int)(*pos2).deleted,
             (int)(*pos2).added,
@@ -1887,7 +1887,7 @@ void TCustomImplDS::implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteI
   PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC+DBG_HOT,(
     "localID='%s' marked for resending by setting mapflag_resend (AND mark for eventual resume!), flags now=0x%lX",
     (*pos).localid.c_str(),
-    (*pos).mapflags
+    (long)(*pos).mapflags
   ));
 } // TCustomImplDS::implMarkItemForResend
 
@@ -1932,7 +1932,7 @@ void TCustomImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteI
       PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
         "implMarkItemForResume: localID='%s', has mapFlags=0x%lX and was probably executed at remote -> NOT marked for resume",
         (*pos).localid.c_str(),
-        (*pos).mapflags
+        (long)(*pos).mapflags
       ));
       (*pos).markforresume=false;
     }
@@ -1944,7 +1944,7 @@ void TCustomImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteI
       PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
         "implMarkItemForResume: localID='%s', has mapFlags=0x%lX and was %s executed at remote%s -> mark for resume",
         (*pos).localid.c_str(),
-        (*pos).mapflags,
+        (long)(*pos).mapflags,
         aUnSent ? "NOT" : "probably",
         fSessionP->getSessionConfig()->fRelyOnEarlyMaps ? " (relying on early maps)" : ""
       ));
@@ -2098,7 +2098,7 @@ localstatus TCustomImplDS::implGetItem(
               "Item localID='%s' already has map entry: remoteid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
               syncsetitemP->localid.c_str(),
               (*pos).remoteid.c_str(),
-              (*pos).mapflags,
+              (long)(*pos).mapflags,
               (int)(*pos).changed,
               (int)(*pos).deleted,
               (int)(*pos).added,
@@ -2635,7 +2635,6 @@ bool TCustomImplDS::implProcessItem(
   TP_DEFIDX(li);
   TP_SWITCH(li,fSessionP->fTPInfo,TP_database);
   // get field map list
-  TFieldMapList &fml = fConfigP->fFieldMappings.fFieldMapList;
   SYSYNC_TRY {
     // get casted item pointer
     TMultiFieldItem *myitemP = (TMultiFieldItem *)aItemP;
