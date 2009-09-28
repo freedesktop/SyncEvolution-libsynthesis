@@ -493,6 +493,7 @@ TSyError Session_SaveNonce( CContext sContext, cAppCharP nonce )
   DEBUG_DB      ( sc->fCB, MyDB, Se_SN, "%d '%s'", sc,nonce );
 
   if (sc->fDev) { sc->fDev->fToken= nonce;
+                  sc->fDevList.fChanged= true;
     err=          sc->fDevList.SaveDB( true, sc->fCB ); // save it
   } // if
 
