@@ -240,12 +240,13 @@ void TPluginDSConfig::localResolve(bool aLastPass)
 TLocalEngineDS *TPluginDSConfig::newLocalDataStore(TSyncSession *aSessionP)
 {
   // Synccap defaults to normal set supported by the engine by default
-  TLocalEngineDS *ldsP =
-    #ifdef SYSYNC_CLIENT
-    new TPluginApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_SERVER));
-    #else
-    new TPluginApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_CLIENT));
-    #endif
+  TLocalEngineDS *ldsP;
+  if (IS_CLIENT) {
+    ldsP = new TPluginApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_SERVER));
+  }
+  else {
+    ldsP = new TPluginApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_CLIENT));
+  }
   // do common stuff
   addTypes(ldsP,aSessionP);
   // return
@@ -1414,40 +1415,6 @@ bool TPluginApiDS::dsFinalizeLocalID(string &aLocalID)
   }
   // no change - ID is ok as-is
   return false;
-
-  /*
-	// hacky implementation for now, as this routine is not yet in the DBApi.
-  // But as we need it for iPhone only so far, and iPhone only allows statically linked DB plugins, we can call
-  // it directly
-	#ifdef IPHONE_PLUGINS_STATIC
-  #warning "Ugly hack here"
-	char *finalizedID = NULL;
-  #ifdef HARDCODED_CONTACTS
-  if (fPluginDSConfigP->fLocalDBTypeID == 1001) {
-	  sta = iPhone_addressbook::FinalizeLocalID(fDBApi_Data.fContext, aLocalID.c_str(), &finalizedID);
-  }
-  else
-  #endif // HARDCODED_CONTACTS
-  #ifdef HARDCODED_CALENDAR
-  if (fPluginDSConfigP->fLocalDBTypeID == 1002) {
-	  sta = iPhone_calendar::FinalizeLocalID(fDBApi_Data.fContext, aLocalID.c_str(), &finalizedID);
-  }
-  else
-  #endif // HARDCODED_CALENDAR
-  {
-  	return false; // no know datastore, no finalisation
-  }
-  // now get back translated ID
-  if (sta==LOCERR_OK && finalizedID) {
-		aLocalID = finalizedID;
-    free(finalizedID); // %%% should be StrDispose
-    return true; // final ID is different from temp one
-	}
-  #endif // IPHONE_PLUGINS_STATIC
-
-  // no change - ID is ok as-is
-  return false;
-  */
 } // TPluginApiDS::dsFinalizeLocalID
 
 #endif // SYSYNC_CLIENT
@@ -1506,10 +1473,10 @@ localstatus TPluginApiDS::apiUpdateItem(TMultiFieldItem &aItem)
   if (dberr==LOCERR_OK) {
     // check if ID has changed
     if (!updItemAndParentID.item.empty() && strcmp(updItemAndParentID.item.c_str(),aItem.getLocalID())!=0) {
-      #ifndef SYSYNC_CLIENT
-      // update item ID and Map
-      dsLocalIdHasChanged(aItem.getLocalID(),updItemAndParentID.item.c_str());
-      #endif
+    	if (IS_SERVER) {
+        // update item ID and Map
+        dsLocalIdHasChanged(aItem.getLocalID(),updItemAndParentID.item.c_str());
+      }
       // - update in this item we have here as well
       aItem.setLocalID(updItemAndParentID.item.c_str());
       aItem.updateLocalIDDependencies();
@@ -2289,13 +2256,16 @@ localstatus TPluginApiDS::apiLoadAdminData(
     // Note: in the main map, these are marked deleted. Before the next saveAdminData, these will
     //       be re-added (=re-activated) from the extra lists if they still exist.
     switch (mapEntry.entrytype) {
-      #ifndef SYSYNC_CLIENT
+      #ifdef SYSYNC_SERVER 
       case mapentry_tempidmap:
-        fTempGUIDMap[mapEntry.remoteid]=mapEntry.localid; // tempGUIDs are accessed by remoteID=tempID
+      	if (IS_SERVER)
+	        fTempGUIDMap[mapEntry.remoteid]=mapEntry.localid; // tempGUIDs are accessed by remoteID=tempID
         break;
-      #else
+      #endif
+      #ifdef SYSYNC_CLIENT
       case mapentry_pendingmap:
-        fPendingAddMaps[mapEntry.localid]=mapEntry.remoteid;
+      	if (IS_CLIENT)
+	        fPendingAddMaps[mapEntry.localid]=mapEntry.remoteid;
         break;
       #endif
     }
@@ -2393,12 +2363,14 @@ void TPluginApiDS::dsLogSyncResult(void)
   logData+="\r\ndevicerejected:"; StringObjAppendPrintf(logData,"%ld",(long)fRemoteItemsError);
   logData+="\r\nlocalupdated:"; StringObjAppendPrintf(logData,"%ld",(long)fLocalItemsUpdated);
   logData+="\r\ndeviceupdated:"; StringObjAppendPrintf(logData,"%ld",(long)fRemoteItemsUpdated);
-  #ifndef SYSYNC_CLIENT
-  logData+="\r\nslowsyncmatches:"; StringObjAppendPrintf(logData,"%ld",fSlowSyncMatches);
-  logData+="\r\nserverwins:"; StringObjAppendPrintf(logData,"%ld",fConflictsServerWins);
-  logData+="\r\nclientwins:"; StringObjAppendPrintf(logData,"%ld",fConflictsClientWins);
-  logData+="\r\nduplicated:"; StringObjAppendPrintf(logData,"%ld",fConflictsDuplicated);
-  #endif
+  #ifdef SYSYNC_SERVER
+  if (IS_SERVER) {
+    logData+="\r\nslowsyncmatches:"; StringObjAppendPrintf(logData,"%ld",fSlowSyncMatches);
+    logData+="\r\nserverwins:"; StringObjAppendPrintf(logData,"%ld",fConflictsServerWins);
+    logData+="\r\nclientwins:"; StringObjAppendPrintf(logData,"%ld",fConflictsClientWins);
+    logData+="\r\nduplicated:"; StringObjAppendPrintf(logData,"%ld",fConflictsDuplicated);
+  } // server
+  #endif // SYSYNC_SERVER
   logData+="\r\nsessionbytesin:"; StringObjAppendPrintf(logData,"%ld",(long)fSessionP->getIncomingBytes());
   logData+="\r\nsessionbytesout:"; StringObjAppendPrintf(logData,"%ld",(long)fSessionP->getOutgoingBytes());
   logData+="\r\ndatabytesin:"; StringObjAppendPrintf(logData,"%ld",(long)fIncomingDataBytes);

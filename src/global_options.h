@@ -8,6 +8,22 @@
 #ifndef GLOBAL_OPTIONS_H
 #define GLOBAL_OPTIONS_H
 
+
+// the following should be defined BEFORE including this file
+// - SYSYNC_CLIENT : defined if client functionality should be included
+// - SYSYNC_SERVER : defined if server functionality should be included
+//   If not defined, and SYSYNC_CLIENT is also not defined, build
+//   defaults to SYSYNC_SERVER
+// - platform defines, like MACOSX, MOBOSX, LINUX, WINCE, _WIN32
+//   __PALM_OS__, __EPOC_OS__ etc.
+// - RELEASE_VERSION : define in targets that are real product releases
+//   not internal debug/test/experimental releases
+// - RELEASE_SYDEBUG : define the debug level for RELEASE_VERSION
+//   (0=no debug code at all, 1=basic debug, 2=extended, 3=developer only)
+//   Non-release versions (RELEASE_VERSION undefined) usually have
+//   a debug level of 2 or 3 (defined in target or product options).
+
+
 // signal that we are compiling with the SYSYNC engine
 #define SYSYNC_ENGINE 1
 
@@ -45,13 +61,13 @@
 #endif
 
 #ifndef SYSYNC_VERSION_MINOR
-#define SYSYNC_VERSION_MINOR        2
-#define SYSYNC_VERSION_MINOR_TXT   "2"
+#define SYSYNC_VERSION_MINOR        3
+#define SYSYNC_VERSION_MINOR_TXT   "3"
 #endif
 
 #ifndef SYSYNC_SUBVERSION
-#define SYSYNC_SUBVERSION           1
-#define SYSYNC_SUBVERSION_TXT      "1"
+#define SYSYNC_SUBVERSION           0
+#define SYSYNC_SUBVERSION_TXT      "0"
 #endif
 
 #ifndef SYSYNC_BUILDNUMBER
@@ -100,6 +116,33 @@
 
 // Global feature switches (might be overridden in individual targets)
 // ###################################################################
+
+
+// server or client macros
+// - make sure we have either SYSYNC_CLIENT, SYSYNC_SERVER or both
+// - if combined build, define SERVER_CLIENT_BUILD as well
+#if defined(SYSYNC_CLIENT) && defined(SYSYNC_SERVER)
+	#define SERVER_CLIENT_BUILD 1
+#elif !defined(SYSYNC_CLIENT)
+	#define SYSYNC_SERVER 1
+#endif
+// build differentiation macros
+#ifdef SERVER_CLIENT_BUILD
+	// dynamically switching between server and client
+  #define IS_CLIENT (!getSyncAppBase()->isServer())
+  #define IS_SERVER (getSyncAppBase()->isServer())
+#else
+	// static, built as either server or client
+  #ifdef SYSYNC_CLIENT
+  	// client
+    #define IS_CLIENT 1
+    #define IS_SERVER 0
+  #else
+  	// server
+    #define IS_CLIENT 0
+    #define IS_SERVER 1
+  #endif
+#endif
 
 
 // build type

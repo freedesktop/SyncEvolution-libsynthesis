@@ -397,7 +397,7 @@ lineartime_t TPluginApiAgent::getDatabaseNowAs(timecontext_t aTimecontext)
 
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 // info about requested auth type
 TAuthTypes TPluginApiAgent::requestedAuthType(void)
@@ -492,10 +492,10 @@ void TPluginApiAgent::CheckDevice(const char *aDeviceID)
     TSyError sta = fDBApiSession.CheckDevice(aDeviceID,deviceKey,lastNonce);
     if (sta!=LOCERR_OK)
       SYSYNC_THROW(TSyncException("TPluginApiAgent: checkdevice failed",sta));
-    #ifndef SYSYNC_CLIENT
-    // save last nonce
-    fLastNonce = lastNonce.c_str();
-    #endif
+    if (IS_SERVER) {
+      // save last nonce
+      fLastNonce = lastNonce.c_str();
+    }
     // device "key" is set to deviceID. Plugin internally maintains its key needed for storing Nonce or DevInf
     fDeviceKey = deviceKey.c_str();
   } // if device table implemented in ApiDB
@@ -661,7 +661,7 @@ void TPluginApiAgent::LogoutApi(void)
 
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 void TPluginApiAgent::RequestEnded(bool &aHasData)
 {
@@ -691,8 +691,9 @@ TSyncClient *TPluginAgentConfig::CreateClientSession(const char *aSessionID)
   MP_RETURN_NEW(TPluginApiAgent,DBG_HOT,"TPluginApiAgent",TPluginApiAgent(static_cast<TSyncClientBase *>(getSyncAppBase()),aSessionID));
 } // TPluginAgentConfig::CreateClientSession
 
+#endif
 
-#else
+#ifdef SYSYNC_SERVER
 
 TSyncServer *TPluginAgentConfig::CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID)
 {

@@ -2827,7 +2827,7 @@ TMapCommand::TMapCommand(
 } // TMapCommand::TMapCommand
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 // Server only receives Maps
 
 // analyze command (but do not yet execute)
@@ -2888,8 +2888,10 @@ bool TMapCommand::execute(void)
   return !queueforlater;
 } // TMapCommand::execute
 
+#endif
 
-#else
+#ifdef SYSYNC_CLIENT
+
 // Client only sends maps
 
 // constructor for sending MAP Command

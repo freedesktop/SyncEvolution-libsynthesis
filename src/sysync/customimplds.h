@@ -766,11 +766,11 @@ protected:
   // - modify map, if remoteID or localID is NULL or empty, map item will be deleted (if it exists at all)
   void modifyMap(TMapEntryType aEntryType, const char *aLocalID, const char *aRemoteID, uInt32 aMapFlags, bool aDelete, uInt32 aClearFlags=0xFFFFFFFF);
   #endif // not BASED_ON_BINFILE_CLIENT
-  #ifndef SYSYNC_CLIENT
+  #ifdef SYSYNC_SERVER
   // - called when a item in the sync set changes its localID (due to local DB internals)
   //   Datastore must make sure that eventually cached items get updated
   virtual void dsLocalIdHasChanged(const char *aOldID, const char *aNewID);
-  #endif
+  #endif // SYSYNC_SERVER
   // - target key (if needed by descendant)
   string fTargetKey;
   // - folder key (key value for subselecting in datastore, determined at implMakeAdminReady())

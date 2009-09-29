@@ -817,14 +817,18 @@ void TOdbcAgentConfig::localResolve(bool aLastPass)
     #ifdef HAS_SQL_ADMIN
     if (fClearTextPw && fMD5UserPass)
       throw TConfigParseException("only one of 'cleartextpw' and 'md5userpass' can be set");
-    #ifndef SYSYNC_CLIENT
-    if (fAutoNonce && !fClearTextPw && !fMD5UserPass)
-      throw TConfigParseException("if 'autononce' is set, 'cleartextpw' or 'md5userpass' MUST be set as well");
-    #endif
+    #ifdef SYSYNC_SERVER
+    if (IS_SERVER) {
+      if (fAutoNonce && !fClearTextPw && !fMD5UserPass)
+        throw TConfigParseException("if 'autononce' is set, 'cleartextpw' or 'md5userpass' MUST be set as well");
+    }
+    #endif // SYSYNC_SERVER
     #ifdef SYSYNC_CLIENT
-    if (fNoLocalDBLogin && !fUserKeySQL.empty())
-      throw TConfigParseException("'nolocaldblogin' is not allowed when 'userkeysql' is defined");
-    #endif
+    if (IS_CLIENT) {
+      if (fNoLocalDBLogin && !fUserKeySQL.empty())
+        throw TConfigParseException("'nolocaldblogin' is not allowed when 'userkeysql' is defined");
+    }
+    #endif // SYSYNC_CLIENT
     #endif // HAS_SQL_ADMIN
     #endif // ODBCAPI_SUPPORT
   }
@@ -854,21 +858,33 @@ void TOdbcAgentConfig::ResolveAPIScripts(void)
 
 #ifdef SYSYNC_CLIENT
 TODBCApiAgent::TODBCApiAgent(TSyncClientBase *aSyncClientBaseP, const char *aSessionID) :
-  TCustomImplAgent(aSyncClientBaseP, aSessionID),
-#else
+  TCustomImplAgent(aSyncClientBaseP, aSessionID)
+{
+	internalInit();
+}
+#endif // SYSYNC_CLIENT
+
+#ifdef SYSYNC_SERVER
 TODBCApiAgent::TODBCApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID) :
-  TCustomImplAgent(aAppBaseP, aSessionHandleP, aSessionID),
-#endif
-  fConfigP(NULL)
+  TCustomImplAgent(aAppBaseP, aSessionHandleP, aSessionID)
+{
+	internalInit();
+}  
+#endif // SYSYNC_SERVER
+
+
+// private init routine for both client and server constructor
+void TODBCApiAgent::internalInit(void)
+{
+	// init basics
   #ifdef ODBCAPI_SUPPORT
-  ,fODBCConnectionHandle(SQL_NULL_HANDLE)
-  ,fODBCEnvironmentHandle(SQL_NULL_HANDLE)
+  fODBCConnectionHandle = SQL_NULL_HANDLE;
+  fODBCEnvironmentHandle = SQL_NULL_HANDLE;
   #ifdef SCRIPT_SUPPORT
-  ,fScriptStatement(SQL_NULL_HANDLE)
-  ,fAfterConnectContext(NULL)
+  fScriptStatement = SQL_NULL_HANDLE;
+  fAfterConnectContext = NULL
   #endif
   #endif // ODBCAPI_SUPPORT
-{
   // get config for agent and save direct link to agent config for easy reference
   fConfigP = static_cast<TOdbcAgentConfig *>(getRootConfig()->fAgentConfigP);
   // Note: Datastores are already created from config
@@ -881,7 +897,7 @@ TODBCApiAgent::TODBCApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessi
   fSessionDBPassword = fConfigP->fPassword;
   #endif
   #endif
-} // TODBCApiAgent::TODBCApiAgent
+} // TODBCApiAgent::internalInit
 
 
 // destructor
@@ -3420,7 +3436,7 @@ lineartime_t TODBCApiAgent::getDatabaseNowAs(timecontext_t aTimecontext)
 } // TODBCApiAgent::getDatabaseNowAs
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 // info about requested auth type
 TAuthTypes TODBCApiAgent::requestedAuthType(void)
@@ -3513,7 +3529,7 @@ void TODBCApiAgent::getNextNonce(const char *aDeviceID, string &aNextNonce)
   }
 } // TODBCApiAgent::getNextNonce
 
-#endif // not SYSYNC_CLIENT
+#endif // SYSYNC_SERVER
 
 
 #ifdef HAS_SQL_ADMIN
@@ -3572,10 +3588,10 @@ void TODBCApiAgent::CheckDevice(const char *aDeviceID)
             throw TSyncException("Fatal: inserted device record cannot be found again");
           }
           PDEBUGPRINTFX(DBG_ADMIN,("Unknown device '%.30s', creating new record",aDeviceID));
-          #ifndef SYSYNC_CLIENT
-          // device does not exist yet
-          fLastNonce.erase();
-          #endif
+          if (IS_SERVER) {
+            // device does not exist yet
+            fLastNonce.erase();
+          }
           // create new device
           SafeSQLCloseCursor(statement);
           // - get SQL
@@ -3609,18 +3625,19 @@ void TODBCApiAgent::CheckDevice(const char *aDeviceID)
           // - device key
           getColumnValueAsString(statement,1,fDeviceKey,chs_ascii);
           // - nonce
-          #ifdef SYSYNC_CLIENT
-          string dummy;
-          getColumnValueAsString(statement,2,dummy,chs_ascii);
-          #else
-          getColumnValueAsString(statement,2,fLastNonce,chs_ascii);
-          #endif
+          if (IS_CLIENT) {
+            string dummy;
+            getColumnValueAsString(statement,2,dummy,chs_ascii);
+          }
+          else {
+	          getColumnValueAsString(statement,2,fLastNonce,chs_ascii);
+          }
           // - done for now
           SafeSQLCloseCursor(statement);
           PDEBUGPRINTFX(DBG_ADMIN,("Device '%.30s' found, fDeviceKey='%.30s'",aDeviceID,fDeviceKey.c_str()));
-          #ifndef SYSYNC_CLIENT
-          DEBUGPRINTFX(DBG_ADMIN,("Last nonce saved for device='%.30s'",fLastNonce.c_str()));
-          #endif
+          if (IS_SERVER) {
+	          DEBUGPRINTFX(DBG_ADMIN,("Last nonce saved for device='%.30s'",fLastNonce.c_str()));
+          }
           break;
         }
       } while (true); // do until device found or created new
@@ -3869,7 +3886,7 @@ void TODBCApiAgent::remoteAnalyzed(void)
 
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 void TODBCApiAgent::RequestEnded(bool &aHasData)
 {
@@ -3887,7 +3904,7 @@ void TODBCApiAgent::RequestEnded(bool &aHasData)
   #endif
 } // TODBCApiAgent::RequestEnded
 
-#endif
+#endif // SYSYNC_SERVER
 
 
 // factory methods of Agent config
@@ -3901,8 +3918,9 @@ TSyncClient *TOdbcAgentConfig::CreateClientSession(const char *aSessionID)
   MP_RETURN_NEW(TODBCApiAgent,DBG_HOT,"TODBCApiAgent",TODBCApiAgent(static_cast<TSyncClientBase *>(getSyncAppBase()),aSessionID));
 } // TOdbcAgentConfig::CreateClientSession
 
+#endif
 
-#else
+#ifdef SYSYNC_SERVER
 
 TSyncServer *TOdbcAgentConfig::CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID)
 {

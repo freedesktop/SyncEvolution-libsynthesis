@@ -32,7 +32,9 @@ TStdLogicAgent::TStdLogicAgent(TSyncClientBase *aClientBaseP, const char *aSessi
   // nop
 } // TStdLogicAgent::TStdLogicAgent
 
-#else
+#endif
+
+#ifdef SYSYNC_SERVER
 
 TStdLogicAgent::TStdLogicAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID) :
   TSyncServer(aAppBaseP, aSessionHandleP, aSessionID)

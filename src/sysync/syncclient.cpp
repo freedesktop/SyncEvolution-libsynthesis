@@ -1030,19 +1030,6 @@ localstatus TSyncClient::NextMessage(bool &aDone)
                 return getAbortReasonStatus();
               }
             }
-          	/* %%% old code: engInitForSyncOps was here, but switching to dssta_dataaccessstarted
-                   was done earlier when handling alert from server. This caused that types
-                   were not ready when loading the sync set, making client-side filtering impossible
-            // initialize datastore for sync
-            TStatusCommand dummystatus(this);
-            status = (*pos)->engInitForSyncOps((*pos)->getRemoteDBPath());
-            if (status!=LOCERR_OK) {
-              // failed
-              AbortSession(status,true);
-              return status;
-            }
-            // init prepared, we can now call datastore to generate sync command
-            */
             // start or continue (which is largely nop, as continuing works via unfinished sync command)
             // generating sync items
             (*pos)->engClientStartOfSyncMessage();

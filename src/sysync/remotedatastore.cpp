@@ -20,7 +20,7 @@
 #include "syncsession.h"
 #include "remotedatastore.h"
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 #include "syncserver.h"
 #endif
 
@@ -40,7 +40,7 @@ void TRemoteDataStore::init(void)
 void TRemoteDataStore::InternalResetDataStore(void)
 {
   // for server, get default GUID size (in case remote devInf does not send one)
-  #ifndef SYSYNC_CLIENT
+  #ifdef SYSYNC_SERVER
   fMaxGUIDSize = static_cast<TServerConfig *>(getSession()->getSessionConfig())->fMaxGUIDSizeSent;
   #endif
 } // TRemoteDataStore::InternalResetDataStore

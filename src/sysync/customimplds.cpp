@@ -1145,7 +1145,7 @@ TMapContainer::iterator TCustomImplDS::findMapByRemoteID(const char *aRemoteID)
 } // TCustomImplDS::findMapByRemoteID
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 // - called when a item in the sync set changes its localID (due to local DB internals)
 //   Datastore must make sure that eventually cached items get updated
@@ -1740,23 +1740,24 @@ void TCustomImplDS::implMarkOnlyUngeneratedForResume(void)
       bool needMark=false;
       pos=findMapByLocalID((*syncsetpos)->localid.c_str(),mapentry_normal,true); // find deleted ones as well
       if (fSlowSync) {
-        #ifdef SYSYNC_CLIENT
-        // for client, there are no reference-only: mark all leftovers in a slow sync
-        needMark=true;
-        #else
-        // for server, make sure not to mark reference-only.
-        if (!isResuming() || pos==fMapTable.end()) {
-          // if not resuming, or we have no map for this one at all - we'll need it again for resume
-          needMark=true;
+      	if (IS_CLIENT) {
+	        // for client, there are no reference-only: mark all leftovers in a slow sync
+  	      needMark=true;
         }
         else {
-          // for slowsync resume which have already a map:
-          // - items that are not marked for resume, but already have a remoteID mapped
-          //   are reference-only and must NOT be marked
-          if (((*pos).mapflags & mapflag_useforresume) || (*pos).remoteid.empty())
+          // for server, make sure not to mark reference-only.
+          if (!isResuming() || pos==fMapTable.end()) {
+            // if not resuming, or we have no map for this one at all - we'll need it again for resume
             needMark=true;
+          }
+          else {
+            // for slowsync resume which have already a map:
+            // - items that are not marked for resume, but already have a remoteID mapped
+            //   are reference-only and must NOT be marked
+            if (((*pos).mapflags & mapflag_useforresume) || (*pos).remoteid.empty())
+              needMark=true;
+          }
         }
-        #endif
       }
       else if (!isRefreshOnly()) {
         // not slow sync, and not refresh from remote only - mark those that are actually are involved
@@ -1818,35 +1819,36 @@ void TCustomImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID, 
   }
   else {
     TMapContainer::iterator pos;
-    #ifdef SYSYNC_CLIENT
-    // for client, always find by localid
-    pos=findMapByLocalID(aLocalID,mapentry_normal);
-    #else
-    // for server, only add can be found by localid
-    if (aSyncOp==sop_add)
+    if (IS_CLIENT) {
+      // for client, always find by localid
       pos=findMapByLocalID(aLocalID,mapentry_normal);
-    else
-      pos=findMapByRemoteID(aRemoteID);
-    #endif
+    }
+    else {
+      // for server, only add can be found by localid
+      if (aSyncOp==sop_add)
+        pos=findMapByLocalID(aLocalID,mapentry_normal);
+      else
+        pos=findMapByRemoteID(aRemoteID);
+    }
     if (pos!=fMapTable.end()) {
       // Anyway, clear the status pending flag
       // Note: we do not set the "changed" bit here because we don't really need to make this persistent between sessions
       (*pos).mapflags &= ~mapflag_pendingStatus;
-      #ifdef SYSYNC_CLIENT
-      if (aSuccess) {
-        // Note: we do not check for sop here - any successfully statused sop will clear the pending add status
-        //       (e.g. in slow sync, items reported as add to engine are actually sent as replaces, but still
-        //       seeing a ok status means that they are not any longer pending as adds)
-        // Note: the same functionality formerly was in TStdLogicDS::startDataWrite() - making sure that a
-        //       add sent to the server is not repeated. As every item reported by implGetItem now already
-        //       has a map entry (adds get one with mapflag_pendingAddConfirm set), we just need to clear
-        //       the flag here now that we know the add has reached the server.
-        // Note: For the server, we can clear the mapflag_pendingAddConfirm not before we have received a <Map> item for it!
-        PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("successful status for non-delete received -> clear mapflag_pendingAddConfirm"));
-        (*pos).mapflags &= ~mapflag_pendingAddConfirm;
-        (*pos).changed = true; // this MUST be made persistent!
-      }
-      #endif
+      if (IS_CLIENT) {
+        if (aSuccess) {
+          // Note: we do not check for sop here - any successfully statused sop will clear the pending add status
+          //       (e.g. in slow sync, items reported as add to engine are actually sent as replaces, but still
+          //       seeing a ok status means that they are not any longer pending as adds)
+          // Note: the same functionality formerly was in TStdLogicDS::startDataWrite() - making sure that a
+          //       add sent to the server is not repeated. As every item reported by implGetItem now already
+          //       has a map entry (adds get one with mapflag_pendingAddConfirm set), we just need to clear
+          //       the flag here now that we know the add has reached the server.
+          // Note: For the server, we can clear the mapflag_pendingAddConfirm not before we have received a <Map> item for it!
+          PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("successful status for non-delete received -> clear mapflag_pendingAddConfirm"));
+          (*pos).mapflags &= ~mapflag_pendingAddConfirm;
+          (*pos).changed = true; // this MUST be made persistent!
+        }
+      } // if client
     }
     else {
       PDEBUGPRINTFX(DBG_ERROR+DBG_EXOTIC,("dsConfirmItemOp - INTERNAL ERROR: no map entry exists for item"));
@@ -1924,8 +1926,8 @@ void TCustomImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteI
     //   resume ONLY if we can rely on early maps or if they are completely unsent.
     //   Sent adds will just keep their mapflag_pendingAddConfirm until they receive their map
     // For Client: all items will be marked for resume
-    #ifndef SYSYNC_CLIENT
     if (
+    	IS_SERVER &&
       ((*pos).mapflags & mapflag_pendingAddConfirm) && // is an add...
       !aUnSent && // ...and already sent out
       !fSessionP->getSessionConfig()->fRelyOnEarlyMaps // and we can't rely on the client sending the maps before
@@ -1938,9 +1940,7 @@ void TCustomImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteI
       ));
       (*pos).markforresume=false;
     }
-    else
-    #endif
-    {
+    else {
       // for client: everything may be repeated and therefore marked for resume
       // for server: unsent adds will also be marked, or all if we can rely on early maps (which is the default)
       PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
@@ -2125,16 +2125,13 @@ localstatus TCustomImplDS::implGetItem(
           }
           else {
             if (pos!=fMapTable.end()) {
-              #ifndef SYSYNC_CLIENT
               // for slowsync resume - items that are not marked for resume, but already have a remoteID mapped
               // must be presented for re-match with sop_reference_only
-              if (fSlowSync && isResuming() && !((*pos).mapflags & mapflag_useforresume) && !(*pos).remoteid.empty()) {
+              if (IS_SERVER && fSlowSync && isResuming() && !((*pos).mapflags & mapflag_useforresume) && !(*pos).remoteid.empty()) {
                 // this item apparently was already slow-sync-matched before the suspend - still show it for reference to avoid re-adding it
                 sop=sop_reference_only;
               }
-              else
-              #endif
-              if (!isRefreshOnly()) {
+              else if (!isRefreshOnly()) {
                 // item is already in map: check if this is an already detected, but unfinished add
                 if (!((*pos).mapflags & mapflag_pendingAddConfirm)) {
                   // is a replace (not an add): changed if mod date newer or resend flagged (AND updates enabled)
@@ -2193,28 +2190,27 @@ localstatus TCustomImplDS::implGetItem(
                     }
                   }
                   else {
-                    #ifdef SYSYNC_CLIENT
-                    // for client - repeating an add does not harm (but helps if it did not reach the server in the previous attempt
-                    PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Non-resume sync found item with mapflag_pendingAddConfirm -> send it again"));
-                    sop=sop_wants_add;
-                    #else
-                    // for server - repeating an add potentially DOES harm (duplicate if client already got the add, but didn't send a map yet)
-                    // but it's ok if it's flagged as an explicit resend (this happens only if we have got error status from remote)
-                    if ((*pos).mapflags & mapflag_resend) {
-                      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Item with mapflag_pendingAddConfirm (add) also has mapflag_resend -> we can safely resend"));
+                  	if (IS_CLIENT) {
+                      // for client - repeating an add does not harm (but helps if it did not reach the server in the previous attempt
+                      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Non-resume sync found item with mapflag_pendingAddConfirm -> send it again"));
                       sop=sop_wants_add;
-                      // - reset resend flag here
-                      (*pos).mapflags &= ~mapflag_resend;
-                      (*pos).changed = true;
-                    }
+                    } // client
                     else {
-                      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Non-resume sync found item with mapflag_pendingAddConfirm (add) -> ignore until map is found"));
-                    }
-                    #endif
+                      // for server - repeating an add potentially DOES harm (duplicate if client already got the add, but didn't send a map yet)
+                      // but it's ok if it's flagged as an explicit resend (this happens only if we have got error status from remote)
+                      if ((*pos).mapflags & mapflag_resend) {
+                        PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Item with mapflag_pendingAddConfirm (add) also has mapflag_resend -> we can safely resend"));
+                        sop=sop_wants_add;
+                        // - reset resend flag here
+                        (*pos).mapflags &= ~mapflag_resend;
+                        (*pos).changed = true;
+                      }
+                      else {
+                        PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Non-resume sync found item with mapflag_pendingAddConfirm (add) -> ignore until map is found"));
+                      }
+                    } // server
                   }
                 }
-
-
               } // if not refreshonly
             } // a map entry already exists
             else {
@@ -2518,30 +2514,31 @@ bool TCustomImplDS::implRetrieveItemByID(
 
   // determine item's local ID
   if (!aItem.hasLocalID()) {
-    #ifdef SYSYNC_CLIENT
-    // client case: MUST have local ID
-    aStatusCommand.setStatusCode(400); // bad request (no address)
-    return false;
-    #else
-    // no local ID specified directly, address by remote ID
-    if (!aItem.hasRemoteID()) {
+  	if (IS_CLIENT) {
+      // client case: MUST have local ID
       aStatusCommand.setStatusCode(400); // bad request (no address)
       return false;
     }
-    // lookup remote ID in map
-    TMapContainer::iterator mappos = findMapByRemoteID(aItem.getRemoteID());
-    if (mappos==fMapTable.end()) {
-      aStatusCommand.setStatusCode(404); // not found
-      return false;
+    else {
+      // no local ID specified directly, address by remote ID
+      if (!aItem.hasRemoteID()) {
+        aStatusCommand.setStatusCode(400); // bad request (no address)
+        return false;
+      }
+      // lookup remote ID in map
+      TMapContainer::iterator mappos = findMapByRemoteID(aItem.getRemoteID());
+      if (mappos==fMapTable.end()) {
+        aStatusCommand.setStatusCode(404); // not found
+        return false;
+      }
+      // set local ID
+      aItem.setLocalID(mappos->localid.c_str());
+      // check if we have a local ID now
+      if (!aItem.hasLocalID()) {
+        aStatusCommand.setStatusCode(400); // bad request (no address)
+        return false;
+      }
     }
-    // set local ID
-    aItem.setLocalID(mappos->localid.c_str());
-    // check if we have a local ID now
-    if (!aItem.hasLocalID()) {
-      aStatusCommand.setStatusCode(400); // bad request (no address)
-      return false;
-    }
-    #endif
   }
   TP_DEFIDX(li);
   TP_SWITCH(li,fSessionP->fTPInfo,TP_database);
@@ -2644,27 +2641,28 @@ bool TCustomImplDS::implProcessItem(
     // - get op
     sop = myitemP->getSyncOp();
     // - check IDs
-    #ifdef SYSYNC_CLIENT
-    // Client case: we always get the local ID, except for add
-    localID=myitemP->getLocalID();
-    remoteID=myitemP->getRemoteID();
-    if (!localID.empty() && sop!=sop_add && sop!=sop_wants_add)
-      mappos=findMapByLocalID(localID.c_str(),mapentry_normal); // for all but sop == sop_add
-    else
-      mappos=fMapTable.end(); // if there is no localid or it is an add, we have no map entry yet
-    #else
-    // Server case: we only know the remote ID
-    // - get remoteID
-    remoteID=myitemP->getRemoteID();
-    // first see if we have a map entry for this remote ID
-    localID.erase(); // none yet
-    // Note: even items detected for deletion still have a map item until deletion is confirmed by the remote party,
-    //       so we'll be able to update already "deleted" items (in case they are not really gone, but only invisible in the sync set)
-    mappos=findMapByRemoteID(remoteID); // search for it
-    if (mappos!=fMapTable.end()) {
-      localID = (*mappos).localid; // assign it if we have it
+    if (IS_CLIENT) {
+      // Client case: we always get the local ID, except for add
+      localID=myitemP->getLocalID();
+      remoteID=myitemP->getRemoteID();
+      if (!localID.empty() && sop!=sop_add && sop!=sop_wants_add)
+        mappos=findMapByLocalID(localID.c_str(),mapentry_normal); // for all but sop == sop_add
+      else
+        mappos=fMapTable.end(); // if there is no localid or it is an add, we have no map entry yet
+  	}
+    else {
+      // Server case: we only know the remote ID
+      // - get remoteID
+      remoteID=myitemP->getRemoteID();
+      // first see if we have a map entry for this remote ID
+      localID.erase(); // none yet
+      // Note: even items detected for deletion still have a map item until deletion is confirmed by the remote party,
+      //       so we'll be able to update already "deleted" items (in case they are not really gone, but only invisible in the sync set)
+      mappos=findMapByRemoteID(remoteID); // search for it
+      if (mappos!=fMapTable.end()) {
+        localID = (*mappos).localid; // assign it if we have it
+      }
     }
-    #endif
     // - now perform op
     aStatusCommand.setStatusCode(510); // default DB error
     switch (sop) {
@@ -2673,17 +2671,17 @@ bool TCustomImplDS::implProcessItem(
       case sop_add :
         // add item and retrieve new localID for it
         sta = apiAddItem(*myitemP,localID);
-        #ifndef SYSYNC_CLIENT
-        if (sta==DB_DataMerged) {
-        	// while adding, data was merged with pre-existing data (external from the sync set)
-          // so we should retrieve the full data and send an update back to the client
-          // - this is like forcing a conflict, i.e. this loads the item by local/remoteid and adds it to
-          //   the to-be-sent list of the server.
-					PDEBUGPRINTFX(DBG_DATA,("Database adapter indicates that added item was merged with pre-existing data (status 207), so update client with merged item"));
-          forceConflict(myitemP);
-          sta = LOCERR_OK; // otherwise, treat as ok
-        }
-        #endif
+        if (IS_SERVER) {
+          if (sta==DB_DataMerged) {
+            // while adding, data was merged with pre-existing data (external from the sync set)
+            // so we should retrieve the full data and send an update back to the client
+            // - this is like forcing a conflict, i.e. this loads the item by local/remoteid and adds it to
+            //   the to-be-sent list of the server.
+            PDEBUGPRINTFX(DBG_DATA,("Database adapter indicates that added item was merged with pre-existing data (status 207), so update client with merged item"));
+            forceConflict(myitemP);
+            sta = LOCERR_OK; // otherwise, treat as ok
+          }
+        } // server
         if (sta!=LOCERR_OK) {
           aStatusCommand.setStatusCode(sta);
           ok=false;
@@ -2816,12 +2814,11 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
     else if (!(*pos).deleted) {
       // in case of map table without flags, we must get rid of all non-real maps
       if (!dsResumeSupportedInDB() && aSessionFinished) {
-        #ifndef SYSYNC_CLIENT
         // For client, remoteid is irrelevant and can well be empty
         //   Map entries exist for those items that are not newly added on the client
         // For server, maps w/o remoteid are not really mapped and must not be saved when
         //   we have no flags to mark this special conditon (mapflag_pendingAddConfirm)
-        if ((*pos).remoteid.empty()) {
+        if (IS_SERVER && (*pos).remoteid.empty()) {
           // no remoteid -> this is not a real map, we cannot represent it w/o resume support (=flags) in map table
           DEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("LocalID='%s' has no remoteID - cannot be stored in non-DS-1.2 Map DB -> removed map",(*pos).localid.c_str()));
           if ((*pos).added) {
@@ -2835,9 +2832,7 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
             (*pos).deleted=true;
           }
         }
-        else
-        #endif
-        {
+        else {
           // clear all specials
           (*pos).mapflags=0;
           (*pos).savedmark=false;
@@ -2850,9 +2845,8 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
         ((*pos).mapflags & mapflag_pendingAddConfirm)
       ) {
         // successful end of session - we can forget pending add confirmations (as the add commands apparently never reached the remote at all)
-        #ifndef SYSYNC_CLIENT
         // Note: for clients, maps can well have an empty remoteid (because it does not need to be saved)
-        if ((*pos).remoteid.empty()) {
+        if (IS_SERVER && (*pos).remoteid.empty()) {
           PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Successful end of session but localID='%s' has no remoteID and pendingAddConfirm still set -> removed map",(*pos).localid.c_str()));
           // if not mapped, this will be a re-add in the next session, so forget it for now
           if ((*pos).added) {
@@ -2866,9 +2860,7 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
             (*pos).deleted=true;
           }
         }
-        else
-        #endif
-        {
+        else {
           // For server: is mapped, which means that it now exists in the client - just clean mapflag_pendingAddConfirm
           // For client: just clean the pendingAddConfirm
           // Note: maps like this should not exist at this time - as at end of a successful session all items should
@@ -2887,26 +2879,31 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
     // Note: these entries are already in the global map table, but with the deleted flag set.
     //       Here those that still exist now will be re-activated (without saving them again if not needed)
     TStringToStringMap::iterator spos;
-    #ifdef SYSYNC_CLIENT
-    // - now pending maps (unsent ones)
-    PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMap as mapentry_pendingmap",fPendingAddMaps.size()));
-    for (spos=fPendingAddMaps.begin();spos!=fPendingAddMaps.end();spos++) {
-    	string locID = (*spos).first;
-      dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
-      modifyMap(mapentry_pendingmap, locID.c_str(), (*spos).second.c_str(), 0, false);
+    if (IS_CLIENT) {
+    	#ifdef SYSYNC_CLIENT
+      // - now pending maps (unsent ones)
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMap as mapentry_pendingmap",fPendingAddMaps.size()));
+      for (spos=fPendingAddMaps.begin();spos!=fPendingAddMaps.end();spos++) {
+        string locID = (*spos).first;
+        dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
+        modifyMap(mapentry_pendingmap, locID.c_str(), (*spos).second.c_str(), 0, false);
+      }
+      // - now pending maps (sent, but not seen status yet)
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fUnconfirmedMaps as mapentry_pendingmap/mapflag_pendingMapStatus",fUnconfirmedMaps.size()));
+      for (spos=fUnconfirmedMaps.begin();spos!=fUnconfirmedMaps.end();spos++) {
+        modifyMap(mapentry_pendingmap, (*spos).first.c_str(), (*spos).second.c_str(), mapflag_pendingMapStatus, false);
+      }
+      #endif
     }
-    // - now pending maps (sent, but not seen status yet)
-    PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fUnconfirmedMaps as mapentry_pendingmap/mapflag_pendingMapStatus",fUnconfirmedMaps.size()));
-    for (spos=fUnconfirmedMaps.begin();spos!=fUnconfirmedMaps.end();spos++) {
-      modifyMap(mapentry_pendingmap, (*spos).first.c_str(), (*spos).second.c_str(), mapflag_pendingMapStatus, false);
+    else {
+    	#ifdef SYSYNC_SERVER
+      // - the tempguid maps
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fTempGUIDMap as mapentry_tempidmap",fTempGUIDMap.size()));
+      for (spos=fTempGUIDMap.begin();spos!=fTempGUIDMap.end();spos++) {
+        modifyMap(mapentry_tempidmap, (*spos).second.c_str(), (*spos).first.c_str(), 0, false);
+      }
+      #endif
     }
-    #else
-    // - the tempguid maps
-    PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fTempGUIDMap as mapentry_tempidmap",fTempGUIDMap.size()));
-    for (spos=fTempGUIDMap.begin();spos!=fTempGUIDMap.end();spos++) {
-      modifyMap(mapentry_tempidmap, (*spos).second.c_str(), (*spos).first.c_str(), 0, false);
-    }
-    #endif
   }
   sta=apiSaveAdminData(aSessionFinished,aSuccessful);
   if (sta!=LOCERR_OK) {

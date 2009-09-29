@@ -869,11 +869,10 @@ bool TMultiFieldItem::processFilter(bool aMakePass, const char *&aPos, const cha
     if (str=="LUID") {
       // this is SyncML-TAF Standard
       // it is also produced by DS 1.2 &LUID; pseudo-identifier
-      #ifdef SYSYNC_CLIENT
-      idfield.setAsString(getLocalID());
-      #else
-      idfield.setAsString(getRemoteID());
-      #endif
+      if (IS_CLIENT)
+	      idfield.setAsString(getLocalID());
+      else
+	      idfield.setAsString(getRemoteID());
       fldP=&idfield;
     }
     else if (str=="LOCALID") {
@@ -881,18 +880,18 @@ bool TMultiFieldItem::processFilter(bool aMakePass, const char *&aPos, const cha
       idfield.setAsString(getLocalID());
       fldP=&idfield;
     }
-    #ifndef SYSYNC_CLIENT
-    else if (str=="GUID") {
+    #ifdef SYSYNC_SERVER
+    else if (IS_SERVER && str=="GUID") {
       // this is a Synthesis extension, added for symmetry to LUID
       idfield.setAsString(getLocalID());
       fldP=&idfield;
     }
-    else if (str=="REMOTEID") {
+    else if (IS_SERVER && str=="REMOTEID") {
       // this is a Synthesis extension
       idfield.setAsString(getRemoteID());
       fldP=&idfield;
     }
-    #endif
+    #endif // SYSYNC_SERVER
     else {
       // must be a field
       if (fItemTypeP)
@@ -1045,7 +1044,7 @@ bool TMultiFieldItem::processFilter(bool aMakePass, const char *&aPos, const cha
 
 #endif
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 // compare function, returns 0 if equal, 1 if this > aItem, -1 if this < aItem
 sInt16 TMultiFieldItem::compareWith(
@@ -1325,7 +1324,7 @@ bool TMultiFieldItem::checkItem(TLocalEngineDS *aDatastoreP)
 } // TMultiFieldItem::checkItem
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 // merge this item with specified item.
 // Notes:

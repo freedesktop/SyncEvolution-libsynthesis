@@ -589,15 +589,16 @@ void TSessionConfig::clear(void)
   fShowCTCapProps=true;
   // - default value for flag to send type/size in CTCap for SyncML 1.0 (disable as old clients like S55 crash on this)
   fShowTypeSzInCTCap10=false;
-  #ifdef SYSYNC_CLIENT
-  // - Synthesis clients always behaved like that (sending 23:59:59), so we'll keep it as a default
-	fVCal10EnddatesSameDay = true;
-  #else
-  // - Many modern clients need the exclusive format (start of next day) to detect all-day events properly.
-  //   Synthesis clients detect these fine as well, so not using 23:59:59 style by default is more
-  //   compatible in general for a server.
-	fVCal10EnddatesSameDay = false;
-  #endif
+  if (IS_CLIENT) {
+    // - Synthesis clients always behaved like that (sending 23:59:59), so we'll keep it as a default
+    fVCal10EnddatesSameDay = true;
+  }
+  else {
+    // - Many modern clients need the exclusive format (start of next day) to detect all-day events properly.
+    //   Synthesis clients detect these fine as well, so not using 23:59:59 style by default is more
+    //   compatible in general for a server.
+    fVCal10EnddatesSameDay = false;
+  }
   // traditionally Synthesis has folded content
   fDoNotFoldContent = false;
   // - default value for flag is "default" (depends on SyncML version)
@@ -642,8 +643,14 @@ void TSessionConfig::clear(void)
   #ifndef MINIMAL_CODE
   // - logfile
   fLogFileName.erase();
-  fLogFileFormat.assign(DEFAULT_LOG_FORMAT);
-  fLogFileLabels.assign(DEFAULT_LOG_LABELS);
+  if (IS_SERVER) {
+    fLogFileFormat.assign(DEFAULT_LOG_FORMAT_SERVER);
+    fLogFileLabels.assign(DEFAULT_LOG_LABELS_SERVER);
+  }
+  else {
+    fLogFileFormat.assign(DEFAULT_LOG_FORMAT_CLIENT);
+    fLogFileLabels.assign(DEFAULT_LOG_LABELS_CLIENT);  
+  }
   fLogEnabled=true;
   fDebugChunkMaxSize=0; // disabled
   #endif
@@ -2229,16 +2236,18 @@ void TSyncSession::issueHeader(bool aNoResp)
   // Start output translation before issuing outgoing header
   XMLTranslationOutgoingStart();
   #endif
-  #if defined(SYDEBUG) && defined(SYSYNC_CLIENT)
-  // for client, document exchange starts with outgoing message
-  // but for server, SyncML_Outgoing is started before SyncML_Incoming, as SyncML_Incoming ends first
-  PDEBUGBLOCKDESC("SyncML_Outgoing","start of new outgoing message");
-  PDEBUGPRINTFX(DBG_HOT,("=================> Started new outgoing message"));
-  #endif
-  #if defined(EXPIRES_AFTER_DATE) && defined(SYSYNC_CLIENT)
-  // set 1/4 of the date here
-  fCopyOfScrambledNow=((getSyncAppBase()->fScrambledNow)<<2)+503; // scramble again a little
-  #endif
+  if (IS_CLIENT) {
+	  #ifdef SYDEBUG
+    // for client, document exchange starts with outgoing message
+    // but for server, SyncML_Outgoing is started before SyncML_Incoming, as SyncML_Incoming ends first
+    PDEBUGBLOCKDESC("SyncML_Outgoing","start of new outgoing message");
+    PDEBUGPRINTFX(DBG_HOT,("=================> Started new outgoing message"));
+    #endif
+    #ifdef EXPIRES_AFTER_DATE
+    // set 1/4 of the date here
+    fCopyOfScrambledNow=((getSyncAppBase()->fScrambledNow)<<2)+503; // scramble again a little
+    #endif
+  }
   // create and send response header
   TSyncHeader *syncheaderP;
   MP_NEW(syncheaderP,DBG_OBJINST,"TSyncHeader",TSyncHeader(this,aNoResp));
@@ -2841,60 +2850,60 @@ void TSyncSession::nextMessageRequest(void)
 {
   // count the request
   fNextMessageRequests++;
-  #ifndef SYSYNC_CLIENT
-  // check if we have seen many requests but could not fulfil them
-  if (fNextMessageRequests>3) {
-    // check for resume that does not send us an empty Sync (Symbian client at TestFest 16)
-    PDEBUGPRINTFX(DBG_ERROR,("Warning: More than 3 consecutive Alert 222 - looks like endless loop, check if we need to work around client implementation issues"));
-    // - check datastores
-    TLocalDataStorePContainer::iterator pos;
-    for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-      // see if it is currently resuming
-      TLocalEngineDS *ldsP = (*pos);
-      if (ldsP->isResuming() && ldsP->getDSState()<dssta_serverseenclientmods) {
-        // fake empty <sync> from client to get things going again
-        // - create it
-        SmlSyncPtr_t fakeSyncCmdP = (SmlSyncPtr_t)smlLibMalloc(sizeof(SmlSync_t));
-        fakeSyncCmdP->elementType = SML_PE_SYNC_START;
-        fakeSyncCmdP->cmdID=NULL; // none needed here
-        fakeSyncCmdP->flags=0; // none
-        fakeSyncCmdP->cred=NULL;
-        fakeSyncCmdP->target=newLocation(ldsP->getName()); // client would target myself
-        fakeSyncCmdP->source=newLocation(ldsP->getRemoteDBPath()); // client would target myself
-        fakeSyncCmdP->meta=NULL; // no meta
-        fakeSyncCmdP->noc=NULL; // no NOC
-        // - have it processed like it was a real command
-        PDEBUGPRINTFX(DBG_HOT+DBG_PROTO,("Probably client expects resume to continue without sending an empty <Sync> -> simulate one"));
-        PDEBUGBLOCKFMT((
-          "Resume_Sim_Sync","Simulated empty sync to get resume going",
-          "datastore=%s",
-          ldsP->getName()
-        ));
-        TStatusCommand *fakeStatusCmdP = new TStatusCommand(this);
-        bool queueforlater=false;
-        bool ok=processSyncStart(
-          fakeSyncCmdP,
-          *fakeStatusCmdP,
-          queueforlater // will be set if command must be queued for later re-execution
-        );
-        if (!queueforlater) {
-          fNextMessageRequests=0; // reset that counter
-          // and make sure we advance the sync session state
-          // - now the real ugly hacking starts - we have to fake receiving a <final/>
-          fFakeFinalFlag=true;
+  if (IS_SERVER) {
+    // check if we have seen many requests but could not fulfil them
+    if (fNextMessageRequests>3) {
+      // check for resume that does not send us an empty Sync (Symbian client at TestFest 16)
+      PDEBUGPRINTFX(DBG_ERROR,("Warning: More than 3 consecutive Alert 222 - looks like endless loop, check if we need to work around client implementation issues"));
+      // - check datastores
+      TLocalDataStorePContainer::iterator pos;
+      for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
+        // see if it is currently resuming
+        TLocalEngineDS *ldsP = (*pos);
+        if (ldsP->isResuming() && ldsP->getDSState()<dssta_serverseenclientmods) {
+          // fake empty <sync> from client to get things going again
+          // - create it
+          SmlSyncPtr_t fakeSyncCmdP = (SmlSyncPtr_t)smlLibMalloc(sizeof(SmlSync_t));
+          fakeSyncCmdP->elementType = SML_PE_SYNC_START;
+          fakeSyncCmdP->cmdID=NULL; // none needed here
+          fakeSyncCmdP->flags=0; // none
+          fakeSyncCmdP->cred=NULL;
+          fakeSyncCmdP->target=newLocation(ldsP->getName()); // client would target myself
+          fakeSyncCmdP->source=newLocation(ldsP->getRemoteDBPath()); // client would target myself
+          fakeSyncCmdP->meta=NULL; // no meta
+          fakeSyncCmdP->noc=NULL; // no NOC
+          // - have it processed like it was a real command
+          PDEBUGPRINTFX(DBG_HOT+DBG_PROTO,("Probably client expects resume to continue without sending an empty <Sync> -> simulate one"));
+          PDEBUGBLOCKFMT((
+            "Resume_Sim_Sync","Simulated empty sync to get resume going",
+            "datastore=%s",
+            ldsP->getName()
+          ));
+          TStatusCommand *fakeStatusCmdP = new TStatusCommand(this);
+          bool queueforlater=false;
+          bool ok=processSyncStart(
+            fakeSyncCmdP,
+            *fakeStatusCmdP,
+            queueforlater // will be set if command must be queued for later re-execution
+          );
+          if (!queueforlater) {
+            fNextMessageRequests=0; // reset that counter
+            // and make sure we advance the sync session state
+            // - now the real ugly hacking starts - we have to fake receiving a <final/>
+            fFakeFinalFlag=true;
+          }
+          else {
+            PDEBUGPRINTFX(DBG_ERROR,("simulated <Sync> can't be processed now, we'll try again later"));
+          }
+          // now just simulate a </sync>
+          processSyncEnd(queueforlater);
+          // now let this particular datastore "know" that sync-from-client is over now
+          (*pos)->engEndOfSyncFromRemote(true); // fake "final"
+          PDEBUGENDBLOCK("Resume_Sim_Sync");
         }
-        else {
-          PDEBUGPRINTFX(DBG_ERROR,("simulated <Sync> can't be processed now, we'll try again later"));
-        }
-        // now just simulate a </sync>
-        processSyncEnd(queueforlater);
-        // now let this particular datastore "know" that sync-from-client is over now
-        (*pos)->engEndOfSyncFromRemote(true); // fake "final"
-        PDEBUGENDBLOCK("Resume_Sim_Sync");
       }
     }
-  }
-  #endif // SYSYNC_CLIENT
+  } // server
 } // TSyncSession::nextMessageRequest
 
 
@@ -3508,7 +3517,7 @@ done:
 } // TSyncSession::analyzeRemoteDevInf
 
 
-#ifndef SYSYNC_CLIENT
+#ifdef SYSYNC_SERVER
 
 // Initialize Sync: set up datastores and types for server sync session
 localstatus TSyncSession::initSync(
@@ -3566,7 +3575,7 @@ localstatus TSyncSession::initSync(
   return sta;
 } // TSyncSession::initSync
 
-#endif // not SYSYNC_CLIENT
+#endif // SYSYNC_SERVER
 
 
 
@@ -3982,13 +3991,13 @@ bool TSyncSession::checkCredentials(const char *aUserName, const SmlCredPtr_t aC
     SYSYNC_SUBVERSION,
     SYSYNC_BUILDNUMBER
   ));
-  #ifndef SYSYNC_CLIENT
-  PDEBUGPRINTFX(DBG_HOT,(
-    "==== SyncML URL used = '%s', username as sent by remote = '%s'",
-    fInitialLocalURI.c_str(),
-    fSyncUserName.c_str()
-  ));
-  #endif
+  if (IS_SERVER) {
+    PDEBUGPRINTFX(DBG_HOT,(
+      "==== SyncML URL used = '%s', username as sent by remote = '%s'",
+      fInitialLocalURI.c_str(),
+      fSyncUserName.c_str()
+    ));
+  } // server
   // return result
   return authok;
 } // TSyncSession::checkCredentials(SmlCredPtr_t...)
@@ -4380,14 +4389,15 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
       fRemoteDescName += " (no devInf)";
       // switch on legacy behaviour (conservative preferred types)
       fLegacyMode = true;
-      #ifdef SYSYNC_CLIENT
-      // Client case
-      fRemoteCanHandleUTC = true; // Assume server can handle UTC (it is very improbable a server can't)
-      #else
-      // Server case
-      fRemoteCanHandleUTC = fSyncMLVersion==syncml_vers_1_0 ? true : false; // Assume client cannot handle UTC (it is likely a client can't, or at least can't properly, so localtime is safer)
-      fLimitedRemoteFieldLengths = true; // assume limited client field length (almost all clients have limited length)
-      #endif
+      if (IS_CLIENT) {
+        // Client case
+        fRemoteCanHandleUTC = true; // Assume server can handle UTC (it is very improbable a server can't)
+      }
+      else {
+        // Server case
+        fRemoteCanHandleUTC = fSyncMLVersion==syncml_vers_1_0 ? true : false; // Assume client cannot handle UTC (it is likely a client can't, or at least can't properly, so localtime is safer)
+        fLimitedRemoteFieldLengths = true; // assume limited client field length (almost all clients have limited length)
+      }
     }
   }
   // show summary
@@ -5035,21 +5045,23 @@ Ret_t TSyncSession::StartMessage(SmlSyncHdrPtr_t aContentP)
   fMessageRetried = false; // we assume no message retry
   MP_SHOWCURRENT(DBG_PROFILE,"Start of incoming Message");
   TP_START(fTPInfo,TP_general); // could be new thread
-  #if defined(EXPIRES_AFTER_DATE) && !defined(SYSYNC_CLIENT)
-  // set 1/4 of the date here
-  fCopyOfScrambledNow=((getSyncAppBase()->fScrambledNow)<<2)+503; // scramble again a little
-  #endif
+  #ifdef EXPIRES_AFTER_DATE
+  if (IS_SERVER) {
+    // set 1/4 of the date here
+    fCopyOfScrambledNow=((getSyncAppBase()->fScrambledNow)<<2)+503; // scramble again a little
+  }
+  #endif // EXPIRES_AFTER_DATE
   // dump it if configured
   // Note: this must happen here before answer writing to the instance buffer starts, as otherwise
   //       the already consumed part of the buffer might get overwritten (the SyncML message header in this case).
   #ifdef SYDEBUG
   DumpSyncMLMessage(false); // incoming
   #endif
-  #ifndef SYSYNC_CLIENT
-  // for server, SyncML_Outgoing is started here, as SyncML_Incoming ends before SyncML_Outgoing
-  // but for client, document exchange starts with outgoing message
-  PDEBUGBLOCKDESC("SyncML_Outgoing","preparing for response before starting to analyze new incoming message");
-  #endif
+  if (IS_SERVER) {
+    // for server, SyncML_Outgoing is started here, as SyncML_Incoming ends before SyncML_Outgoing
+    // but for client, document exchange starts with outgoing message
+    PDEBUGBLOCKDESC("SyncML_Outgoing","preparing for response before starting to analyze new incoming message");
+  }
   PDEBUGBLOCKFMT(("SyncML_Incoming","Starting to analyze incoming message",
     "RequestNo=%ld|SySyncVers=%d.%d.%d.%d",(long)fSyncAppBaseP->requestCount(),
     SYSYNC_VERSION_MAJOR,

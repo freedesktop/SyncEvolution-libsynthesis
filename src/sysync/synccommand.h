@@ -496,11 +496,12 @@ public:
     uInt32 aMsgID,                    // the Message ID of the command
     SmlMapPtr_t aMapElementP        // associated syncml protocol element
   );
-  #ifndef SYSYNC_CLIENT
+  #ifdef SYSYNC_SERVER
   // Server implementation
   virtual bool analyze(TPackageStates aPackageState);
   virtual bool execute(void);
-  #else
+  #endif // SYSYNC_SERVER
+  #ifdef SYSYNC_CLIENT
   // Client implementation
   // - constructor for sending MAP
   TMapCommand(
@@ -525,7 +526,7 @@ public:
   // - handle status received for previously issued command
   //   returns true if done, false if command must be kept in the status queue
   virtual bool handleStatus(TStatusCommand *aStatusCmdP);
-  #endif
+  #endif // SYSYNC_CLIENT
 protected:
   virtual void FreeSmlElement(void);
   SmlMapPtr_t fMapElementP;

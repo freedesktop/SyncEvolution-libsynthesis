@@ -111,7 +111,8 @@ public:
   #ifdef SYSYNC_CLIENT
   // create appropriate session (=agent) for this client
   virtual TSyncClient *CreateClientSession(const char *aSessionID);
-  #else
+  #endif
+  #ifdef SYSYNC_SERVER
   // create appropriate session (=agent) for this server
   virtual TSyncServer *CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID);
   #endif
@@ -133,7 +134,8 @@ class TPluginApiAgent :
 public:
   #ifdef SYSYNC_CLIENT
   TPluginApiAgent(TSyncClientBase *aSyncClientBaseP, const char *aSessionID);
-  #else
+  #endif
+  #ifdef SYSYNC_SERVER
   TPluginApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID);
   #endif
   virtual ~TPluginApiAgent();
@@ -141,14 +143,14 @@ public:
   virtual void ResetSession(void); // Resets session (but unlike TerminateSession, session might be re-used)
   void InternalResetSession(void); // static implementation for calling through virtual destructor and virtual ResetSession();
   // user authentication
-  #ifndef SYSYNC_CLIENT
+  #ifdef SYSYNC_SERVER
   // - return auth type to be requested from remote
   virtual TAuthTypes requestedAuthType(void); // avoids MD5 when it cannot be checked
   // - get next nonce string top be sent to remote party for subsequent MD5 auth
   virtual void getNextNonce(const char *aDeviceID, string &aNextNonce);
   // - get nonce string, which is expected to be used by remote party for MD5 auth.
   virtual void getAuthNonce(const char *aDeviceID, string &aAuthNonce);
-  #endif
+  #endif // SYSYNC_SERVER
   #ifndef BASED_ON_BINFILE_CLIENT
   // - check device ID related stuff
   virtual void CheckDevice(const char *aDeviceID);
@@ -168,7 +170,7 @@ public:
   // get API session object
   TDB_Api_Session *getDBApiSession() { return &fDBApiSession; };
 protected:
-  #ifndef SYSYNC_CLIENT
+  #ifdef SYSYNC_SERVER
   // - request end, used to clean up
   virtual void RequestEnded(bool &aHasData);
   #endif

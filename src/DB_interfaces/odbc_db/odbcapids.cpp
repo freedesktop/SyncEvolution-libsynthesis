@@ -603,12 +603,13 @@ void TOdbcDSConfig::apiResolveScripts(void)
 TLocalEngineDS *TOdbcDSConfig::newLocalDataStore(TSyncSession *aSessionP)
 {
   // Synccap defaults to normal set supported by the engine by default
-  TLocalEngineDS *ldsP =
-    #ifdef SYSYNC_CLIENT
-    new TODBCApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_SERVER));
-    #else
-    new TODBCApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_CLIENT));
-    #endif
+  TLocalEngineDS *ldsP;
+	if (IS_CLIENT) {
+    ldsP = new TODBCApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_SERVER));
+  }
+  else {
+    ldsP = new TODBCApiDS(this,aSessionP,getName(),aSessionP->getSyncCapMask() & ~(isOneWayFromRemoteSupported() ? 0 : SCAP_MASK_ONEWAY_CLIENT));
+  }
   // do common stuff
   addTypes(ldsP,aSessionP);
   // return
@@ -4148,13 +4149,16 @@ localstatus TODBCApiDS::apiLoadAdminData(
             // Note: in the main map, these are marked deleted. Before the next saveAdminData, these will
             //       be re-added (=re-activated) from the extra lists if they still exist.
             switch (entry.entrytype) {
-              #ifndef SYSYNC_CLIENT
+              #ifdef SYSYNC_SERVER
               case mapentry_tempidmap:
-                fTempGUIDMap[entry.remoteid]=entry.localid; // tempGUIDs are accessed by remoteID=tempID
+              	if (IS_SERVER)
+	                fTempGUIDMap[entry.remoteid]=entry.localid; // tempGUIDs are accessed by remoteID=tempID
                 break;
-              #else
+              #endif
+              #ifdef SYSYNC_CLIENT
               case mapentry_pendingmap:
-                fPendingAddMaps[entry.localid]=entry.remoteid;
+              	if (IS_CLIENT)
+	                fPendingAddMaps[entry.localid]=entry.remoteid;
                 break;
               #endif
             }

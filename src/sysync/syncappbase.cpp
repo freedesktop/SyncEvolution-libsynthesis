@@ -433,12 +433,10 @@ bool TRootConfig::localStartElement(const char *aElementName, const char **aAttr
   #endif
   else
   // Agent: Server or client
-  #ifdef SYSYNC_CLIENT
-  if (strucmp(aElementName,"client")==0)
-  #else
-  if (strucmp(aElementName,"server")==0)
-  #endif
-  {
+  if (
+  	(IS_CLIENT && strucmp(aElementName,"client")==0) ||
+		(IS_SERVER && strucmp(aElementName,"server")==0)
+  ) {
     // Agent config
     if (!fAgentConfigP) return false;
     return parseAgentConfig(aAttributes, aLine);
@@ -733,11 +731,11 @@ void TDebugConfig::localResolve(bool aLastPass)
         fGlobalDbgLoggerOptions.fSubThreadMode=dbgsubthread_separate; // separate per thread
         fGlobalDbgLoggerOptions.fTimestampForAll=true; // timestamp for every message
       #else
-        #ifndef SYSYNC_CLIENT
+      	if (IS_SERVER) {
           // - global log for ISAPI/XPT *Servers* is always in openclose mode (possibly multiple processes accessing it)
           fGlobalDbgLoggerOptions.fFlushMode=dbgflush_openclose; // open and close for every log line
-        #endif
-          fGlobalDbgLoggerOptions.fSubThreadMode=dbgsubthread_linemix; // mix in one file
+        }
+        fGlobalDbgLoggerOptions.fSubThreadMode=dbgsubthread_linemix; // mix in one file
         #ifdef MULTI_THREAD_SUPPORT
           fGlobalDbgLoggerOptions.fThreadIDForAll=true; // thread ID for each message
         #endif
