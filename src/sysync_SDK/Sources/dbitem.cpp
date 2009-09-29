@@ -952,7 +952,7 @@ TSyError TDBItem::SaveDB( bool withKey, void* aCB )
   cAppCharP SDB= "-SaveDB"; // collapsed display with '-' at the beginning
   TSyError err= LOCERR_OK;
 
-  if (!fChanged)         return LOCERR_OK; // nothing changed, no saving
+  // if (!fChanged)         return LOCERR_OK; // nothing changed, no saving
   if (fFileName.empty()) return DB_NotFound;
 
   if (aCB==NULL) aCB= fCB; // get the default callback, if not overridden by <aCB>
