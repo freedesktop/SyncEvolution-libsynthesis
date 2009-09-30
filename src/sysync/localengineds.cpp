@@ -475,7 +475,7 @@ public:
     int daysbefore = aFuncContextP->getLocalVar(0)->getAsInteger();
     int daysafter = aFuncContextP->getLocalVar(1)->getAsInteger();
     // depending on SyncML version, create a SINCE/BEFORE filter or use the /dr(x,y) syntax
-    if (dsP->getSession()->getSyncMLVersion()>=syncml_vers_1_2 && static_cast<TSyncClient *>(dsP->getSession())->fServerHasSINCEBEFORE) {
+    if (dsP->getSession()->getSyncMLVersion()>=syncml_vers_1_2 && static_cast<TSyncAgent *>(dsP->getSession())->fServerHasSINCEBEFORE) {
       // use the SINCE/BEFORE syntax
       // BEFORE&EQ;20070808T000000Z&AND;SINCE&EQ;20070807T000000Z
       lineartime_t now = getSystemNowAs(TCTX_UTC,aFuncContextP->getSessionZones());

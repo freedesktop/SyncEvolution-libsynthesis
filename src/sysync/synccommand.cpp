@@ -541,7 +541,7 @@ bool TSyncHeader::execute(void)
           // known version found
           // - set it only for server, client keeps preset version (will change it when
           //   a 513 is detected)
-          if (fSessionP->IsServerSession()) fSessionP->fSyncMLVersion=(TSyncMLVersions)ver;
+          if (IS_SERVER) fSessionP->fSyncMLVersion=(TSyncMLVersions)ver;
           break;
         }
       }
@@ -552,7 +552,7 @@ bool TSyncHeader::execute(void)
         ver<minver ||
         ver>=numSyncMLVersions ||
         ver>maxver ||
-        (fSessionP->IsServerSession() && fSessionP->fSyncMLVersion!=syncml_vers_unknown && fSessionP->fSyncMLVersion!=ver)
+        (IS_SERVER && fSessionP->fSyncMLVersion!=syncml_vers_unknown && fSessionP->fSyncMLVersion!=ver)
       ) {
         // unsupported protocol version (or different than in first message): Status 513
         // - Make sure we have a valid SyncML version
@@ -4283,7 +4283,7 @@ TDevInfPutCommand::TDevInfPutCommand(
   fPutElementP->meta=newMetaType(metatype.c_str());
   // - add local DevInf item to result
   //   Note: PUT of server only returns alerted datastore's devInf
-  addItem(fSessionP->getLocalDevInfItem(fSessionP->IsServerSession(),false));
+  addItem(fSessionP->getLocalDevInfItem(IS_SERVER,false));
 } // TDevInfPutCommand::TDevInfPutCommand
 
 

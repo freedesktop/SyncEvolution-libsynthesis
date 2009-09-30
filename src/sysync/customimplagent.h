@@ -95,18 +95,14 @@ class TScriptContext;
 class TCustomAgentConfig:
   #ifdef BASED_ON_BINFILE_CLIENT
   public TBinfileClientConfig
-  #elif defined(SYSYNC_CLIENT)
-  public TClientConfig
   #else
-  public TServerConfig
+  public TAgentConfig
   #endif
 {
   #ifdef BASED_ON_BINFILE_CLIENT
   typedef TBinfileClientConfig inherited;
-  #elif defined(SYSYNC_CLIENT)
-  typedef TClientConfig inherited;
   #else
-  typedef TServerConfig inherited;
+  typedef TAgentConfig inherited;
   #endif
 public:
   TCustomAgentConfig(TConfigElement *aParentElement);

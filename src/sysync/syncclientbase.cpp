@@ -167,7 +167,7 @@ TSyError TClientEngineInterface::OpenSessionKey(SessionH aSessionH, KeyH &aNewKe
   if (aSessionH != (SessionH)static_cast<TSyncClientBase *>(getSyncAppBase())->fClientSessionP)
     return LOCERR_WRONGUSAGE; // something wrong with that handle
   // get client session pointer
-  TSyncClient *clientSessionP = static_cast<TSyncClient *>((void *)aSessionH);
+  TSyncAgent *clientSessionP = static_cast<TSyncAgent *>((void *)aSessionH);
   // create settings key for the session
   aNewKeyH = (KeyH)clientSessionP->newSessionKey(this);
   // done
@@ -217,7 +217,7 @@ TSyError TClientEngineInterface::SessionStep(SessionH aSessionH, uInt16 &aStepCm
   if (aSessionH != (SessionH)clientBaseP->fClientSessionP)
     return LOCERR_WRONGUSAGE; // something wrong with that handle
   // get client session pointer
-  TSyncClient *clientSessionP = static_cast<TSyncClient *>((void *)aSessionH);
+  TSyncAgent *clientSessionP = static_cast<TSyncAgent *>((void *)aSessionH);
   #ifdef NON_FULLY_GRANULAR_ENGINE
   // pre-process setp command and generate pseudo-steps to empty progress event queue
   // preprocess general step codes
@@ -301,7 +301,7 @@ InstanceID_t TClientEngineInterface::getSmlInstanceOfSession(SessionH aSessionH)
   if (aSessionH != (SessionH)clientBaseP->fClientSessionP)
     return 0; // something wrong with session handle -> no SML instance
   // get client session pointer
-  TSyncClient *clientSessionP = static_cast<TSyncClient *>((void *)aSessionH);
+  TSyncAgent *clientSessionP = static_cast<TSyncAgent *>((void *)aSessionH);
   // return SML instance associated with that session
   return clientSessionP->getSmlWorkspaceID();
 } // TClientEngineInterface::getSmlInstanceOfSession
@@ -367,10 +367,10 @@ TSyncClientBase::~TSyncClientBase()
 // - dispatches to session's StartMessage
 Ret_t TSyncClientBase::StartMessage(
   InstanceID_t aSmlWorkspaceID, // SyncML toolkit workspace instance ID
-  VoidPtr_t aUserData, // pointer to a TSyncClient descendant
+  VoidPtr_t aUserData, // pointer to a TSyncAgent descendant
   SmlSyncHdrPtr_t aContentP // SyncML tookit's decoded form of the <SyncHdr> element
 ) {
-  TSyncSession *sessionP = static_cast<TSyncClient *>(aUserData); // the client session
+  TSyncSession *sessionP = static_cast<TSyncAgent *>(aUserData); // the client session
   SYSYNC_TRY {
     // let session handle details of StartMessage callback
     return sessionP->StartMessage(aContentP);
@@ -412,12 +412,12 @@ localstatus TSyncClientBase::CreateSession(void)
   // remove any eventually existing old session first
   KillClientSession();
   // get config
-  //TClientConfig *configP = static_cast<TClientConfig *>(getSyncAppBase()->getRootConfig()->fAgentConfigP);
+  //TAgentConfig *configP = static_cast<TAgentConfig *>(getSyncAppBase()->getRootConfig()->fAgentConfigP);
   // create a new client session of appropriate type
   // - use current time as session ID (only for logging purposes)
   string s;
   LONGLONGTOSTR(s,(long long)(getSystemNowAs(TCTX_UTC)));
-  fClientSessionP = static_cast<TClientConfig *>(fConfigP->fAgentConfigP)->CreateClientSession(s.c_str());
+  fClientSessionP = static_cast<TAgentConfig *>(fConfigP->fAgentConfigP)->CreateClientSession(s.c_str());
   if (!fClientSessionP) return LOCERR_UNDEFINED;
   // check expiry here
   return appEnableStatus();
@@ -494,7 +494,7 @@ void TSyncClientBase::KillClientSession(localstatus aStatusCode)
     freeSmlInstance(fClientSessionP->getSmlWorkspaceID());
     fClientSessionP->setSmlWorkspaceID(0); // make sure it isn't set any more
     // delete session itself
-    TSyncClient *clientP = fClientSessionP;
+    TSyncAgent *clientP = fClientSessionP;
     fClientSessionP=NULL;
     delete clientP;
   }

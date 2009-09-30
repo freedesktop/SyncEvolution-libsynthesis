@@ -41,7 +41,9 @@ void TRemoteDataStore::InternalResetDataStore(void)
 {
   // for server, get default GUID size (in case remote devInf does not send one)
   #ifdef SYSYNC_SERVER
-  fMaxGUIDSize = static_cast<TServerConfig *>(getSession()->getSessionConfig())->fMaxGUIDSizeSent;
+  if (IS_SERVER) {
+	  fMaxGUIDSize = static_cast<TAgentConfig *>(getSession()->getSessionConfig())->fMaxGUIDSizeSent;
+  }
   #endif
 } // TRemoteDataStore::InternalResetDataStore
 

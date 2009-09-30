@@ -21,6 +21,8 @@
 #include "mimedirprofile.h"
 #include "mimediritemtype.h"
 
+#include "syncagent.h"
+
 
 using namespace sysync;
 
@@ -666,7 +668,7 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
 
 #ifndef NO_REMOTE_RULES
 // resolve remote rule dependencies in profile (recursive)
-static void resolveRemoteRuleDeps(TProfileDefinition *aProfileP, TSessionConfig *aSessionConfigP)
+static void resolveRemoteRuleDeps(TProfileDefinition *aProfileP, TAgentConfig *aSessionConfigP)
 {
   TProfileDefinition *profileP = aProfileP;
   while (profileP) {
@@ -715,7 +717,7 @@ void TMIMEProfileConfig::localResolve(bool aLastPass)
     // recursively resolve remote rule dependencies in all properties
     resolveRemoteRuleDeps(
       fRootProfileP,
-      static_cast<TSessionConfig *>(static_cast<TRootConfig *>(getRootElement())->fAgentConfigP)
+      static_cast<TAgentConfig *>(static_cast<TRootConfig *>(getRootElement())->fAgentConfigP)
     );
     #endif
   }

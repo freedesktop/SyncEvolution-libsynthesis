@@ -370,9 +370,9 @@ protected:
 // ======
 
 class TBinfileClientConfig:
-  public TClientConfig
+  public TAgentConfig
 {
-  typedef TClientConfig inherited;
+  typedef TAgentConfig inherited;
 public:
   TBinfileClientConfig(TConfigElement *aParentElement);
   virtual ~TBinfileClientConfig();
@@ -572,7 +572,7 @@ class TBinFileClientParamsKey :
   typedef TClientParamsKey inherited;
 
 public:
-  TBinFileClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncClient *aClientSessionP);
+  TBinFileClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aClientSessionP);
   virtual ~TBinFileClientParamsKey() {};
 
 protected:

@@ -113,10 +113,10 @@ TEngineSessionDispatch::~TEngineSessionDispatch()
 // - dispatches to session's StartMessage
 Ret_t TEngineSessionDispatch::StartMessage(
   InstanceID_t aSmlWorkspaceID, // SyncML toolkit workspace instance ID
-  VoidPtr_t aUserData, // pointer to a TSyncClient descendant
+  VoidPtr_t aUserData, // pointer to a TSyncAgent descendant
   SmlSyncHdrPtr_t aContentP // SyncML tookit's decoded form of the <SyncHdr> element
 ) {
-  TSyncSession *sessionP = static_cast<TSyncServer *>(aUserData); // the server session
+  TSyncSession *sessionP = static_cast<TSyncAgent *>(aUserData); // the server session
   SYSYNC_TRY {
     // let session handle details of StartMessage callback
     return sessionP->StartMessage(aContentP);
@@ -265,8 +265,8 @@ bool TEngineServerRootConfig::parseCommConfig(const char **aAttributes, sInt32 a
 // TEngineServerSessionHandle
 // ==========================
 
-// Note: this is not a relative of TSyncSessionHandle, but only a container for TSyncServer also
-//       holding some engine-related status. TSyncServer is run with a NULL TSyncSessionHandle
+// Note: this is not a relative of TSyncSessionHandle, but only a container for TSyncAgent also
+//       holding some engine-related status. TSyncAgent is run with a NULL TSyncSessionHandle
 //       when called via engine, as all session dispatching is outside the engine.
 
 TEngineServerSessionHandle::TEngineServerSessionHandle(TServerEngineInterface *aServerEngineInterface)
@@ -318,7 +318,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
   else {
 		// create a new server session
 		TEngineServerSessionHandle *sessionHandleP = NULL;
-  	TSyncServer *sessionP=NULL;
+  	TSyncAgent *sessionP=NULL;
     SYSYNC_TRY {
       // - create a handle
       sessionHandleP = new TEngineServerSessionHandle(this);
@@ -343,7 +343,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
       }
       // - create session object
       sessionP =
-        static_cast<TServerConfig *>(sessionDispatchP->getRootConfig()->fAgentConfigP)
+        static_cast<TAgentConfig *>(sessionDispatchP->getRootConfig()->fAgentConfigP)
           ->CreateServerSession(NULL,SessionIDString.c_str());
       if (sessionP) {
       	// assign to handle
@@ -403,7 +403,7 @@ TSyError TServerEngineInterface::CloseSession(SessionH aSessionH)
 	if (!aSessionH) return LOCERR_WRONGUSAGE;
   TSyError sta = LOCERR_OK;
   TEngineServerSessionHandle *sessionHandleP = reinterpret_cast<TEngineServerSessionHandle *>(aSessionH);
-  TSyncServer *serverSessionP = sessionHandleP->fServerSessionP;
+  TSyncAgent *serverSessionP = sessionHandleP->fServerSessionP;
   if (serverSessionP) {
   	// session still exists
     if (!serverSessionP->isAborted()) {
@@ -440,7 +440,7 @@ TSyError TServerEngineInterface::SessionStep(SessionH aSessionH, uInt16 &aStepCm
 {
 	if (!aSessionH) return LOCERR_WRONGUSAGE;
   TEngineServerSessionHandle *sessionHandleP = reinterpret_cast<TEngineServerSessionHandle *>(aSessionH);
-  TSyncServer *serverSessionP = sessionHandleP->fServerSessionP;
+  TSyncAgent *serverSessionP = sessionHandleP->fServerSessionP;
 
   // preprocess general step codes
   switch (aStepCmd) {
@@ -469,7 +469,7 @@ InstanceID_t TServerEngineInterface::getSmlInstanceOfSession(SessionH aSessionH)
 {
 	if (!aSessionH) return 0; // something wrong with session handle -> no SML instance
   TEngineServerSessionHandle *sessionHandleP = reinterpret_cast<TEngineServerSessionHandle *>(aSessionH);
-  TSyncServer *serverSessionP = sessionHandleP->fServerSessionP;
+  TSyncAgent *serverSessionP = sessionHandleP->fServerSessionP;
   if (!serverSessionP) return 0; // something wrong with session handle -> no SML instance
   // return SML instance associated with that session
   return serverSessionP->getSmlWorkspaceID();

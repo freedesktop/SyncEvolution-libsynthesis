@@ -175,6 +175,8 @@ public:
 }; // TCommConfig
 
 
+/* %%% this was a useless intermediate class. We now call the unilib config TAgentConfig
+       (union of TClientConfig and TServerConfig)
 // agent configuration (an agent is a server or a client)
 class TAgentConfig : public TConfigElement
 {
@@ -186,9 +188,9 @@ public:
   //   such as binfile profiles. If aDoLoose==false, situations, where existing config
   //   is detected but cannot be re-used will return an error. With aDoLoose==true, config
   //   files etc. are created even if it means a loss of data.
-  virtual localstatus loadVarConfig(bool aDoLoose=false) { return LOCERR_OK; /* NOP and ok by default */ }
+  virtual localstatus loadVarConfig(bool aDoLoose=false) { return LOCERR_OK; }
 }; // TAgentConfig
-
+*/
 
 
 // single data type configuration abstract class
@@ -304,6 +306,7 @@ private:
 #endif
 
 class TProfileConfig; // forward
+class TAgentConfig; // forward
 
 // root Config element
 class TRootConfig : public TRootConfigElement
@@ -359,7 +362,7 @@ public:
   bool fNeverPutDevinf;
   // transport/environment config
   TCommConfig *fCommConfigP;
-  // Server or Client config
+  // Agent (Server or Client session) config
   TAgentConfig *fAgentConfigP;
   // datatypes config
   TDatatypesConfig *fDatatypesConfigP;

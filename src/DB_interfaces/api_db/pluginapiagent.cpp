@@ -405,7 +405,7 @@ TAuthTypes TPluginApiAgent::requestedAuthType(void)
   // if not checking via api, let inherited decide
   if (!fPluginAgentConfigP->fApiSessionAuth) return inherited::requestedAuthType();
   // get default
-  TAuthTypes auth = TSyncServer::requestedAuthType();
+  TAuthTypes auth = TSyncAgent::requestedAuthType();
   // depending on possibilities of used module, we need to enforce basic
   int pwmode=fDBApiSession.PasswordMode();
   if (pwmode==Password_ClrText_IN || (pwmode==Password_MD5_OUT && getSyncMLVersion()<syncml_vers_1_1)) {
@@ -685,7 +685,7 @@ void TPluginApiAgent::RequestEnded(bool &aHasData)
 
 #ifdef SYSYNC_CLIENT
 
-TSyncClient *TPluginAgentConfig::CreateClientSession(const char *aSessionID)
+TSyncAgent *TPluginAgentConfig::CreateClientSession(const char *aSessionID)
 {
   // return appropriate client session
   MP_RETURN_NEW(TPluginApiAgent,DBG_HOT,"TPluginApiAgent",TPluginApiAgent(static_cast<TSyncClientBase *>(getSyncAppBase()),aSessionID));
@@ -695,7 +695,7 @@ TSyncClient *TPluginAgentConfig::CreateClientSession(const char *aSessionID)
 
 #ifdef SYSYNC_SERVER
 
-TSyncServer *TPluginAgentConfig::CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID)
+TSyncAgent *TPluginAgentConfig::CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID)
 {
   // return XML2GO or ODBC-server session
   MP_RETURN_NEW(TPluginApiAgent,DBG_HOT,"TPluginApiAgent",TPluginApiAgent(getSyncAppBase(),aSessionHandle,aSessionID));

@@ -135,10 +135,8 @@ sInt64 lineartimeToDbInt(lineartime_t aLinearTime, TDBFieldType aDbfty)
 TCustomAgentConfig::TCustomAgentConfig(TConfigElement *aParentElement) :
   #ifdef BASED_ON_BINFILE_CLIENT
   TBinfileClientConfig(aParentElement)
-  #elif defined(SYSYNC_CLIENT)
-  TClientConfig("CustomClient",aParentElement)
   #else
-  TServerConfig("CustomServer",aParentElement)
+  TAgentConfig("CustomAgent",aParentElement)
   #endif
   #ifdef SCRIPT_SUPPORT
   , fResolverContext(NULL)

@@ -27,7 +27,7 @@
 #ifdef SYSYNC_CLIENT
 
 TStdLogicAgent::TStdLogicAgent(TSyncClientBase *aClientBaseP, const char *aSessionID) :
-  TSyncClient(aClientBaseP,aSessionID)
+  inherited(aClientBaseP,aSessionID)
 {
   // nop
 } // TStdLogicAgent::TStdLogicAgent
@@ -37,7 +37,7 @@ TStdLogicAgent::TStdLogicAgent(TSyncClientBase *aClientBaseP, const char *aSessi
 #ifdef SYSYNC_SERVER
 
 TStdLogicAgent::TStdLogicAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID) :
-  TSyncServer(aAppBaseP, aSessionHandleP, aSessionID)
+  inherited(aAppBaseP, aSessionHandleP, aSessionID)
 {
   // nop
   InternalResetSession();

@@ -163,9 +163,9 @@ typedef std::list<TRemoteRuleConfig *> TRemoteRulesList;
 #endif
 
 // session config
-class TSessionConfig: public TAgentConfig
+class TSessionConfig: public TConfigElement
 {
-  typedef TAgentConfig inherited;
+  typedef TConfigElement inherited;
 public:
   TSessionConfig(const char *aElementName, TConfigElement *aParentElementP);
   virtual ~TSessionConfig();
@@ -245,6 +245,11 @@ public:
   // public methods
   TLocalDSConfig *getLocalDS(const char *aName, uInt32 aDBTypeID=0);
   lineartime_t getSessionTimeout(void) { return fSessionTimeout * secondToLinearTimeFactor; };
+  // - MUST be called after creating config to load (or pre-load) variable parts of config
+  //   such as binfile profiles. If aDoLoose==false, situations, where existing config
+  //   is detected but cannot be re-used will return an error. With aDoLoose==true, config
+  //   files etc. are created even if it means a loss of data.
+  virtual localstatus loadVarConfig(bool aDoLoose=false) { return LOCERR_OK; }
 protected:
   // check config elements
   #ifndef HARDCODED_CONFIG
@@ -368,8 +373,6 @@ public:
   void setSessionBusy(bool aBusy) { fSessionIsBusy=aBusy; }; // make session behave busy generally
   bool getReadOnly(void) { return fReadOnly; }; // read-only option
   void setReadOnly(bool aReadOnly) { fReadOnly=aReadOnly; }; // read-only option
-  // info about session
-  virtual bool IsServerSession(void) = 0;
   // - check if we can handle UTC time (devices without time zone might override this)
   virtual bool canHandleUTC(void) { return true; }; // assume yes
   // helpers

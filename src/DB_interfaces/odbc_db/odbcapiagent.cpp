@@ -3441,7 +3441,7 @@ lineartime_t TODBCApiAgent::getDatabaseNowAs(timecontext_t aTimecontext)
 // info about requested auth type
 TAuthTypes TODBCApiAgent::requestedAuthType(void)
 {
-  TAuthTypes auth = TSyncServer::requestedAuthType();
+  TAuthTypes auth = TSyncAgent::requestedAuthType();
 
   // make sure that we don't request MD5 if we cannot check it:
   // either we need plain text passwords in the DB or SyncML V1.1 MD5 schema
@@ -3912,7 +3912,7 @@ void TODBCApiAgent::RequestEnded(bool &aHasData)
 
 #ifdef SYSYNC_CLIENT
 
-TSyncClient *TOdbcAgentConfig::CreateClientSession(const char *aSessionID)
+TSyncAgent *TOdbcAgentConfig::CreateClientSession(const char *aSessionID)
 {
   // return appropriate client session
   MP_RETURN_NEW(TODBCApiAgent,DBG_HOT,"TODBCApiAgent",TODBCApiAgent(static_cast<TSyncClientBase *>(getSyncAppBase()),aSessionID));
@@ -3922,7 +3922,7 @@ TSyncClient *TOdbcAgentConfig::CreateClientSession(const char *aSessionID)
 
 #ifdef SYSYNC_SERVER
 
-TSyncServer *TOdbcAgentConfig::CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID)
+TSyncAgent *TOdbcAgentConfig::CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID)
 {
   // return XML2GO or ODBC-server session
   MP_RETURN_NEW(TODBCApiAgent,DBG_HOT,"TODBCApiAgent",TODBCApiAgent(getSyncAppBase(),aSessionHandle,aSessionID));

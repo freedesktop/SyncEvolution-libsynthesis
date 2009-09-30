@@ -15,6 +15,7 @@
 
 #include "sysync.h"
 #include "syncsession.h"
+#include "syncagent.h"
 #ifdef SUPERDATASTORES
   #include "superdatastore.h"
 #endif
@@ -538,7 +539,7 @@ bool TRemoteRuleConfig::localStartElement(const char *aElementName, const char *
 
 // config constructor
 TSessionConfig::TSessionConfig(const char *aElementName, TConfigElement *aParentElementP) :
-  TAgentConfig(aElementName,aParentElementP)
+  inherited(aElementName,aParentElementP)
 {
   clear();
 } // TSessionConfig::TSessionConfig
@@ -814,7 +815,7 @@ bool TSessionConfig::localStartElement(const char *aElementName, const char **aA
   #endif
   // - none known here
   else
-    return TAgentConfig::localStartElement(aElementName,aAttributes,aLine);
+    return inherited::localStartElement(aElementName,aAttributes,aLine);
   // ok
   return true;
 } // TSessionConfig::localStartElement
@@ -3187,7 +3188,7 @@ SmlDevInfDatastoreListPtr_t TSyncSession::newDevInfDataStoreList(bool aAlertedOn
         continue; // not alerted, do not show this one
     }
     // see if we have info at all
-    datastoreP = (*pos1)->getDatastoreDevinf(IsServerSession(), aWithoutCTCapProps);
+    datastoreP = (*pos1)->getDatastoreDevinf(IS_SERVER, aWithoutCTCapProps);
     if (datastoreP) {
       // create new list item
       (*insertpos) = SML_NEW(SmlDevInfDatastoreList_t);

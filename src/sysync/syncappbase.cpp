@@ -15,6 +15,7 @@
 #include "syncappbase.h"
 #include "scriptcontext.h"
 #include "iso8601.h"
+#include "syncagent.h"
 #include "multifielditem.h" // in case we have no scripts...
 
 #ifdef SYSER_REGISTRATION

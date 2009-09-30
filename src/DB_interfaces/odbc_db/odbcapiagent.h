@@ -313,12 +313,12 @@ protected:
   #endif
   #ifdef SYSYNC_CLIENT
   // create appropriate session (=agent) for this client
-  virtual TSyncClient *CreateClientSession(const char *aSessionID);
+  virtual TSyncAgent *CreateClientSession(const char *aSessionID);
   #endif
 public:
   #ifdef SYSYNC_SERVER
   // create appropriate session (=agent) for this server
-  virtual TSyncServer *CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID);
+  virtual TSyncAgent *CreateServerSession(TSyncSessionHandle *aSessionHandle, const char *aSessionID);
   #endif
 }; // TOdbcAgentConfig
 

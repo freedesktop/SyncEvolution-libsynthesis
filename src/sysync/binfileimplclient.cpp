@@ -1149,7 +1149,7 @@ TSyError TBinfileLogsKey::DeleteSubkey(sInt32 aID)
 
 
 // Constructor
-TBinFileClientParamsKey::TBinFileClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncClient *aClientSessionP) :
+TBinFileClientParamsKey::TBinFileClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aClientSessionP) :
   inherited(aEngineInterfaceP,aClientSessionP)
 {
 } // TBinFileClientParamsKey::TBinFileClientParamsKey
@@ -1188,7 +1188,7 @@ TSyError TBinFileClientParamsKey::OpenSubKeyByName(
 // ======
 
 TBinfileClientConfig::TBinfileClientConfig(TConfigElement *aParentElement) :
-  TClientConfig("BinFileDBClient",aParentElement)
+  TAgentConfig("BinFileDBClient",aParentElement)
 {
 } // TBinfileClientConfig::TBinfileClientConfig
 

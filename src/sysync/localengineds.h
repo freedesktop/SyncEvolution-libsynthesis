@@ -295,11 +295,7 @@ class TLocalEngineDS: public TSyncDataStore
   friend class TSyncOpCommand;
   friend class TMultiFieldItemType;
   friend class TTextProfileHandler;
-  #ifndef SYSYNC_CLIENT
-  friend class TSyncServer;
-  #else
-  friend class TSyncClient;
-  #endif
+  friend class TSyncAgent;
   #ifdef SUPERDATASTORES
   friend class TSuperDataStore;
   #endif

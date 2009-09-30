@@ -110,7 +110,7 @@ protected:
 
 
 // forward declarations
-class TSyncServer;
+class TSyncAgent;
 class TSyncSession;
 
 
@@ -125,7 +125,7 @@ public:
   // the server engine interface
   TServerEngineInterface *fServerEngineInterface;
   // the session itself
-	TSyncServer *fServerSessionP;
+	TSyncAgent *fServerSessionP;
   // the toolkit instance used by the session
   InstanceID_t fSmlInstanceID;
   // status of the session
@@ -147,7 +147,7 @@ public:
   // - Start/End Message: identifies Session, and creates new or assigns existing session
   Ret_t StartMessage(
     InstanceID_t aSmlWorkspaceID, // SyncML toolkit workspace instance ID
-    VoidPtr_t aUserData, // pointer to a TSyncServer descendant
+    VoidPtr_t aUserData, // pointer to a TSyncAgent descendant
     SmlSyncHdrPtr_t aContentP // SyncML tookit's decoded form of the <SyncHdr> element
   );
   // - Handle exception happening while decoding commands for a session

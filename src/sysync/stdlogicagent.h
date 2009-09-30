@@ -33,19 +33,9 @@ namespace sysync {
 
 
 class TStdLogicAgent:
-  #ifdef SYSYNC_CLIENT
-  public TSyncClient
-  #endif
-  #ifdef SYSYNC_SERVER
-  public TSyncServer
-  #endif
+  public TSyncAgent
 {
-  #ifdef SYSYNC_CLIENT
-  typedef TSyncClient inherited;
-  #endif
-  #ifdef SYSYNC_SERVER
-  typedef TSyncServer inherited;
-  #endif
+  typedef TSyncAgent inherited;
 public:
   #ifdef SYSYNC_CLIENT
   TStdLogicAgent(TSyncClientBase *aClientBaseP, const char *aSessionID);
