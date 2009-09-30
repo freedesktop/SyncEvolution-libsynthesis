@@ -31,9 +31,9 @@
 #undef SYSYNC_CLIENT
 // - is a engine library
 #define ENGINE_LIBRARY 1
-// see also serverengine_opensource_linux_prefix.h?!
-#define SYSYNC_EXTERNAL(_x) SySync_ ## _x
-#define SYSYNC_PREFIX "SySync_"
+// - needs prefixed entry points to be distinguishable from client library
+#define SYSYNC_EXTERNAL(_x) SySync_srv_ ## _x
+#define SYSYNC_PREFIX "SySync_srv_"
 
 // - ...which is used in standalone apps
 #define STANDALONE_APP 1
