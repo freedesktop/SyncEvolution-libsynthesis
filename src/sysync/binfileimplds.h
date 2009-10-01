@@ -636,6 +636,8 @@ public:
   TBinfileDSConfig(const char* aName, TConfigElement *aParentElement);
   virtual ~TBinfileDSConfig();
   // properties
+  // - activtion switch (for making it inactive e.g. in server case)
+  bool fBinfileDSActive;
   // - identifies local Database related to this datastore
   string fLocalDBPath;
   // - flag that corresponds with profile.dsAvailFlags / dsavail_xxx
@@ -908,6 +910,8 @@ protected:
   /// zaps changelog. Should be called if datastore as a entiety was replaced
   /// by another datatstore (or created new)
   void zapChangeLog(void);
+  /// check if active derived classes (in particular: customImplDS that CAN derive binfiles, but does not necessarily so)
+  bool binfileDSActive(void) { return fConfigP && fConfigP->fBinfileDSActive; };
 private:
   /// load changelog into memory for quick access
   void loadChangeLog(void);
@@ -917,11 +921,13 @@ private:
   localstatus SaveAdminData(bool aSessionFinished, bool aSuccessful);
   /// load target record for this datastore
 	localstatus loadTarget(bool aCreateIfMissing, cAppCharP aRemoteDBID=NULL);
+  /* %%% seems obsolete - never called from anywhere
   // private utils
   #ifdef OBJECT_FILTERING
   // - Test Filters
   bool testFilters(TMultiFieldItem *aItemP);
   #endif
+  */
   // sync anchor, time and changelog cursor (modcount)
   #ifdef CHECKSUM_CHANGELOG
   /// change log

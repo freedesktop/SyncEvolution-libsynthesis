@@ -761,8 +761,6 @@ protected:
   virtual string getDeviceType(void)=0; // abstract, must be client or server
   // - get new response URI to be sent to remote party for subsequent messages TO local party
   virtual SmlPcdataPtr_t newResponseURIForRemote(void) { return NULL; }; // no RespURI by default
-  // - URI to send outgoing message to
-  virtual const char *getSendURI(void) { return ""; }; // none by default (and server)
   // Authorisation
   // - required authentication type and mode
   virtual TAuthTypes requestedAuthType(void) = 0; // get preferred authentication type for authentication of remote party
@@ -774,6 +772,8 @@ protected:
   // - generate credentials (based on fRemoteNonce, fRemoteRequestedAuth, fRemoteRequestedAuthEnc)
   SmlCredPtr_t newCredentials(const char *aUser, const char *aPassword);
 public:
+  // - URI to send outgoing message to
+  virtual const char *getSendURI(void) { return ""; }; // none by default (and server)
   // - get common sync capabilities mask of this session (datastores might modify it)
   virtual uInt32 getSyncCapMask(void);
   // - check credentials, login to server
