@@ -57,8 +57,8 @@ int wbxmlConv(int argc, const char *argv[]);
 #endif
 
 // non-class print to console (#ifdef CONSOLEINFO)
-extern "C" void ConsolePrintf(const char *text, ...);
-extern "C" void ConsolePuts(const char *text);
+void ConsolePrintf(const char *text, ...);
+void ConsolePuts(const char *text);
 
 // direct print to app's console, whatever that is
 // NOTE: implemented in derived xxxx_app.cpp
@@ -98,11 +98,11 @@ extern "C" {
 
 // static routines for accessing appbase logs from UI_Call_In/DB_Callback
 #ifdef SYDEBUG
-extern "C" void AppBaseLogDebugPuts(void *aCallbackRef, const char *aText);
-extern "C" void AppBaseLogDebugExotic(void *aCallbackRef, const char *aText);
-extern "C" void AppBaseLogDebugBlock(void *aCallbackRef, const char *aTag, const char *aDesc, const char *aAttrText );
-extern "C" void AppBaseLogDebugEndBlock(void *aCallbackRef, const char *aTag);
-extern "C" void AppBaseLogDebugEndThread(void *aCallbackRef);
+void AppBaseLogDebugPuts(void *aCallbackRef, const char *aText);
+void AppBaseLogDebugExotic(void *aCallbackRef, const char *aText);
+void AppBaseLogDebugBlock(void *aCallbackRef, const char *aTag, const char *aDesc, const char *aAttrText );
+void AppBaseLogDebugEndBlock(void *aCallbackRef, const char *aTag);
+void AppBaseLogDebugEndThread(void *aCallbackRef);
 #endif
 
 
