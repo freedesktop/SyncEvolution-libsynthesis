@@ -331,15 +331,7 @@ class TODBCApiAgent: public TCustomImplAgent
   friend class TODBCAgentFuncs;
   typedef TCustomImplAgent inherited;
 public:
-  #ifdef SYSYNC_CLIENT
-  TODBCApiAgent(TSyncClientBase *aSyncClientBaseP, const char *aSessionID);
-  #endif
-  #ifdef SYSYNC_SERVER
-  TODBCApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID);
-  #endif
-private:
-  void internalInit(void);
-public:
+  TODBCApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, cAppCharP aSessionID);
   virtual ~TODBCApiAgent();
   virtual void TerminateSession(void); // Terminate session, like destructor, but without actually destructing object itself
   virtual void ResetSession(void); // Resets session (but unlike TerminateSession, session might be re-used)

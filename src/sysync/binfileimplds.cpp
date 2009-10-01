@@ -20,6 +20,10 @@
 #include "binfileimplclient.h"
 #include "binfileimplds.h"
 
+#if defined(BINFILE_ALWAYS_ACTIVE) && defined(SYSYNC_SERVER)
+	#error "BINFILE_ALWAYS_ACTIVE is not compatible with server-enabled builds"
+#endif
+
 
 namespace sysync {
 
@@ -366,7 +370,7 @@ void TBinfileImplDS::dsResetDataStore(void)
   InternalResetDataStore();
   // Let ancestor initialize
   inherited::dsResetDataStore();
-  if (fConfigP->fBinfileDSActive) {
+  if (binfileDSActive()) {
     // And now force MaxGUIDSize to what this datastore can handle
     fMaxGUIDSize=BINFILE_MAXGUIDSIZE;
   }
@@ -432,7 +436,7 @@ bool TBinfileImplDS::dsSetClientSyncParams(
   bool aFilterInclusive
 )
 {
-	if (fConfigP->fBinfileDSActive) {
+	if (binfileDSActive()) {
     #ifdef AUTOSYNC_SUPPORT
     string s;
     bool cgi=false;
@@ -1053,7 +1057,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
   cAppCharP aRemoteDBID  // database ID of remote device
 )
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localstatus sta=LOCERR_OK; // assume ok
 
@@ -1224,7 +1228,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
 
 localstatus TBinfileImplDS::implStartDataRead()
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // init reading of all records
   /// @todo: check if there are other cases where we need all records even if not slow sync - probably with filters only
@@ -1261,7 +1265,7 @@ bool TBinfileImplDS::testFilters(TMultiFieldItem *aItemP)
 /// @brief called to have all non-yet-generated sync commands as "to-be-resumed"
 void TBinfileImplDS::implMarkOnlyUngeneratedForResume(void)
 {
-	if (!fConfigP->fBinfileDSActive) return; // must be active when called at all
+	if (!binfileDSActive()) return; // must be active when called at all
   
   TChangeLogEntry *chglogP;
 
@@ -1347,7 +1351,7 @@ void TBinfileImplDS::implMarkOnlyUngeneratedForResume(void)
 // as "to-be-resumed", by localID or remoteID (latter only in server case).
 void TBinfileImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteID, bool aUnSent)
 {
-	if (!fConfigP->fBinfileDSActive) return; // must be active when called at all
+	if (!binfileDSActive()) return; // must be active when called at all
 
   // make sure we have the changelog in memory
   loadChangeLog();
@@ -1382,7 +1386,7 @@ void TBinfileImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemote
 // error status conditions, by localID or remoteID (latter only in server case).
 void TBinfileImplDS::implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID)
 {
-	if (!fConfigP->fBinfileDSActive) return; // must be active when called at all
+	if (!binfileDSActive()) return; // must be active when called at all
 
   // make sure we have the changelog in memory
   loadChangeLog();
@@ -1421,7 +1425,7 @@ localstatus TBinfileImplDS::implGetItem(
   TSyncItem* &aSyncItemP
 )
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localstatus sta=LOCERR_OK;
   TSyncItem *myitemP=NULL;
@@ -1619,7 +1623,7 @@ error:
 // end of read
 localstatus TBinfileImplDS::implEndDataRead(void)
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // pass it on to the DB api (usually dummy for traditional binfile derivates, but
   // needed for customimplds)
@@ -1674,7 +1678,7 @@ void TBinfileImplDS::loadChangeLog(void)
 // start of write
 localstatus TBinfileImplDS::implStartDataWrite(void)
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localstatus sta = LOCERR_OK;
 
@@ -1751,7 +1755,7 @@ bool TBinfileImplDS::implRetrieveItemByID(
   TStatusCommand &aStatusCommand
 )
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
   // %%% not so nice as we need to copy it once
   TSyncItem *itemP=NULL;
   // read item by local ID
@@ -1785,7 +1789,7 @@ bool TBinfileImplDS::implProcessItem(
   TStatusCommand &aStatusCommand
 )
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localid_out_t newid;
   TSyError statuscode;
@@ -1970,7 +1974,7 @@ done:
 // @note aSyncOp passed not necessarily reflects what was sent to remote, but what actually happened
 void TBinfileImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID, cAppCharP aRemoteID, bool aSuccess, localstatus aErrorStatus)
 {
-	if (fConfigP->fBinfileDSActive) {
+	if (binfileDSActive()) {
     // Nothing to do here, even successful deletes must not delete changelog entry (this will be done
     // by changeLogPostFlight() for those enties that have been reported as deleted in all profiles!)
   }
@@ -1984,7 +1988,7 @@ void TBinfileImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID,
 //   (or, in case the session is really complete, make sure that no resume state is left)
 localstatus TBinfileImplDS::implSaveResumeMarks(void)
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
   
   // update modcount reference of last suspend
   fPreviousSuspendModCount = fCurrentModCount;
@@ -2049,7 +2053,7 @@ void TBinfileImplDS::dsLogSyncResult(void)
 // be called by the derivate after doing customimpl specific stuff.
 localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // update TCustomImplDS dsSavedAdmin variables (other levels have already updated their variables
   if (aUpdateAnchors) {
@@ -2098,7 +2102,7 @@ localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
 // - end write with commit
 bool TBinfileImplDS::implEndDataWrite(void)
 {
-	if (!fConfigP->fBinfileDSActive) return LOCERR_WRONGUSAGE; // must be active when called at all
+	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // Call apiEndDataWrite variant which is possibly implemented in
   // datastores which were designed as direct derivates of binfileds.

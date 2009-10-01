@@ -160,6 +160,13 @@
   #define DIRECT_APPBASE_GLOBALACCESS 1
 #endif
 
+// binfile layer specifics
+#if defined(BASED_ON_BINFILE_CLIENT) && !defined(SYSYNC_SERVER)
+	// client-only build with binfiles included -> binfile must be always active
+  // (and customimpl does not need a lot of stuff it would otherwise include)
+	#define BINFILE_ALWAYS_ACTIVE 1
+#endif
+
 
 // default datatype support
 #define MIMEDIR_SUPPORT 1

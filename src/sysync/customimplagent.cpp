@@ -161,7 +161,7 @@ void TCustomAgentConfig::clear(void)
   fDataCharSet=chs_ansi; // assume ANSI, is probable for ODBC connection
   fDataLineEndMode=lem_dos; // default to CRLF, as this seems to be safest assumption
   // resolver context
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   #ifdef SCRIPT_SUPPORT
   fLoginInitScript.erase();
   fLoginCheckScript.erase();
@@ -171,7 +171,7 @@ void TCustomAgentConfig::clear(void)
     fResolverContext=NULL;
   }
   #endif
-  #endif
+  #endif // BINFILE_ALWAYS_ACTIVE
   // clear inherited
   inherited::clear();
 } // TCustomAgentConfig::clear
@@ -187,7 +187,7 @@ void TCustomAgentConfig::clear(void)
 class TCustomAgentFuncs {
 public:
 
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   // Login context functions
 
   // integer CHECKAUTH(string user, string secret, integer secretismd5)
@@ -352,7 +352,7 @@ public:
     );
   }; // func_SetDeviceKey
 
-  #endif // not BASED_ON_BINFILE_CLIENT
+  #endif // not BINFILE_ALWAYS_ACTIVE
 
 
   // timestamp DBINTTOTIMESTAMP(integer dbint,string dbfieldtype)
@@ -432,7 +432,7 @@ const uInt8 param_oneInteger[] = { VAL(fty_integer) };
 const uInt8 param_variant[] = { VAL(fty_none) };
 
 
-#ifndef BASED_ON_BINFILE_CLIENT
+#ifndef BINFILE_ALWAYS_ACTIVE
 
 // builtin function table for login context
 const TBuiltInFuncDef CustomAgentFuncDefs[numCustomAgentFuncs] = {
@@ -449,12 +449,12 @@ const TBuiltInFuncDef CustomAgentFuncDefs[numCustomAgentFuncs] = {
   { "SETDEVICEKEY", TCustomAgentFuncs::func_SetDeviceKey, fty_none, 1, param_variant },
 };
 
-#endif // not BASED_ON_BINFILE_CLIENT
+#endif // not BINFILE_ALWAYS_ACTIVE
 
 
 // builtin function defs for customImpl database and login contexts
 const TBuiltInFuncDef CustomAgentAndDSFuncDefs[numCustomAgentAndDSFuncs] = {
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   { "DEVICEKEY", TCustomAgentFuncs::func_DeviceKey, fty_string, 0, NULL },
   { "USERKEY", TCustomAgentFuncs::func_UserKey, fty_string, 0, NULL },
   #endif
@@ -464,7 +464,7 @@ const TBuiltInFuncDef CustomAgentAndDSFuncDefs[numCustomAgentAndDSFuncs] = {
 };
 
 
-#ifndef BASED_ON_BINFILE_CLIENT
+#ifndef BINFILE_ALWAYS_ACTIVE
 
 // function table which is chained from login-context function table
 const TFuncTable CustomAgentFuncTable2 = {
@@ -491,7 +491,7 @@ const TFuncTable CustomAgentFuncTable = {
   CustomAgentChainFunc // chain to general agent funcs.
 };
 
-#endif // not BASED_ON_BINFILE_CLIENT
+#endif // not BINFILE_ALWAYS_ACTIVE
 
 
 // chain from agent funcs to custom datastore funcs (when chained via CustomDSFuncTable1
@@ -522,7 +522,7 @@ const TFuncTable CustomDSFuncTable1 = {
 bool TCustomAgentConfig::localStartElement(const char *aElementName, const char **aAttributes, sInt32 aLine)
 {
   // checking the elements
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   #ifdef SCRIPT_SUPPORT
   if (strucmp(aElementName,"logininitscript")==0)
     expectScript(fLoginInitScript,aLine,getAgentFuncTableP());
@@ -532,7 +532,7 @@ bool TCustomAgentConfig::localStartElement(const char *aElementName, const char 
     expectScript(fLoginFinishScript,aLine,getAgentFuncTableP());
   else
   #endif // SCRIPT_SUPPORT
-  #endif // BASED_ON_BINFILE_CLIENT
+  #endif // BINFILE_ALWAYS_ACTIVE
   // - session level Date/Time info
   if (
     strucmp(aElementName,"timestamputc")==0 || // old 2.1 compatible
@@ -565,7 +565,7 @@ void TCustomAgentConfig::localResolve(bool aLastPass)
     fCurrentDateTimeZone = TCTX_UTC;
   // Scripts etc.
   if (aLastPass) {
-    #ifndef BASED_ON_BINFILE_CLIENT
+    #ifndef BINFILE_ALWAYS_ACTIVE
     #ifdef SCRIPT_SUPPORT
     // login scripting
     TScriptContext::resolveScript(getSyncAppBase(),fLoginInitScript,fResolverContext,NULL);
@@ -577,7 +577,7 @@ void TCustomAgentConfig::localResolve(bool aLastPass)
     if (fResolverContext) delete fResolverContext;
     fResolverContext=NULL;
     #endif
-    #endif // not BASED_ON_BINFILE_CLIENT
+    #endif // not BINFILE_ALWAYS_ACTIVE
   }
   // resolve inherited
   inherited::localResolve(aLastPass);
@@ -589,13 +589,8 @@ void TCustomAgentConfig::localResolve(bool aLastPass)
 /* public TCustomImplAgent members */
 
 
-#ifdef SYSYNC_CLIENT
-TCustomImplAgent::TCustomImplAgent(TSyncClientBase *aSyncClientBaseP, const char *aSessionID) :
-  inherited(aSyncClientBaseP, aSessionID),
-#else
-TCustomImplAgent::TCustomImplAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID) :
+TCustomImplAgent::TCustomImplAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, cAppCharP aSessionID) :
   inherited(aAppBaseP, aSessionHandleP, aSessionID),
-#endif
   fConfigP(NULL)
   #ifdef SCRIPT_SUPPORT
   ,fScriptContextDatastore(NULL)
@@ -609,7 +604,7 @@ TCustomImplAgent::TCustomImplAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *
 {
   // get config for agent and save direct link to agent config for easy reference
   fConfigP = static_cast<TCustomAgentConfig *>(getRootConfig()->fAgentConfigP);
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   #ifdef SCRIPT_SUPPORT
   // create login script context if there are scripts
   // Note: derivates might already have initialized fAgentContext here, that's why we
@@ -619,7 +614,7 @@ TCustomImplAgent::TCustomImplAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *
   TScriptContext::rebuildContext(getSyncAppBase(),fConfigP->fLoginFinishScript,fAgentContext,this,true); // now build vars
   // Note: derivates will rebuild NOW, AFTER our rebuilds, in the derived constructor
   #endif
-  #endif
+  #endif // BINFILE_ALWAYS_ACTIVE
   // Note: Datastores are already created from config
 } // TCustomImplAgent::TCustomImplAgent
 
@@ -712,13 +707,7 @@ TLocalEngineDS *TCustomImplAgent::getTunnelDS()
 
 
 
-
-
-
-
-
-
-#ifndef BASED_ON_BINFILE_CLIENT
+#ifndef BINFILE_ALWAYS_ACTIVE
 
 // check credential string
 // Note: if authentication is successful, odbcDBServer session
@@ -726,9 +715,15 @@ TLocalEngineDS *TCustomImplAgent::getTunnelDS()
 //       DB accesses.
 bool TCustomImplAgent::SessionLogin(const char *aUserName, const char *aAuthString, TAuthSecretTypes aAuthStringType, const char *aDeviceID)
 {
+	#ifdef BASED_ON_BINFILE_CLIENT
+	// let binfile handle it if it is active
+  if (binfilesActive()) {
+  	return inherited::SessionLogin(aUserName, aAuthString, aAuthStringType, aDeviceID);
+  }
+  #endif // BASED_ON_BINFILE_CLIENT
+  
   bool authok = false;
   string nonce;
-  bool neednonce = aAuthStringType==sectyp_md5_V10 || aAuthStringType==sectyp_md5_V11;
 
   if (!fConfigP) return false; // no config -> fail early (no need for cleanup)
 
@@ -839,7 +834,7 @@ cleanup:
   return authok;
 } // TCustomImplAgent::SessionLogin
 
-#endif // BASED_ON_BINFILE_CLIENT
+#endif // BINFILE_ALWAYS_ACTIVE
 
 
 } // namespace sysync

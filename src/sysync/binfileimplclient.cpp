@@ -2322,12 +2322,12 @@ void TBinfileClientConfig::cleanChangeLogForDBname(cAppCharP aDBName)
 /* public TBinfileImplClient members */
 
 
-TBinfileImplClient::TBinfileImplClient(TSyncClientBase *aSyncClientBaseP, const char *aSessionID) :
-  TStdLogicAgent(aSyncClientBaseP, aSessionID),
+TBinfileImplClient::TBinfileImplClient(TSyncAppBase *aSyncAppBaseP, TSyncSessionHandle *aSyncSessionHandleP, cAppCharP aSessionID) :
+  TStdLogicAgent(aSyncAppBaseP, aSyncSessionHandleP, aSessionID),
   fConfigP(NULL)
 {
   // get config for agent
-  TRootConfig *rootcfgP = aSyncClientBaseP->getRootConfig();
+  TRootConfig *rootcfgP = aSyncAppBaseP->getRootConfig();
   // - save direct link to agent config for easy reference
   fConfigP = static_cast<TBinfileClientConfig *>(rootcfgP->fAgentConfigP);
   // - make profile invalid

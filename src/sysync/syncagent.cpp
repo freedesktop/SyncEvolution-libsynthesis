@@ -32,6 +32,10 @@
 #include "syncclientbase.h"
 #endif
 
+#ifdef SYSYNC_TOOL
+#include <errno.h>
+#endif
+
 
 namespace sysync {
 
@@ -604,66 +608,59 @@ void TAgentConfig::localResolve(bool aLastPass)
 // Implementation of TSyncAgent
 // =============================
 
-#ifdef SYSYNC_CLIENT
 
-// client constructor
-TSyncAgent::TSyncAgent(
-  TSyncClientBase *aSyncClientBaseP,
-  cAppCharP aSessionID // a session ID
-) :
-  TSyncSession(aSyncClientBaseP,aSessionID)
-  #ifdef ENGINEINTERFACE_SUPPORT
-  ,fEngineState(ces_idle)
-  #endif
-{
-  #ifdef HARD_CODED_SERVER_URI
-  fNoCRCPrefixLen=0;
-  #endif
-  // reset session now to get correct initial state
-  InternalResetSession();
-  // restart with session numbering at 1 (incremented before use)
-  fClientSessionNo=0;
-} // TSyncAgent::TSyncAgent
-
-#endif // SYSYNC_CLIENT
-
-
-#ifdef SYSYNC_SERVER
-
-// server constructor
+// constructor
 TSyncAgent::TSyncAgent(
   TSyncAppBase *aAppBaseP,
   TSyncSessionHandle *aSessionHandleP,
   const char *aSessionID // a session ID
 ) :
   TSyncSession(aAppBaseP,aSessionID)  
-  #ifdef ENGINEINTERFACE_SUPPORT
-  ,fEngineState(ses_needdata)
-  ,fRequestSize(0)
-  #endif
 {
-  // init answer buffer
-  fBufferedAnswer=NULL;
-  fBufferedAnswerSize=0;
-  // reset data counts
-  fIncomingBytes=0;
-  fOutgoingBytes=0;
-  // init own stuff
-  InternalResetSession();
-  // save session handle
-  fSessionHandleP = aSessionHandleP; // link to handle
-	// get config defaults
-  TAgentConfig *configP = static_cast<TAgentConfig *>(aAppBaseP->getRootConfig()->fAgentConfigP);
-  fUseRespURI = configP->fUseRespURI;
-  // create all locally available datastores from config
-  TLocalDSList::iterator pos;
-  for (pos=configP->fDatastores.begin(); pos!=configP->fDatastores.end(); pos++) {
-    // create the datastore
-    addLocalDataStore(*pos);
-  }   
+	if (IS_CLIENT) {
+		#ifdef SYSYNC_CLIENT
+    #ifdef HARD_CODED_SERVER_URI
+    fNoCRCPrefixLen=0;
+    #endif
+	  #ifdef ENGINE_LIBRARY
+		// engine
+  	fClientEngineState = ces_idle;
+    #endif
+    // reset session now to get correct initial state
+    InternalResetSession();
+    // restart with session numbering at 1 (incremented before use)
+    fClientSessionNo=0;  
+		#endif // SYSYNC_CLIENT
+  }
+  else {
+		#ifdef SYSYNC_SERVER
+    // init answer buffer
+    fBufferedAnswer = NULL;
+    fBufferedAnswerSize = 0;
+    // reset data counts
+    fIncomingBytes = 0;
+    fOutgoingBytes = 0;
+	  #ifdef ENGINE_LIBRARY
+    // engine
+    fServerEngineState = ses_needdata;
+    fRequestSize = 0;
+    #endif
+    // init own stuff
+    InternalResetSession();
+    // save session handle
+    fSessionHandleP = aSessionHandleP; // link to handle
+    // get config defaults
+    TAgentConfig *configP = static_cast<TAgentConfig *>(aAppBaseP->getRootConfig()->fAgentConfigP);
+    fUseRespURI = configP->fUseRespURI;
+    // create all locally available datastores from config
+    TLocalDSList::iterator pos;
+    for (pos=configP->fDatastores.begin(); pos!=configP->fDatastores.end(); pos++) {
+      // create the datastore
+      addLocalDataStore(*pos);
+    }
+    #endif // SYSYNC_SERVER
+  }
 } // TSyncAgent::TSyncAgent
-
-#endif // SYSYNC_SERVER
 
 
 // destructor
@@ -704,9 +701,9 @@ void TSyncAgent::TerminateSession()
   #ifdef SYSYNC_CLIENT
   if (IS_CLIENT && !fTerminated) {
     InternalResetSession();
-    #ifdef ENGINEINTERFACE_SUPPORT
+    #ifdef ENGINE_LIBRARY
     // switch state to done to prevent any further activity via SessionStep()
-    fEngineState = ces_done;
+    fClientEngineState = ces_done;
     #endif
   }
   #endif // SYSYNC_CLIENT
@@ -2818,6 +2815,7 @@ appPointer TSyncAgent::newSessionKey(TEngineInterface *aEngineInterfaceP)
 } // TSyncAgent::newSessionKey
 
 
+#ifdef ENGINE_LIBRARY
 
 TSyError TSyncAgent::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
 {
@@ -2833,6 +2831,7 @@ TSyError TSyncAgent::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
   }
 } // TSyncAgent::SessionStep
 
+#endif // ENGINE_LIBRARY
 
 
 #ifdef SYSYNC_SERVER
@@ -2894,11 +2893,11 @@ TSyError TSyncAgent::ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
 
   // if session is already aborted, no more steps are required
   if (isAborted()) {
-  	fEngineState = ses_done; // we are done
+  	fServerEngineState = ses_done; // we are done
   }
 
   // handle pre-processed step command according to current engine state
-  switch (fEngineState) {
+  switch (fServerEngineState) {
 
     // Done state
     case ses_done :
@@ -2941,7 +2940,7 @@ TSyError TSyncAgent::ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
             break;            
           }
           // content type ok - switch to processing mode
-          fEngineState = ses_processing;
+          fServerEngineState = ses_processing;
           aStepCmd = STEPCMD_OK;
           sta = LOCERR_OK;
           break;
@@ -2955,7 +2954,7 @@ TSyError TSyncAgent::ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
       switch (stepCmdIn) {
         case STEPCMD_SENTDATA :
           // sent data, now wait for next request
-          fEngineState = ses_needdata;
+          fServerEngineState = ses_needdata;
           aStepCmd = STEPCMD_NEEDDATA;
           sta = LOCERR_OK;
           break;
@@ -2985,7 +2984,7 @@ TSyError TSyncAgent::ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
       // invalid
       break;
 
-  } // switch fEngineState
+  } // switch fServerEngineState
 
   // done
   return sta;
@@ -3022,7 +3021,7 @@ TSyError TSyncAgent::ServerProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo 
     // message completely processed
     // - switch engine state to generating answer message (if any)
     aStepCmd = STEPCMD_OK;
-    fEngineState = ses_generating;
+    fServerEngineState = ses_generating;
     sta = LOCERR_OK;
   }
   else {
@@ -3035,7 +3034,7 @@ TSyError TSyncAgent::ServerProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo 
     // abort the session (causing proper error events to be generated and reported back)
     AbortSession(LOCERR_PROCESSMSG, true);
     // session is now done
-    fEngineState = ses_done;
+    fServerEngineState = ses_done;
     // step by itself is ok - let app continue stepping (to restart session or complete abort)
     aStepCmd = STEPCMD_OK;
     sta = LOCERR_OK;
@@ -3058,7 +3057,7 @@ TSyError TSyncAgent::ServerGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
   if (hasdata) {
   	// there is data to be sent
     aStepCmd = STEPCMD_SENDDATA;
-    fEngineState = ses_dataready;
+    fServerEngineState = ses_dataready;
   }
   else {
   	// no more data to send
@@ -3069,7 +3068,7 @@ TSyError TSyncAgent::ServerGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
   	// Session is done
   	TerminateSession();
     // subsequent steps will all return STEPCMD_DONE
-  	fEngineState = ses_done;
+  	fServerEngineState = ses_done;
   }
   // request reset
   fRequestSize = 0;
@@ -3083,6 +3082,8 @@ TSyError TSyncAgent::ServerGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
 
 
 #ifdef SYSYNC_CLIENT
+
+#ifdef ENGINE_LIBRARY
 
 // Client implementation
 // ---------------------
@@ -3110,11 +3111,11 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
 
   // if session is already aborted, no more steps are required
   if (isAborted()) {
-  	fEngineState = ces_done; // we are done
+  	fClientEngineState = ces_done; // we are done
   }
 
   // handle pre-processed step command according to current engine state
-  switch (fEngineState) {
+  switch (fClientEngineState) {
 
     // Idle state
     case ces_done : {
@@ -3133,7 +3134,7 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
           sta = InitializeSession(fProfileSelectorInternal,stepCmdIn==STEPCMD_CLIENTAUTOSTART);
           if (sta!=LOCERR_OK) break;
           // engine is now ready, start generating first request
-          fEngineState = ces_generating;
+          fClientEngineState = ces_generating;
           // ok with no status
           aStepCmd = STEPCMD_OK;
           break;
@@ -3182,13 +3183,13 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
             // abort the session (causing proper error events to be generated and reported back)
             AbortSession(sta, true);
             // session is now done
-            fEngineState = ces_done;
+            fClientEngineState = ces_done;
 				    aStepCmd = STEPCMD_ERROR;
             break;
           }
           // content type ok - switch to processing mode
           fIgnoreMsgErrs=false; // do not ignore errors by default
-          fEngineState = ces_processing;
+          fClientEngineState = ces_processing;
           aStepCmd = STEPCMD_OK;
           sta = LOCERR_OK;
           break;
@@ -3196,7 +3197,7 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
         case STEPCMD_RESENDDATA :
         	// instead of having received new data, the network layer has found it needs to re-send the data.
           // performing the STEPCMD_RESENDDATA just generates a new send start event, but otherwise no engine action
-          fEngineState = ces_resending;
+          fClientEngineState = ces_resending;
           aStepCmd = STEPCMD_RESENDDATA; // return the same step command, to differentiate it from STEPCMD_SENDDATA
           OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendstart,NULL,0,0,0);
           sta = LOCERR_OK;
@@ -3213,7 +3214,7 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
         	// allowed in dataready or resending state
           // sent (or re-sent) data, now request answer data
           OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendend,NULL,0,0,0);
-          fEngineState = ces_needdata;
+          fClientEngineState = ces_needdata;
           aStepCmd = STEPCMD_NEEDDATA;
           sta = LOCERR_OK;
           break;
@@ -3226,7 +3227,7 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
       break;
     }
 
-  } // switch fEngineState
+  } // switch fClientEngineState
 
   // done
   return sta;
@@ -3244,7 +3245,7 @@ TSyError TSyncAgent::ClientGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
   sta = NextMessage(done);
   if (done) {
     // done with session, with or without error
-    fEngineState = ces_done; // blocks any further activity with the session
+    fClientEngineState = ces_done; // blocks any further activity with the session
     aStepCmd = STEPCMD_DONE;
     // terminate session to provoke all end-of-session progress events
     TerminateSession();
@@ -3260,7 +3261,7 @@ TSyError TSyncAgent::ClientGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
     //   start.
     smlReadOutgoingAgain(getSmlWorkspaceID());
     // next is sending request to server
-    fEngineState = ces_dataready;
+    fClientEngineState = ces_dataready;
     aStepCmd = STEPCMD_SENDDATA;
     OBJ_PROGRESS_EVENT(getSyncAppBase(),pev_sendstart,NULL,0,0,0);
   }
@@ -3298,7 +3299,7 @@ TSyError TSyncAgent::ClientProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo 
     // message completely processed
     // - switch engine state to generating next message (if any)
     aStepCmd = STEPCMD_OK;
-    fEngineState = ces_generating;
+    fClientEngineState = ces_generating;
     sta = LOCERR_OK;
   }
   else {
@@ -3312,11 +3313,11 @@ TSyError TSyncAgent::ClientProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo 
 	    // abort the session (causing proper error events to be generated and reported back)
      	AbortSession(LOCERR_PROCESSMSG, true);
       // session is now done
-      fEngineState = ces_done;
+      fClientEngineState = ces_done;
     }
     else {
     	// we must ignore errors e.g. because of session restart and go back to generate next message
-      fEngineState = ces_generating;
+      fClientEngineState = ces_generating;
     }
     // anyway, step by itself is ok - let app continue stepping (to restart session or complete abort)
     aStepCmd = STEPCMD_OK;
@@ -3333,6 +3334,7 @@ TSyError TSyncAgent::ClientProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo 
   return sta;
 } // TSyncAgent::ClientProcessingStep
 
+#endif // ENGINE_LIBRARY
 
 #endif // SYSYNC_CLIENT
 

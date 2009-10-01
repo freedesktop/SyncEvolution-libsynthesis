@@ -1034,25 +1034,27 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
 	TSyError dberr=LOCERR_OK;
 
   #ifdef BASED_ON_BINFILE_CLIENT
-  // we need to create the context for the data plugin here, as loadAdminData is not called in BASED_ON_BINFILE_CLIENT case.
-	dberr = connectDataPlugin();
-  if (dberr==LOCERR_OK) {
-    if (!fDBApi_Data.Created()) {
-      // - use datastore name as context name and link with session context
-      dberr = fDBApi_Data.CreateContext(
-        getName(), false,
-        &(fPluginDSConfigP->fDBApiConfig_Data),
-        "anydevice", // no real device key
-        "singleuser", // no real user key
-        NULL // no associated session level // fPluginAgentP->getDBApiSession()
-      );
+  if (binfileDSActive()) {
+    // we need to create the context for the data plugin here, as loadAdminData is not called in BASED_ON_BINFILE_CLIENT case.
+    dberr = connectDataPlugin();
+    if (dberr==LOCERR_OK) {
+      if (!fDBApi_Data.Created()) {
+        // - use datastore name as context name and link with session context
+        dberr = fDBApi_Data.CreateContext(
+          getName(), false,
+          &(fPluginDSConfigP->fDBApiConfig_Data),
+          "anydevice", // no real device key
+          "singleuser", // no real user key
+          NULL // no associated session level // fPluginAgentP->getDBApiSession()
+        );
+      }
     }
-  }
-  else if (dberr==LOCERR_NOTIMP)
-  	dberr=LOCERR_OK; // we just don't have a data plugin, that's ok, inherited (SQL) will handle data
-  if (dberr!=LOCERR_OK)
-  	return dberr;
-  #endif
+    else if (dberr==LOCERR_NOTIMP)
+      dberr=LOCERR_OK; // we just don't have a data plugin, that's ok, inherited (SQL) will handle data
+    if (dberr!=LOCERR_OK)
+      return dberr;
+  } // binfile active
+  #endif // BASED_ON_BINFILE_CLIENT
   #ifndef SDK_ONLY_SUPPORT
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created()) return inherited::apiReadSyncSet(aNeedAll);
@@ -1616,7 +1618,7 @@ void TPluginApiDS::dsThreadMayChangeNow(void)
 
 // - connect data handling part of plugin, Returns LOCERR_NOTIMPL when no data plugin is selected
 //   Note: this is either called as part of apiLoadAdminData (even if plugin is NOT responsible for data!)
-//         or directly before startDataRead (in BASED_ON_BINFILE_CLIENT case)
+//         or directly before startDataRead (in BASED_ON_BINFILE_CLIENT binfileDSActive() case)
 TSyError TPluginApiDS::connectDataPlugin(void)
 {
 	TSyError err = LOCERR_NOTIMP;
@@ -1651,7 +1653,7 @@ TSyError TPluginApiDS::connectDataPlugin(void)
 } // connectDataPlugin
 
 
-#ifndef BASED_ON_BINFILE_CLIENT
+#ifndef BINFILE_ALWAYS_ACTIVE
 
 /// @brief save admin data
 ///   Must save the following items:
@@ -1852,11 +1854,11 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
       // - fLastTargetURI    = item ID (string, if limited in length should be long enough for large IDs, >=64 chars recommended)
       adminData+="\r\nlasttargetURI:"; StrToCStrAppend( fLastTargetURI.c_str(), adminData,true );
       // - fPITotalSize      = uInt32, total item size
-      adminData+="\r\ntotalsize:"; StringObjAppendPrintf( adminData,"%hd", fPITotalSize );
+      adminData+="\r\ntotalsize:"; StringObjAppendPrintf( adminData,"%ld", fPITotalSize );
       // - fPIUnconfirmedSize= uInt32, unconfirmed part of item size
-      adminData+="\r\nunconfirmedsize:"; StringObjAppendPrintf( adminData,"%hd", fPIUnconfirmedSize );
+      adminData+="\r\nunconfirmedsize:"; StringObjAppendPrintf( adminData,"%ld", fPIUnconfirmedSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, store it as well to make ReadBlob easier (mallloc)
-      adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%hd", blSize );
+      adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%ld", blSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, 0=none
       // - fPIStoredDataP    = void *, BLOB data, NULL if none
       adminData+="\r\nstored;BLOBID="; adminData+= PIStored;
@@ -1925,10 +1927,10 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
 ///   - fLastRemoteAnchor = anchor string used by remote party for last session (and saved to DB then)
 ///   - fPreviousSyncTime = anchor (beginning of session) timestamp of last session.
 ///   - fPreviousToRemoteSyncCmpRef = Reference time to determine items modified since last time sending data to remote
-///                         (or last changelog update in case of BASED_ON_BINFILE_CLIENT)
+///                         (or last changelog update in case of BASED_ON_BINFILE_CLIENT && binfileDSActive())
 ///   - fPreviousToRemoteSyncIdentifier = string identifying last session that sent data to remote
-///                         (or last changelog update in case of BASED_ON_BINFILE_CLIENT). Needs only be saved
-///                         if derived datastore cannot work with timestamps and has its own identifier.
+///                         (or last changelog update in case of BASED_ON_BINFILE_CLIENT && binfileDSActive()). Needs
+///                         only be saved if derived datastore cannot work with timestamps and has its own identifier.
 ///   - fMapTable         = list<TMapEntry> containing map entries. The implementation must load all map entries
 ///                         related to the current sync target identified by the triple of (aDeviceID,aDatabaseID,aRemoteDBID)
 ///                         or by fTargetKey. The entries added to fMapTable must have "changed", "added" and "deleted" flags
@@ -2276,7 +2278,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
 } // TPluginApiDS::apiLoadAdminData
 
 
-#endif // not BASED_ON_BINFILE_CLIENT
+#endif // not BINFILE_ALWAYS_ACTIVE
 
 
 /// @brief log datastore sync result, called at end of sync with this datastore
@@ -2332,13 +2334,13 @@ void TPluginApiDS::dsLogSyncResult(void)
   logData.erase();
   logData+="lastsync:"; TimestampToISO8601Str(s,fCurrentSyncTime,TCTX_UTC); logData+=s.c_str();
   logData+="\r\ntargetkey:"; StrToCStrAppend(fTargetKey.c_str(),logData,true);
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   logData+="\r\nuserkey:"; StrToCStrAppend(fPluginAgentP->fUserKey.c_str(),logData,true);
   logData+="\r\ndevicekey:"; StrToCStrAppend(fPluginAgentP->fDeviceKey.c_str(),logData,true);
   #ifdef SCRIPT_SUPPORT
   logData+="\r\ndomain:"; StrToCStrAppend(fPluginAgentP->fDomainName.c_str(),logData,true);
   #endif
-  #endif
+  #endif // BINFILE_ALWAYS_ACTIVE
   logData+="\r\ndsname:"; StrToCStrAppend(getName(),logData,true);
   #ifndef MINIMAL_CODE
   logData+="\r\ndsremotepath:"; StrToCStrAppend(getRemoteDBPath(),logData,true);

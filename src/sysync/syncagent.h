@@ -16,6 +16,8 @@
 #ifndef SYNC_AGENT_H
 #define SYNC_AGENT_H
 
+#include "engine_defs.h"
+
 //%%% we still need this at this time
 #define NON_FULLY_GRANULAR_ENGINE 1
 
@@ -39,6 +41,12 @@ using namespace sysync;
 
 namespace sysync {
 
+
+#ifndef SYSYNC_SERVER
+// dummy session handle type for client-only case to allow unified constructor
+class TSyncSessionHandle {
+};
+#endif
 
 // Support for SySync Diagnostic Tool
 #ifdef SYSYNC_TOOL
@@ -222,25 +230,18 @@ class TSyncAgent: public TSyncSession
 {
   typedef TSyncSession inherited;
 public:
-	#ifdef SYSYNC_CLIENT
-  TSyncAgent(
-    TSyncClientBase *aSyncClientBaseP,
-    cAppCharP aSessionID // a session ID
-  );
-  #endif
-  #ifdef SYSYNC_SERVER
   TSyncAgent(
     TSyncAppBase *aAppBaseP,
     TSyncSessionHandle *aSessionHandleP,
-    const char *aSessionID // a session ID
+    cAppCharP aSessionID // a session ID
   );  
-  #endif
   virtual ~TSyncAgent();
   virtual void TerminateSession(void); // Terminate session, like destructor, but without actually destructing object itself
   virtual void ResetSession(void); // Resets session (but unlike TerminateSession, session might be re-used)
   void InternalResetSession(void); // static implementation for calling through virtual destructor and virtual ResetSession();
 
   #ifdef ENGINEINTERFACE_SUPPORT
+  #ifdef ENGINE_LIBRARY
   // Support for EngineModule common interface
   /// @brief Executes next step of the session
   /// @param aStepCmd[in/out] step command (STEPCMD_xxx):
@@ -249,6 +250,7 @@ public:
   /// @param aInfoP[in] pointer to a TEngineProgressInfo structure, NULL if no progress info needed
   /// @return LOCERR_OK on success, SyncML or LOCERR_xxx error code on failure
   TSyError SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP);
+  #endif
   /// @brief Get new session key to access details of this session
   virtual appPointer newSessionKey(TEngineInterface *aEngineInterfaceP);
   #endif // ENGINEINTERFACE_SUPPORT
@@ -268,10 +270,10 @@ public:
 
 
 	#ifdef SYSYNC_CLIENT
-  #ifdef ENGINEINTERFACE_SUPPORT
+  #ifdef ENGINE_LIBRARY
   // set profileID to client session before doing first SessionStep
   virtual void SetProfileSelector(uInt32 aProfileSelector) { fProfileSelectorInternal = aProfileSelector; /* default is just passing it on */ };
-  #endif // ENGINEINTERFACE_SUPPORT
+  #endif // ENGINE_LIBRARY
   // session set-up
   // - initialize the client session, select the profile and link session with SML instance
   //   for the correct encoding
@@ -392,7 +394,7 @@ protected:
   uInt32 fServerURICRC;
   uInt8 fNoCRCPrefixLen;
   #endif
-  #ifdef ENGINEINTERFACE_SUPPORT
+  #ifdef ENGINE_LIBRARY
   // Engine interface
   // - process step
   TSyError ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP);
@@ -404,8 +406,8 @@ protected:
   //   SetProfileSelector(), to be used with SelectProfile()
   uInt32 fProfileSelectorInternal;
   // - Client engine state
-  TClientEngineState fEngineState;
-  #endif // ENGINEINTERFACE_SUPPORT
+  TClientEngineState fClientEngineState;
+  #endif // ENGINE_LIBRARY
   // - client side consecutive Alert 222, used to detect endless loop
   uInt32 fOutgoingAlertRequests;
   // Loop detecting time frame to avoid wrong detection of "keep-alive" message
@@ -443,7 +445,7 @@ protected:
   // device info (uses defaults for server, override to customize)
   virtual string getDeviceID(void) { return SYSYNC_SERVER_DEVID; }
   virtual string getDeviceType(void) { return SYNCML_SERVER_DEVTYP; }
-  #ifdef ENGINEINTERFACE_SUPPORT
+  #ifdef ENGINE_LIBRARY
   // Engine interface
   // - process step
   TSyError ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP);
@@ -452,10 +454,10 @@ protected:
   // - Step that processes SyncML data
   TSyError ServerProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP);
   // - Server engine state
-  TServerEngineState fEngineState;
+  TServerEngineState fServerEngineState;
   // - request size
   MemSize_t fRequestSize;
-  #endif // ENGINEINTERFACE_SUPPORT
+  #endif // ENGINE_LIBRARY
   // set if map command received in this session
   bool fMapSeen;
   // standard nonce generation (without persistent device info)

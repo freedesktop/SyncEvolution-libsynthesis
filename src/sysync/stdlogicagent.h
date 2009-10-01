@@ -32,12 +32,7 @@ class TStdLogicAgent:
 {
   typedef TSyncAgent inherited;
 public:
-  #ifdef SYSYNC_CLIENT
-  TStdLogicAgent(TSyncClientBase *aClientBaseP, const char *aSessionID);
-  #endif
-  #ifdef SYSYNC_SERVER
-  TStdLogicAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID);
-  #endif
+  TStdLogicAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, cAppCharP aSessionID);
   virtual ~TStdLogicAgent();
   virtual void TerminateSession(void); // Terminate session, like destructor, but without actually destructing object itself
   virtual void ResetSession(void); // Resets session (but unlike TerminateSession, session might be re-used)

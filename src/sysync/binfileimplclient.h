@@ -504,7 +504,7 @@ class TBinfileImplClient: public TStdLogicAgent
   friend class TBinFileAgentParamsKey;
   #endif
 public:
-  TBinfileImplClient(TSyncClientBase *aSyncClientBaseP, const char *aSessionID);
+  TBinfileImplClient(TSyncAppBase *aSyncAppBaseP, TSyncSessionHandle *aSyncSessionHandleP, cAppCharP aSessionID);
   /// check if active derived classes (in particular: customImplDS that CAN derive binfiles, but does not necessarily so)
   bool binfilesActive(void) { return fConfigP && fConfigP->fBinfilesActive; };
   // - selects a profile (returns false if profile not found)

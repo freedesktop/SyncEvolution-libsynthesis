@@ -132,12 +132,7 @@ class TPluginApiAgent :
   typedef TCustomImplAgent inherited;
   #endif
 public:
-  #ifdef SYSYNC_CLIENT
-  TPluginApiAgent(TSyncClientBase *aSyncClientBaseP, const char *aSessionID);
-  #endif
-  #ifdef SYSYNC_SERVER
-  TPluginApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID);
-  #endif
+  TPluginApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, cAppCharP aSessionID);
   virtual ~TPluginApiAgent();
   virtual void TerminateSession(void); // Terminate session, like destructor, but without actually destructing object itself
   virtual void ResetSession(void); // Resets session (but unlike TerminateSession, session might be re-used)

@@ -24,26 +24,15 @@
 
 /* public TStdLogicAgent members */
 
-#ifdef SYSYNC_CLIENT
-
-TStdLogicAgent::TStdLogicAgent(TSyncClientBase *aClientBaseP, const char *aSessionID) :
-  inherited(aClientBaseP,aSessionID)
-{
-  // nop
-} // TStdLogicAgent::TStdLogicAgent
-
-#endif
-
-#ifdef SYSYNC_SERVER
-
-TStdLogicAgent::TStdLogicAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, const char *aSessionID) :
+TStdLogicAgent::TStdLogicAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessionHandleP, cAppCharP aSessionID) :
   inherited(aAppBaseP, aSessionHandleP, aSessionID)
 {
-  // nop
-  InternalResetSession();
+	if (IS_SERVER) {
+		#ifdef SYSYNC_SERVER
+	  InternalResetSession();
+    #endif
+  }
 } // TStdLogicAgent::TStdLogicAgent
-
-#endif
 
 
 // destructor
