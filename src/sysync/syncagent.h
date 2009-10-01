@@ -480,40 +480,7 @@ protected:
 // Support for EngineModule common interface
 // =========================================
 
-#ifdef SYSYNC_CLIENT
-
-// client runtime parameters
-class TClientParamsKey :
-  public TSessionKey
-{
-  typedef TSessionKey inherited;
-
-public:
-  TClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aClientSessionP);
-  virtual ~TClientParamsKey() {};
-  // open subkey by name (not by path!)
-  virtual TSyError OpenSubKeyByName(
-    TSettingsKeyImpl *&aSettingsKeyP,
-    cAppCharP aName, stringSize aNameSize,
-    uInt16 aMode
-  );
-protected:
-  // get table describing the fields in the struct
-  virtual const TStructFieldInfo *getFieldsTable(void);
-  virtual sInt32 numFields(void);
-  // get actual struct base address
-  virtual uInt8P getStructAddr(void);
-public:
-  // the associated client session
-  TSyncAgent *fClientSessionP;
-}; // TClientParamsKey
-
-#endif // SYSYNC_CLIENT
-
-#ifdef SYSYNC_SERVER
-
-
-#ifndef ENGINE_LIBRARY
+#if defined(SYSYNC_SERVER) && !defined(ENGINE_LIBRARY)
 
 #warning "using ENGINEINTERFACE_SUPPORT in old-style appbase-rooted environment. Should be converted to real engine usage later"
 
@@ -532,21 +499,24 @@ public:
 
 }; // TDummyServerEngineInterface
 
-#endif // not ENGINE_LIBRARY
+#endif // SYSYNC_SERVER and not ENGINE_LIBRARY
 
 
-
-// server runtime parameters
-class TServerParamsKey :
+// session runtime parameters
+class TAgentParamsKey :
   public TSessionKey
 {
   typedef TSessionKey inherited;
 
 public:
-  TServerParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aServerSessionP);
-
-  virtual ~TServerParamsKey() {};
-
+  TAgentParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aAgentP);
+  virtual ~TAgentParamsKey() {};
+  // open subkey by name (not by path!)
+  virtual TSyError OpenSubKeyByName(
+    TSettingsKeyImpl *&aSettingsKeyP,
+    cAppCharP aName, stringSize aNameSize,
+    uInt16 aMode
+  );
 protected:
   // get table describing the fields in the struct
   virtual const TStructFieldInfo *getFieldsTable(void);
@@ -555,10 +525,9 @@ protected:
   virtual uInt8P getStructAddr(void);
 public:
   // the associated server session
-  TSyncAgent *fServerSessionP;
-}; // TServerParamsKey
+  TSyncAgent *fAgentP;
+}; // TAgentParamsKey
 
-#endif // SYSYNC_SERVER
 
 #endif // ENGINEINTERFACE_SUPPORT
 

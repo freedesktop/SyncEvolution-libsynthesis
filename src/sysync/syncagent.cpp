@@ -2814,16 +2814,7 @@ bool TSyncAgent::processSyncStart(
 /// @brief Get new session key to access details of this session
 appPointer TSyncAgent::newSessionKey(TEngineInterface *aEngineInterfaceP)
 {
-	if (IS_CLIENT) {
-		#ifdef SYSYNC_CLIENT
-	  return new TClientParamsKey(aEngineInterfaceP,this);
-		#endif // SYSYNC_CLIENT
-  }
-  else {
-    #ifdef SYSYNC_SERVER
-	  return new TServerParamsKey(aEngineInterfaceP,this);
-    #endif // SYSYNC_SERVER
-  }
+	return new TAgentParamsKey(aEngineInterfaceP,this);
 } // TSyncAgent::newSessionKey
 
 
@@ -3088,162 +3079,7 @@ TSyError TSyncAgent::ServerGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
 
 #endif // ENGINE_LIBRARY
 
-
-// Server runtime settings key
-// ---------------------------
-
-// Constructor
-TServerParamsKey::TServerParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aServerSessionP) :
-  inherited(aEngineInterfaceP,aServerSessionP),
-  fServerSessionP(aServerSessionP)
-{
-} // TServerParamsKey::TServerParamsKey
-
-
-// - read local session ID
-static TSyError readLocalSessionID(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  appPointer aBuffer, memSize aBufSize, memSize &aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  return TStructFieldsKey::returnString(
-    mykeyP->fServerSessionP->getLocalSessionID(),
-    aBuffer,aBufSize,aValSize
-  );
-} // readLocalSessionID
-
-
-// - read initial local URI
-static TSyError readInitialLocalURI(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  appPointer aBuffer, memSize aBufSize, memSize &aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  return TStructFieldsKey::returnString(
-    mykeyP->fServerSessionP->getInitialLocalURI(),
-    aBuffer,aBufSize,aValSize
-  );
-} // readInitialLocalURI
-
-
-// - read abort status
-static TSyError readAbortStatus(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  appPointer aBuffer, memSize aBufSize, memSize &aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  return TStructFieldsKey::returnInt(
-  	mykeyP->fServerSessionP->getAbortReasonStatus(),
-    sizeof(TSyError),
-    aBuffer,aBufSize,aValSize
-  );
-} // readAbortStatus
-
-
-
-// - write abort status, which means aborting a session
-TSyError writeAbortStatus(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  cAppPointer aBuffer, memSize aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  // abort the session
-  TSyError sta = *((TSyError *)aBuffer);
-	mykeyP->fServerSessionP->AbortSession(sta, true);
-  return LOCERR_OK;
-} // writeAbortStatus
-
-
-
-// - read content type string
-static TSyError readContentType(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  appPointer aBuffer, memSize aBufSize, memSize &aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  string contentType = SYNCML_MIME_TYPE;
-  mykeyP->fServerSessionP->addEncoding(contentType);
-  return TStructFieldsKey::returnString(
-    contentType.c_str(),
-    aBuffer,aBufSize,aValSize
-  );
-} // readContentType
-
-
-// - write content type string
-static TSyError writeContentType(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  cAppPointer aBuffer, memSize aValSize
-)
-{
-  string contentType((cAppCharP)aBuffer,aValSize);
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  mykeyP->fServerSessionP->setEncoding(TSyncAppBase::encodingFromContentType(contentType.c_str()));
-  return LOCERR_OK;
-} // writeContentType
-
-
-// - read respURI enable flag
-static TSyError readSendRespURI(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  appPointer aBuffer, memSize aBufSize, memSize &aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-  return TStructFieldsKey::returnInt(mykeyP->fServerSessionP->fUseRespURI, sizeof(bool), aBuffer, aBufSize, aValSize);
-} // readSendRespURI
-
-
-// - write respURI enable flag
-static TSyError writeSendRespURI(
-  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  cAppPointer aBuffer, memSize aValSize
-)
-{
-  TServerParamsKey *mykeyP = static_cast<TServerParamsKey *>(aStructFieldsKeyP);
-	mykeyP->fServerSessionP->fUseRespURI = *((uInt8P)aBuffer);
-  return LOCERR_OK;
-} // writeSendRespURI
-
-
-// accessor table for server session key
-static const TStructFieldInfo ServerParamFieldInfos[] =
-{  
-  // valName, valType, writable, fieldOffs, valSiz
-  { "localSessionID", VALTYPE_TEXT, false, 0, 0, &readLocalSessionID, NULL },
-  { "initialLocalURI", VALTYPE_TEXT, false, 0, 0, &readInitialLocalURI, NULL },
-  { "abortStatus", VALTYPE_INT16, true, 0, 0, &readAbortStatus, &writeAbortStatus },
-  { "contenttype", VALTYPE_TEXT, true, 0, 0, &readContentType, &writeContentType },
-  { "sendrespuri", VALTYPE_INT8, true, 0, 0, &readSendRespURI, &writeSendRespURI },
-};
-
-// get table describing the fields in the struct
-const TStructFieldInfo *TServerParamsKey::getFieldsTable(void)
-{
-  return ServerParamFieldInfos;
-} // TServerParamsKey::getFieldsTable
-
-sInt32 TServerParamsKey::numFields(void)
-{
-  return sizeof(ServerParamFieldInfos)/sizeof(TStructFieldInfo);
-} // TServerParamsKey::numFields
-
-// get actual struct base address
-uInt8P TServerParamsKey::getStructAddr(void)
-{
-  // prepared for accessing fields in server session object
-  return (uInt8P)fServerSessionP;
-} // TServerParamsKey::getStructAddr
-
-
 #endif // SYSYNC_SERVER
-
-
 
 
 #ifdef SYSYNC_CLIENT
@@ -3498,15 +3334,108 @@ TSyError TSyncAgent::ClientProcessingStep(uInt16 &aStepCmd, TEngineProgressInfo 
 } // TSyncAgent::ClientProcessingStep
 
 
-// Client runtime settings key
+#endif // SYSYNC_CLIENT
+
+
+
+// Session runtime settings key
 // ---------------------------
 
 // Constructor
-TClientParamsKey::TClientParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aClientSessionP) :
-  inherited(aEngineInterfaceP,aClientSessionP),
-  fClientSessionP(aClientSessionP)
+TAgentParamsKey::TAgentParamsKey(TEngineInterface *aEngineInterfaceP, TSyncAgent *aAgentP) :
+  inherited(aEngineInterfaceP,aAgentP),
+  fAgentP(aAgentP)
 {
-} // TClientParamsKey::TClientParamsKey
+} // TAgentParamsKey::TAgentParamsKey
+
+
+
+// - read local session ID
+static TSyError readLocalSessionID(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnString(
+    mykeyP->fAgentP->getLocalSessionID(),
+    aBuffer,aBufSize,aValSize
+  );
+} // readLocalSessionID
+
+
+// - read initial local URI
+static TSyError readInitialLocalURI(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnString(
+    mykeyP->fAgentP->getInitialLocalURI(),
+    aBuffer,aBufSize,aValSize
+  );
+} // readInitialLocalURI
+
+
+// - read abort status
+static TSyError readAbortStatus(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnInt(
+  	mykeyP->fAgentP->getAbortReasonStatus(),
+    sizeof(TSyError),
+    aBuffer,aBufSize,aValSize
+  );
+} // readAbortStatus
+
+
+
+// - write abort status, which means aborting a session
+TSyError writeAbortStatus(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  // abort the session
+  TSyError sta = *((TSyError *)aBuffer);
+	mykeyP->fAgentP->AbortSession(sta, true);
+  return LOCERR_OK;
+} // writeAbortStatus
+
+
+
+// - read content type string
+static TSyError readContentType(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  string contentType = SYNCML_MIME_TYPE;
+  mykeyP->fAgentP->addEncoding(contentType);
+  return TStructFieldsKey::returnString(
+    contentType.c_str(),
+    aBuffer,aBufSize,aValSize
+  );
+} // readContentType
+
+
+// - write content type string
+static TSyError writeContentType(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  string contentType((cAppCharP)aBuffer,aValSize);
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  mykeyP->fAgentP->setEncoding(TSyncAppBase::encodingFromContentType(contentType.c_str()));
+  return LOCERR_OK;
+} // writeContentType
 
 
 // - read connection URL
@@ -3515,9 +3444,9 @@ static TSyError readConnectURI(
   appPointer aBuffer, memSize aBufSize, memSize &aValSize
 )
 {
-  TClientParamsKey *mykeyP = static_cast<TClientParamsKey *>(aStructFieldsKeyP);
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
   return TStructFieldsKey::returnString(
-    mykeyP->fClientSessionP->getSendURI(),
+    mykeyP->fAgentP->getSendURI(),
     aBuffer,aBufSize,aValSize
   );
 } // readConnectURI
@@ -3529,9 +3458,9 @@ static TSyError readConnectHost(
   appPointer aBuffer, memSize aBufSize, memSize &aValSize
 )
 {
-  TClientParamsKey *mykeyP = static_cast<TClientParamsKey *>(aStructFieldsKeyP);
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
   string host;
-  splitURL(mykeyP->fClientSessionP->getSendURI(),NULL,&host,NULL,NULL,NULL);
+  splitURL(mykeyP->fAgentP->getSendURI(),NULL,&host,NULL,NULL,NULL);
   return TStructFieldsKey::returnString(
     host.c_str(),
     aBuffer,aBufSize,aValSize
@@ -3545,9 +3474,9 @@ static TSyError readConnectDoc(
   appPointer aBuffer, memSize aBufSize, memSize &aValSize
 )
 {
-  TClientParamsKey *mykeyP = static_cast<TClientParamsKey *>(aStructFieldsKeyP);
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
   string doc;
-  splitURL(mykeyP->fClientSessionP->getSendURI(),NULL,NULL,&doc,NULL,NULL);
+  splitURL(mykeyP->fAgentP->getSendURI(),NULL,NULL,&doc,NULL,NULL);
   return TStructFieldsKey::returnString(
     doc.c_str(),
     aBuffer,aBufSize,aValSize
@@ -3555,35 +3484,34 @@ static TSyError readConnectDoc(
 } // readConnectDoc
 
 
-// - read content type string
-static TSyError readContentType(
+#ifdef SYSYNC_SERVER
+
+// - server only: read respURI enable flag
+static TSyError readSendRespURI(
   TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
   appPointer aBuffer, memSize aBufSize, memSize &aValSize
 )
 {
-  TClientParamsKey *mykeyP = static_cast<TClientParamsKey *>(aStructFieldsKeyP);
-  string contentType = SYNCML_MIME_TYPE;
-  mykeyP->fClientSessionP->addEncoding(contentType);
-  return TStructFieldsKey::returnString(
-    contentType.c_str(),
-    aBuffer,aBufSize,aValSize
-  );
-} // readContentType
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnInt(mykeyP->fAgentP->fUseRespURI, sizeof(bool), aBuffer, aBufSize, aValSize);
+} // readSendRespURI
 
 
-// - read local session ID
-static TSyError readLocalSessionID(
+// - write respURI enable flag
+static TSyError writeSendRespURI(
   TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
-  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+  cAppPointer aBuffer, memSize aValSize
 )
 {
-  TClientParamsKey *mykeyP = static_cast<TClientParamsKey *>(aStructFieldsKeyP);
-  return TStructFieldsKey::returnString(
-    mykeyP->fClientSessionP->getLocalSessionID(),
-    aBuffer,aBufSize,aValSize
-  );
-} // readLocalSessionID
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+	mykeyP->fAgentP->fUseRespURI = *((uInt8P)aBuffer);
+  return LOCERR_OK;
+} // writeSendRespURI
 
+#endif // SYSYNC_SERVER
+
+
+#ifdef SYSYNC_CLIENT
 
 // - write (volatile, write-only) password for running this session
 // (for cases where we don't want to rely on binfile storage for sensitive password data)
@@ -3592,8 +3520,8 @@ TSyError writeSessionPassword(
   cAppPointer aBuffer, memSize aValSize
 )
 {
-  TClientParamsKey *mykeyP = static_cast<TClientParamsKey *>(aStructFieldsKeyP);
-	mykeyP->fClientSessionP->setServerPassword((cAppCharP)aBuffer, aValSize);
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+	mykeyP->fAgentP->setServerPassword((cAppCharP)aBuffer, aValSize);
   return LOCERR_OK;
 } // writeSessionPassword
 
@@ -3614,43 +3542,52 @@ static TSyError readDisplayAlert(
 } // readDisplayAlert
 #endif
 
+#endif // SYSYNC_CLIENT
 
-// accessor table for client params
-static const TStructFieldInfo ClientParamFieldInfos[] =
-{
+
+// accessor table for server session key
+static const TStructFieldInfo ServerParamFieldInfos[] =
+{  
   // valName, valType, writable, fieldOffs, valSiz
+  { "localSessionID", VALTYPE_TEXT, false, 0, 0, &readLocalSessionID, NULL },
+  { "initialLocalURI", VALTYPE_TEXT, false, 0, 0, &readInitialLocalURI, NULL },
+  { "abortStatus", VALTYPE_INT16, true, 0, 0, &readAbortStatus, &writeAbortStatus },
+  { "contenttype", VALTYPE_TEXT, true, 0, 0, &readContentType, &writeContentType },
   { "connectURI", VALTYPE_TEXT, false, 0, 0, &readConnectURI, NULL },
   { "connectHost", VALTYPE_TEXT, false, 0, 0, &readConnectHost, NULL },
   { "connectDoc", VALTYPE_TEXT, false, 0, 0, &readConnectDoc, NULL },
-  { "contenttype", VALTYPE_TEXT, false, 0, 0, &readContentType, NULL },
-  { "localSessionID", VALTYPE_TEXT, false, 0, 0, &readLocalSessionID, NULL },
+  #ifdef SYSYNC_SERVER
+  { "sendrespuri", VALTYPE_INT8, true, 0, 0, &readSendRespURI, &writeSendRespURI },
+  #endif
+  #ifdef SYSYNC_CLIENT
   { "sessionPassword", VALTYPE_TEXT, true, 0, 0, NULL, &writeSessionPassword },
   #ifdef ENGINE_LIBRARY
   { "displayalert", VALTYPE_TEXT, false, 0, 0, &readDisplayAlert, NULL },
   #endif
+  #endif
 };
 
 // get table describing the fields in the struct
-const TStructFieldInfo *TClientParamsKey::getFieldsTable(void)
+const TStructFieldInfo *TAgentParamsKey::getFieldsTable(void)
 {
-  return ClientParamFieldInfos;
-} // TClientParamsKey::getFieldsTable
+  return ServerParamFieldInfos;
+} // TAgentParamsKey::getFieldsTable
 
-sInt32 TClientParamsKey::numFields(void)
+sInt32 TAgentParamsKey::numFields(void)
 {
-  return sizeof(ClientParamFieldInfos)/sizeof(TStructFieldInfo);
-} // TClientParamsKey::numFields
+  return sizeof(ServerParamFieldInfos)/sizeof(TStructFieldInfo);
+} // TAgentParamsKey::numFields
 
 // get actual struct base address
-uInt8P TClientParamsKey::getStructAddr(void)
+uInt8P TAgentParamsKey::getStructAddr(void)
 {
-  // prepared for accessing fields in client session object
-  return (uInt8P)fClientSessionP;
-} // TClientParamsKey::getStructAddr
+  // prepared for accessing fields in server session object
+  return (uInt8P)fAgentP;
+} // TAgentParamsKey::getStructAddr
 
 
 // open subkey by name (not by path!)
-TSyError TClientParamsKey::OpenSubKeyByName(
+TSyError TAgentParamsKey::OpenSubKeyByName(
   TSettingsKeyImpl *&aSettingsKeyP,
   cAppCharP aName, stringSize aNameSize,
   uInt16 aMode
@@ -3658,7 +3595,7 @@ TSyError TClientParamsKey::OpenSubKeyByName(
   #ifdef DBAPI_TUNNEL_SUPPORT
   if (strucmp(aName,"tunnel",aNameSize)==0) {
     // get tunnel datastore pointer
-    TLocalEngineDS *ds = fClientSessionP->getTunnelDS();
+    TLocalEngineDS *ds = fAgentP->getTunnelDS();
     if (!ds) return LOCERR_WRONGUSAGE;
     // opens current session's tunnel key
     aSettingsKeyP = ds->newTunnelKey(fEngineInterfaceP);
@@ -3668,9 +3605,8 @@ TSyError TClientParamsKey::OpenSubKeyByName(
     return inherited::OpenSubKeyByName(aSettingsKeyP,aName,aNameSize,aMode);
   // opened a key
   return LOCERR_OK;
-} // TClientParamsKey::OpenSubKeyByName
+} // TAgentParamsKey::OpenSubKeyByName
 
-#endif // SYSYNC_CLIENT
 
 #endif // ENGINEINTERFACE_SUPPORT
 
