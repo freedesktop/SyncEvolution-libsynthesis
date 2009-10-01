@@ -654,6 +654,22 @@ typedef TSyError (*DisconnectEngine_Func)	( UI_Call_In  aCI );
  ENGINE_ENTRY TSyError SYSYNC_EXTERNAL(DisconnectEngine)
                                           ( UI_Call_In  aCI         ) ENTRY_ATTR;
 
+/* Entry points for connecting the SyncML *server* engine from outside */
+ ENGINE_ENTRY TSyError SySync_srv_ConnectEngine
+                                          ( UI_Call_In *aCI,
+                                            CVersion   *aEngVersion,
+                                            CVersion    aPrgVersion,
+                                            uInt16      aDebugFlags ) ENTRY_ATTR;
+
+ ENGINE_ENTRY TSyError SySync_srv_ConnectEngineS
+                                          ( UI_Call_In  aCI,
+                                            uInt16      aCallbackVersion,
+                                            CVersion   *aEngVersion,
+                                            CVersion    aPrgVersion,
+                                            uInt16      aDebugFlags ) ENTRY_ATTR;
+
+ ENGINE_ENTRY TSyError SySync_srv_DisconnectEngine
+                                          ( UI_Call_In  aCI         ) ENTRY_ATTR;
 
 #ifdef __cplusplus
   } // namespace

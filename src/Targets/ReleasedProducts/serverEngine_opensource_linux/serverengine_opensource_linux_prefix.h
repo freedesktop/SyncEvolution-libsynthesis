@@ -12,8 +12,8 @@
 // server prefix this should be changed so that
 // client and server engines can both be linked
 // into the same app (other name clashes notwithstanding).
-#define SYSYNC_EXTERNAL(_x) SySync_ ## _x
-#define SYSYNC_PREFIX "SySync_"
+#define SYSYNC_EXTERNAL(_x) SySync_srv_ ## _x
+#define SYSYNC_PREFIX "SySync_srv_"
 
 // required before time.h to get tm_gmtoff in struct tm:
 // this is used to find standard and daylight saving offset

@@ -28,7 +28,13 @@ ENGINE_AGE = 2
 CLEANFILES =
 EXTRA_DIST =
 
-lib_LTLIBRARIES = libsmltk.la libsynthesis.la libsynthesisserver.la libsynthesissdk.la
+lib_LTLIBRARIES = libsmltk.la libsynthesissdk.la
+if COND_SYNCML_SERVER
+lib_LTLIBRARIES += libsynthesisserver.la
+endif
+if COND_SYNCML_CLIENT
+lib_LTLIBRARIES += libsynthesis.la
+endif
 nobase_include_HEADERS = @LIBSYNTHESISSDK_HEADERS@ synthesis/target_options.h
 
 # Configuration header files are searched in this order:
@@ -84,7 +90,7 @@ libsynthesis_la_DEPENDENCIES = $(srcdir)/synthesis-linker.map libsmltk.la
 
 libsynthesisserver_la_SOURCES = @LIBSYNTHESISSERVER_SOURCES@ \
 	$(XMLPARSE_SOURCES)
-libsynthesisserver_la_CPPFLAGS = $(libsynthesis_la_CPPFLAGS)
+libsynthesisserver_la_CPPFLAGS = -Dsysync=sysyncsrv $(libsynthesis_la_CPPFLAGS)
 libsynthesisserver_la_CFLAGS = $(subst clientEngine,serverEngine, \
 	$(subst clientengine_demo_x86_linux_prefix.h,serverengine_opensource_linux_prefix.h, $(libsynthesis_la_CFLAGS)))
 libsynthesisserver_la_CXXFLAGS = $(libsynthesisserver_la_CFLAGS)
