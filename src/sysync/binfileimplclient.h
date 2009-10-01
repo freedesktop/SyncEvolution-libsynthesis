@@ -23,6 +23,7 @@
 #include "stdlogicagent.h"
 #include "binfileimplds.h"
 #include "engineinterface.h"
+#include "syncclientbase.h"
 
 #ifndef SYSYNC_CLIENT
   #error "binfileimplclient is CLIENT-ONLY!"

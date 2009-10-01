@@ -18,12 +18,7 @@
 
 // includes
 #include "sysync.h"
-#ifdef SYSYNC_CLIENT
-#include "syncclient.h"
-#endif
-#ifdef SYSYNC_SERVER
-#include "syncserver.h"
-#endif
+#include "syncagent.h"
 #include "localengineds.h"
 
 

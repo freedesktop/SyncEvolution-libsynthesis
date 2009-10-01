@@ -15,14 +15,11 @@
 // includes
 #include "prefix_file.h"
 #include "sysync.h"
-#include "syncappbase.h"
 #include "localengineds.h"
+#include "syncappbase.h"
 #include "scriptcontext.h"
 #include "superdatastore.h"
-
-#ifdef SYSYNC_CLIENT
-#include "syncclient.h"
-#endif
+#include "syncagent.h"
 
 
 using namespace sysync;

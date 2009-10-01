@@ -17,12 +17,9 @@
 // includes
 #include "prefix_file.h"
 #include "sysync.h"
-#include "syncsession.h"
+#include "syncagent.h"
 #include "remotedatastore.h"
 
-#ifdef SYSYNC_SERVER
-#include "syncserver.h"
-#endif
 
 using namespace sysync;
 

@@ -662,7 +662,6 @@ private:
 
 } // namespace sysync
 
-
 #endif // SYNCAPPBASE_H
 
 

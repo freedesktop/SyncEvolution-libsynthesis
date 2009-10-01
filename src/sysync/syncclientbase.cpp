@@ -10,7 +10,7 @@
 
 #include "sysync.h"
 #include "syncclientbase.h"
-#include "syncclient.h"
+#include "syncagent.h"
 
 namespace sysync {
 

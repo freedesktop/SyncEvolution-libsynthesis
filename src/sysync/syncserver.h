@@ -16,6 +16,7 @@
 #if defined(SYSYNC_CLIENT) || !defined(SYSYNC_SERVER)
 	#error "syncserver.h can only be included in a server-only build"
 #else
+	#warning "obsolete syncserver.h included - should be replaced by including syncagent.h"
 	#include "syncagent.h"
 #endif
 

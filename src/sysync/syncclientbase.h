@@ -12,7 +12,7 @@
 // general includes (SyncML tookit, windows, Clib)
 #include "sysync.h"
 #include "syncappbase.h"
-#include "syncclient.h"
+#include "syncagent.h"
 
 
 

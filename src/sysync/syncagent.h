@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SyncAgent_H
-#define SyncAgent_H
+#ifndef SYNC_AGENT_H
+#define SYNC_AGENT_H
 
 //%%% we still need this at this time
 #define NON_FULLY_GRANULAR_ENGINE 1
@@ -26,15 +26,6 @@ namespace sysync {
 }
 #endif
 
-
-
-// includes
-#ifdef SYSYNC_SERVER
-#include "syncsessiondispatch.h"
-#endif
-#ifdef SYSYNC_CLIENT
-#include "syncclientbase.h"
-#endif
 
 #include "syncsession.h"
 #include "localengineds.h"
@@ -133,7 +124,9 @@ class TSyncAgent;
 #ifdef SYSYNC_SERVER
 class TSyncSessionHandle;
 #endif
-
+#ifdef SYSYNC_CLIENT
+class TSyncClientBase;
+#endif
 
 // agent (client or server) config
 class TAgentConfig: public TSessionConfig
@@ -221,11 +214,6 @@ public:
 }; // TAgentConfig
 
 
-
-#ifdef SYSYNC_CLIENT
-class TSyncClientBase;
-#endif
-
 // default profile ID
 #define DEFAULT_PROFILE_ID 0xFFFFFFFF
 #define TUNNEL_PROFILE_ID 0xFFFFFFFE
@@ -265,9 +253,19 @@ public:
   virtual appPointer newSessionKey(TEngineInterface *aEngineInterfaceP);
   #endif // ENGINEINTERFACE_SUPPORT
 
-	// message start and end
+	// Server & Client common:
+	// - message start and end
   virtual bool MessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand &aStatusCommand, bool aBad=false);
   virtual void MessageEnded(bool aIncomingFinal);
+  // - handle status received for SyncHdr, returns false if not handled
+  virtual bool handleHeaderStatus(TStatusCommand *aStatusCmdP);
+  // - start <sync> command group
+  virtual bool processSyncStart(
+    SmlSyncPtr_t aSyncP,           // the Sync element
+    TStatusCommand &aStatusCommand, // pre-set 200 status, can be modified in case of errors
+    bool &aQueueForLater // will be set if command must be queued for later (re-)execution
+  );
+
 
 	#ifdef SYSYNC_CLIENT
   #ifdef ENGINEINTERFACE_SUPPORT
@@ -326,16 +324,6 @@ public:
   // session handling
   // - get client base
   TSyncClientBase *getClientBase(void);
-  // Session level command handling
-  // - handle status received for SyncHdr, returns false if not handled
-  virtual bool handleHeaderStatus(TStatusCommand *aStatusCmdP);
-  // Sync processing (command group)
-  // - start sync group
-  virtual bool processSyncStart(
-    SmlSyncPtr_t aSyncP,           // the Sync element
-    TStatusCommand &aStatusCommand, // pre-set 200 status, can be modified in case of errors
-    bool &aQueueForLater // will be set if command must be queued for later (re-)execution
-  );
   #endif // SYSYNC_CLIENT
 
   #ifdef SYSYNC_SERVER
@@ -362,13 +350,6 @@ public:
   virtual sInt32 RemainingRequestTime(void);
   // info about server status
   virtual bool serverBusy(void); // return busy status (set by connection limit or app expiry)
-  // Sync processing (command group)
-  // - start sync group
-  virtual bool processSyncStart(
-    SmlSyncPtr_t aSyncP,           // the Sync element
-    TStatusCommand &aStatusCommand, // pre-set 200 status, can be modified in case of errors
-    bool &aQueueForLater // will be set if command must be queued for later (re-)execution
-  );
   #endif // SYSYNC_SERVER
     
 	#ifdef SYSYNC_CLIENT
@@ -583,6 +564,6 @@ public:
 
 }	// namespace sysync
 
-#endif	// SyncAgent_H
+#endif	// SYNC_AGENT_H
 
 // eof

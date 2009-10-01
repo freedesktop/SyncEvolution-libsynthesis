@@ -24,6 +24,15 @@
   #include "syserial.h"
 #endif
 
+// includes that can't be in .h due to circular references
+#ifdef SYSYNC_SERVER
+#include "syncsessiondispatch.h"
+#endif
+#ifdef SYSYNC_CLIENT
+#include "syncclientbase.h"
+#endif
+
+
 namespace sysync {
 
 
@@ -2543,8 +2552,8 @@ bool TSyncAgent::syncHdrFailure(bool aTryAgain)
 // handle status received for SyncHdr, returns false if not handled
 bool TSyncAgent::handleHeaderStatus(TStatusCommand *aStatusCmdP)
 {
-	if (IS_SERVER) {
-  	#ifdef SYSYNC_SERVER
+	if (IS_CLIENT) {
+  	#ifdef SYSYNC_CLIENT
     TAgentConfig *configP = static_cast<TAgentConfig *>(getRootConfig()->fAgentConfigP);
     bool handled=true;
     const char *txt;

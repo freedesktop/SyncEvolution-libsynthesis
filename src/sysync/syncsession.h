@@ -75,6 +75,7 @@ class TRootConfig;
 
 
 #ifdef SCRIPT_SUPPORT
+
 // publish as derivates might need it
 extern const TFuncTable ErrorFuncTable;
 
@@ -94,7 +95,9 @@ typedef struct {
   string itemData;
   string metaType;
 } TGetPutResultFuncContext;
-#endif
+
+#endif // SCRIPT_SUPPORT
+
 
 #ifndef NO_REMOTE_RULES
 
@@ -160,7 +163,7 @@ protected:
 
 typedef std::list<TRemoteRuleConfig *> TRemoteRulesList;
 
-#endif
+#endif // NO_REMOTE_RULES
 
 // session config
 class TSessionConfig: public TConfigElement

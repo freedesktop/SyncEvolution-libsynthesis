@@ -15,7 +15,7 @@
 // required headers
 #include "syncappbase.h"
 #include "syncclientbase.h"
-#include "syncclient.h"
+#include "syncagent.h"
 
 
 namespace sysync {
