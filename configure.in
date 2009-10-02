@@ -137,7 +137,7 @@ if test "$enable_shared" = "no"; then
          AC_DEFINE(DBAPI_LINKED, 1, [libsynthesis.a linked statically])
    fi
    if test "$SYNCML_SERVER" = "yes"; then
-         AC_DEFINE(DBAPI_SRV_LINKED, 1, [libsynthesisserver.a linked statically])
+         AC_DEFINE(DBAPI_SRV_LINKED, 1, [libsynthesissrv.a linked statically])
    fi
 fi
 AM_CONDITIONAL([COND_STATIC], [test "$enable_shared" = "no"])

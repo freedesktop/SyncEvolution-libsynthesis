@@ -153,7 +153,7 @@ TSyError UI_Connect( UI_Call_In &aCI, appPointer &aDLL, bool &aIsServer,
       aIsServer=true;
       name = name.substr(prefixlen);
       SyFName= "SySync_srv_ConnectEngine";
-      FName=        "SrvConnectEngine";
+      FName=        "srv_ConnectEngine";
     }
 
     err= ConnectDLL( name.c_str(), aDLL ); // try with name directly
@@ -219,7 +219,7 @@ TSyError UI_Disconnect( UI_Call_In aCI, appPointer aDLL, bool aIsServer )
 
     if (aIsServer) {
       SyFName = "SySync_srv_DisconnectEngine";
-      FName = "SrvDisconnectEngine";
+      FName = "srv_DisconnectEngine";
     }
 
     cAppCharP                 fN= SyFName;
