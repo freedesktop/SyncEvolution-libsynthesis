@@ -20,6 +20,11 @@ UI_util.cpp
 UI_util.h
 EOF`"
 
+# The distinction between client and server files is not
+# important and even likely to be wrong/incomplete. Right now,
+# all of these files are compiled into libsynthesis and only
+# kept out of libsynthesisdk.
+
 # files needed exclusively for the client engine
 CLIENT_FILES="-false `sed -e 's/^/-o -name /' <<EOF
 binfile.cpp
@@ -35,16 +40,25 @@ EOF`"
 SERVER_FILES="-false `sed -e 's/^/-o -name /' <<EOF
 admindata.cpp
 admindata.h
+dbitem.cpp
+dbitem.h
 blobs.cpp
 blobs.h
 enginesessiondispatch.cpp
 syncserver.cpp
 EOF`"
 
-sed -e "s;@LIBSYNTHESIS_SOURCES@;`find ${ENGINE_SOURCES} syncapps/clientEngine_custom \( -name '*.cpp' -o -name '*.[ch]' \) \! \( ${SDK_FILES} -o ${SERVER_FILES} -o -name clientprovisioning_inc.cpp -o -name \*_tables_inc.cpp -o -name syncsessiondispatch.cpp \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSERVER_SOURCES@;`find ${ENGINE_SOURCES} sysync_SDK/DB_Interfaces/text_db syncapps/serverEngine_custom \( -name '*.cpp' -o -name '*.[ch]' \) \! \( ${SDK_FILES} -o ${CLIENT_FILES} -o -name clientprovisioning_inc.cpp -o -name \*_tables_inc.cpp -o -name syncsessiondispatch.cpp \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_SOURCES_BOTH@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_SOURCES_SDK_ONLY@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \( ${SDK_FILES} \) -printf '%p '`;" \
+# files not needed anywhere at the moment
+EXTRA_FILES="-false `sed -e 's/^/-o -name /' <<EOF
+clientprovisioning_inc.cpp
+\*_tables_inc.cpp
+syncsessiondispatch.cpp
+platform_thread.cpp
+EOF`"
+
+sed -e "s;@LIBSYNTHESIS_SOURCES@;`find ${ENGINE_SOURCES} syncapps/clientEngine_custom syncapps/serverEngine_custom sysync_SDK/DB_Interfaces/text_db \( -name '*.cpp' -o -name '*.[ch]' \) \! \( ${SDK_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
+    -e "s;@LIBSYNTHESISSDK_SOURCES_BOTH@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} \) -printf '%p '`;" \
+    -e "s;@LIBSYNTHESISSDK_SOURCES_SDK_ONLY@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \( ${SDK_FILES} \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} \) -printf '%p '`;" \
     -e "s;@LIBSMLTK_SOURCES@;`find syncml_tk \( -name '*.cpp' -o -name '*.[ch]' \) \! \( -wholename syncml_tk/src/sml/\*/palm/\* -o -wholename syncml_tk/src/sml/\*/win/\* \) -printf '%p '`;" \
     -e "s;@LIBSYNTHESISSDK_HEADERS@;`find sysync_SDK/Sources \( -name '*.h' \) -printf 'synthesis/%f '`;" \
     Makefile.am.in >Makefile.am

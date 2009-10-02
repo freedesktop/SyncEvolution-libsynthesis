@@ -109,11 +109,14 @@ AM_CONDITIONAL([COND_XMLPARSE], [test "$with_xmltok" = "builtin"])
 
 AC_CHECK_HEADER(stdint.h)
 
-echo "enable dynamic $enable_shared"
-if test "$enable_shared" = "no"; then
-   AC_DEFINE(UIAPI_LINKED, 1, [libsynthesis.a linked statically])
-   AC_DEFINE(DBAPI_LINKED, 1, [libsynthesis.a linked statically])
-fi
+# the autotools SDK always assumes that it is linked against the engine
+AC_DEFINE(UIAPI_LINKED, 1, [libsynthesis.a linked statically])
+AC_DEFINE(DBAPI_LINKED, 1, [client engine linked statically])
+AC_DEFINE(DBAPI_SRV_LINKED, 1, [server engine linked statically])
+
+# determines which object files are needed in the SDK:
+# if linking statically, some object files are shared with
+# libsynthesis.a
 AM_CONDITIONAL([COND_STATIC], [test "$enable_shared" = "no"])
 
 AC_CONFIG_FILES(Makefile src/Makefile synthesis.pc)
