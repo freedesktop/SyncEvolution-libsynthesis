@@ -125,7 +125,11 @@ const char * const PlatformStringNames[numPlatformStrings] = {
     TSyncAppBase *appBase = getExistingSyncAppBase();
     if (appBase) return appBase;
     // no appBase yet, we must create and anchor the TEngineInterface
-    ENGINE_IF_CLASS *engine = sysync::newEngine();
+    #ifdef SYSYNC_CLIENT
+    ENGINE_IF_CLASS *engine = sysync::newClientEngine();
+    #else
+    ENGINE_IF_CLASS *engine = sysync::newServerEngine();
+    #endif
     // we must init the engine to trigger creation of the appbase!
     if (engine) engine->Init();
     return GET_SYNCAPPBASE;

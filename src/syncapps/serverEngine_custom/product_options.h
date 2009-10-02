@@ -1,7 +1,7 @@
 /* Common Product options
  * ======================
  *
- */ 
+ */
 
 // Custom Server Library Products
 // ##############################
@@ -28,12 +28,9 @@
 
 // Most hyperglobal definition, might even influence global_options.h:
 // - THIS IS A SERVER
-#undef SYSYNC_CLIENT
+#define SYSYNC_SERVER 1
 // - is a engine library
 #define ENGINE_LIBRARY 1
-// - needs prefixed entry points to be distinguishable from client library
-#define SYSYNC_EXTERNAL(_x) SySync_srv_ ## _x
-#define SYSYNC_PREFIX "SySync_srv_"
 
 // - ...which is used in standalone apps
 #define STANDALONE_APP 1
@@ -67,7 +64,7 @@
   #endif
   #undef CONSOLEINFO
 #else
-  #define SYDEBUG 2
+  #define SYDEBUG 2 // 3=including XPT trace, 4=including memory leak detection
   #undef CONSOLEINFO
 #endif
 

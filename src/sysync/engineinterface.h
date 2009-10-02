@@ -55,12 +55,17 @@ class TSyncAppBase;
 
 #ifdef SIMPLE_LINKING
   // for using the engineInterface without EngineModuleBase, engine base class
-  // for the newEngine() function is TEngineInterface
+  // for the newXXXXEngine() functions is TEngineInterface
   #define ENGINE_IF_CLASS TEngineInterface
-  // factory function declaration is here, as we have no EngineModuleBase
-  ENGINE_IF_CLASS *newEngine(void);
+  // factory function declarations are here, as we have no EngineModuleBase
+  #ifdef SYSYNC_CLIENT
+  ENGINE_IF_CLASS *newClientEngine(void);
+  #endif
+  #ifdef SYSYNC_SERVER
+  ENGINE_IF_CLASS *newServerEngine(void);
+  #endif
 #else
-  // with EngineModuleBase, use it as base class. newEngine is declared in
+  // with EngineModuleBase, use it as base class. newXXXXXEngine are declared in
   // enginemodulebase.h
   #define ENGINE_IF_CLASS TEngineModuleBase
 #endif

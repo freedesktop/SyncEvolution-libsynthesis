@@ -34,7 +34,7 @@ namespace sysync {
   #error "this is here for Q&D testing with outlook client only"
 #endif
 // factory function implementation - declared in TEngineInterface
-ENGINE_IF_CLASS *newEngine(void)
+ENGINE_IF_CLASS *newClientEngine(void)
 {
   return new TBinfileEngineInterface;
 } // newEngine

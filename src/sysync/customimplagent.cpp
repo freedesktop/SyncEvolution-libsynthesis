@@ -728,20 +728,22 @@ bool TCustomImplAgent::SessionLogin(const char *aUserName, const char *aAuthStri
   if (!fConfigP) return false; // no config -> fail early (no need for cleanup)
 
   #ifdef SYSYNC_CLIENT
-  #ifndef NO_LOCAL_DBLOGIN
-  // check for eventual client without need for local DB login
-  if (fNoLocalDBLogin) {
-    // just use local DB login name as user key (userkey is probably not needed anyway)
-    fUserKey=fLocalDBUser;
-    // accept as auth ok
-    return true; // return early, no need for cleanup
+  if (IS_CLIENT) {
+    #ifndef NO_LOCAL_DBLOGIN
+    // check for eventual client without need for local DB login
+    if (fNoLocalDBLogin) {
+      // just use local DB login name as user key (userkey is probably not needed anyway)
+      fUserKey=fLocalDBUser;
+      // accept as auth ok
+      return true; // return early, no need for cleanup
+    }
+    #else
+    // client without need for local login
+    return true;
+    #warning "we could probably eliminate much more code here"
+    #endif
   }
-  #else
-  // client without need for local login
-  return true;
-  #warning "we could probably eliminate much more code here"
-  #endif
-  #endif
+  #endif // SYSYNC_CLIENT
   // first step: set defaults
   fUserKey=aUserName; // user key is equal to user name
   fDeviceKey=aDeviceID; // device key is equal to device name

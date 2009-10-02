@@ -1550,7 +1550,8 @@ SmlCredPtr_t TSyncAgent::newCredentialsForRemote(void)
 {
   if (fNeedAuth) {
     // generate cretentials from username/password
-    PDEBUGPRINTFX(DBG_PROTO+DBG_USERDATA,("Authenticating with server as user '%s'",fServerUser.c_str()));
+    PDEBUGPRINTFX(DBG_PROTO+DBG_USERDATA,("Authenticating with server as user '%s'", fServerUser.c_str()));
+    PDEBUGPRINTFX(DBG_PROTO+DBG_USERDATA+DBG_EXOTIC,("- using nonce '%s'", fRemoteNonce.c_str()));
     // NOTE: can be NULL when fServerRequestedAuth is auth_none
     return newCredentials(
       fServerUser.c_str(),
@@ -2846,15 +2847,15 @@ TSyError TSyncAgent::SessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aInfoP)
 #warning "using ENGINEINTERFACE_SUPPORT in old-style appbase-rooted environment. Should be converted to real engine usage later"
 
 // Engine factory function for non-Library case
-ENGINE_IF_CLASS *newEngine(void)
+ENGINE_IF_CLASS *newServerEngine(void)
 {
-  // For real engine based targets, newEngine must create a target-specific derivate
-  // of the engine, which then has a suitable newSyncAppBase() method to create the
+  // For real engine based targets, newServerEngine must create a target-specific derivate
+  // of the server engine, which then has a suitable newSyncAppBase() method to create the
   // appBase. For old-style environment, a generic TServerEngineInterface is ok, as this
   // in turn calls the global newSyncAppBase() which then returns the appropriate
   // target specific appBase. Here we just return a dummy server engine base.
   return new TDummyServerEngineInterface;
-} // newEngine
+} // newServerEngine
 
 /// @brief returns a new application base.
 TSyncAppBase *TDummyServerEngineInterface::newSyncAppBase(void)

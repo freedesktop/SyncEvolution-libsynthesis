@@ -24,15 +24,15 @@ namespace sysync {
 #warning "using ENGINEINTERFACE_SUPPORT in old-style appbase-rooted environment. Should be converted to real engine usage later"
 
 // Engine factory function for non-Library case
-ENGINE_IF_CLASS *newEngine(void)
+ENGINE_IF_CLASS *newClientEngine(void)
 {
-  // For real engine based targets, newEngine must create a target-specific derivate
-  // of the engine, which then has a suitable newSyncAppBase() method to create the
+  // For real engine based targets, newClientEngine must create a target-specific derivate
+  // of the client engine, which then has a suitable newSyncAppBase() method to create the
   // appBase. For old-style environment, a generic TClientEngineInterface is ok, as this
   // in turn calls the global newSyncAppBase() which then returns the appropriate
   // target specific appBase.
   return new TClientEngineInterface;
-} // newEngine
+} // newClientEngine
 
 /// @brief returns a new application base.
 TSyncAppBase *TClientEngineInterface::newSyncAppBase(void)
