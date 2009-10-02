@@ -3,13 +3,13 @@
  *
  */
 
-// Custom Client Library Products
-// ##############################
+// Custom Unified Server/Client Library Products
+// #############################################
 
 // Separate Version
 // ================
 
-// Note: for now, client library has NO SEPARATE VERSION, but shows engine version
+// Note: for now, library has NO SEPARATE VERSION, but shows engine version
 
 /*
 #define SYSYNC_VERSION_MAJOR       1
@@ -31,7 +31,8 @@
 
 
 // Most hyperglobal definition, might even influence global_options.h:
-// - THIS IS A CLIENT
+// - THIS IS BOTH SERVER and CLIENT
+#define SYSYNC_SERVER 1
 #define SYSYNC_CLIENT 1
 
 // - is a engine library
