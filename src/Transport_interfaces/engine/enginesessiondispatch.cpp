@@ -25,41 +25,40 @@ void AppConsolePuts(const char *aText)
 } // AppConsolePuts
 
 
-// TEngineCommConfig
-// =================
-// (dummy at this time)
+// TEngineServerCommConfig
+// =======================
 
 
 // config constructor
-TEngineCommConfig::TEngineCommConfig(TConfigElement *aParentElementP) :
+TEngineServerCommConfig::TEngineServerCommConfig(TConfigElement *aParentElementP) :
   TCommConfig("engineserver",aParentElementP)
 {
   // do not call clear(), because this is virtual!
-} // TEngineCommConfig::TXPTCommConfig
+} // TEngineServerCommConfig::TEngineServerCommConfig
 
 
 // config destructor
-TEngineCommConfig::~TEngineCommConfig()
+TEngineServerCommConfig::~TEngineServerCommConfig()
 {
   // nop by now
-} // TEngineCommConfig::~TXPTCommConfig
+} // TEngineServerCommConfig::~TEngineServerCommConfig
 
 
 // init defaults
-void TEngineCommConfig::clear(void)
+void TEngineServerCommConfig::clear(void)
 {
   // init defaults
   fSessionIDCGIPrefix = "sessionid=";
   fSessionIDCGI = true;
   // clear inherited  
   inherited::clear();
-} // TEngineCommConfig::clear
+} // TEngineServerCommConfig::clear
 
 
 #ifndef HARDCODED_CONFIG
 
 // XPT transport config element parsing
-bool TEngineCommConfig::localStartElement(const char *aElementName, const char **aAttributes, sInt32 aLine)
+bool TEngineServerCommConfig::localStartElement(const char *aElementName, const char **aAttributes, sInt32 aLine)
 {
   // checking the elements
   if (strucmp(aElementName,"sessionidcgiprefix")==0)
@@ -70,13 +69,13 @@ bool TEngineCommConfig::localStartElement(const char *aElementName, const char *
     return inherited::localStartElement(aElementName,aAttributes,aLine);
   // ok
   return true;
-} // TEngineCommConfig::localStartElement
+} // TEngineServerCommConfig::localStartElement
 
 #endif
 
 
 // resolve
-void TEngineCommConfig::localResolve(bool aLastPass)
+void TEngineServerCommConfig::localResolve(bool aLastPass)
 {
   if (aLastPass) {
     // check for required settings
@@ -84,7 +83,7 @@ void TEngineCommConfig::localResolve(bool aLastPass)
   }
   // resolve inherited  
   inherited::localResolve(aLastPass);
-} // TEngineCommConfig::localResolve
+} // TEngineServerCommConfig::localResolve
 
 
 
@@ -96,7 +95,8 @@ void TEngineCommConfig::localResolve(bool aLastPass)
 TEngineSessionDispatch::TEngineSessionDispatch() :
   TSyncAppBase()
 {
-  // init
+  // this is a server engine
+  fIsServer = true;
 } // TEngineSessionDispatch::TEngineSessionDispatch
 
 
@@ -137,7 +137,7 @@ void TEngineSessionDispatch::generateRespURI(
   cAppCharP aSessionID
 )
 {
-  TEngineCommConfig *commCfgP = static_cast<TEngineCommConfig *>(getRootConfig()->fCommConfigP);
+  TEngineServerCommConfig *commCfgP = static_cast<TEngineServerCommConfig *>(getRootConfig()->fCommConfigP);
   if (aLocalURI && aSessionID && commCfgP && commCfgP->fSessionIDCGI) {
   	// include session ID as CGI into RespURI
     aRespURI=aLocalURI;
@@ -246,7 +246,7 @@ Ret_t TEngineSessionDispatch::HandleDecodingException(TSyncSession *aSessionP, c
 void TEngineServerRootConfig::installCommConfig(void)
 {
   // engine API needs no config at this time, commconfig is a NOP dummy for now
-  fCommConfigP=new TEngineCommConfig(this);
+  fCommConfigP=new TEngineServerCommConfig(this);
 } // TEngineServerRootConfig::installCommConfig
 
 
@@ -303,6 +303,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
   // check type of session
   if (aSelector == SESSIONSEL_DBAPI_TUNNEL) {
     // initiate a DBAPI tunnel session.
+    /* 
     #ifdef DBAPI_TUNNEL_SUPPORT
     #error "%%% tbi"
     // Create a new session, sessionName selects datastore
@@ -314,6 +315,9 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
     #else
     return LOCERR_NOTIMP; // tunnel not implemented
     #endif
+    */
+    // %%% for now: not implemented
+    return LOCERR_NOTIMP; // tunnel not implemented
   }
   else {
 		// create a new server session

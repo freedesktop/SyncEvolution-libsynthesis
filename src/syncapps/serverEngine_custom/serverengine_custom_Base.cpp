@@ -49,7 +49,7 @@ TSyncAppBase *TCustomServerEngineInterface::newSyncAppBase(void)
 TCustomServerEngineBase::TCustomServerEngineBase()
 {  
   // create config root
-  fConfigP=new TEngineServerRootConfig(this);
+  fConfigP = new TEngineServerRootConfig(this);
 } // TCustomServerEngineBase::TCustomServerEngineBase
 
 

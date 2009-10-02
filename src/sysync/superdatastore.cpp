@@ -1167,7 +1167,7 @@ void TSuperDataStore::engMarkMapConfirmed(cAppCharP aLocalID, cAppCharP aRemoteI
   TSubDatastoreLink *linkP = findSubLinkByLocalID(aLocalID);
   if (linkP) {
     // pass to subdatastore with prefix removed
-    linkP->engMarkMapConfirmed(aLocalID+linkP->fDSLinkConfigP->fGUIDPrefix.size(),aRemoteID);
+    linkP->fDatastoreLinkP->engMarkMapConfirmed(aLocalID+linkP->fDSLinkConfigP->fGUIDPrefix.size(),aRemoteID);
   }
 } // TSuperDataStore::engMarkMapConfirmed
 
@@ -1175,10 +1175,7 @@ void TSuperDataStore::engMarkMapConfirmed(cAppCharP aLocalID, cAppCharP aRemoteI
 // - client only: called to generate Map items
 //   Returns true if now finished for this datastore
 //   also sets fState to dss_done when finished
-bool TSuperDataStore::engGenerateMapItems(
-  TMapCommand *aMapCommandP,
-  const char *aLocalIDPrefix
-)
+bool TSuperDataStore::engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP aLocalIDPrefix)
 {
   TSubDSLinkList::iterator pos=fSubDSLinks.begin();
   bool ok;
@@ -1192,7 +1189,7 @@ bool TSuperDataStore::engGenerateMapItems(
     AssignString(prefix,aLocalIDPrefix);
     prefix.append(fCurrentGenDSPos->fDSLinkConfigP->fGUIDPrefix);
     // generate Map items
-    ok=pos->fDatastoreLinkP->engGenerateMapItems(TMapCommand *aMapCommandP,prefix.c_str());
+    ok=pos->fDatastoreLinkP->engGenerateMapItems(aMapCommandP,prefix.c_str());
     // exit if not yet finished with generating map items for this datastore
     if (!ok) {
       PDEBUGENDBLOCK("MapGenerate");
@@ -1203,16 +1200,20 @@ bool TSuperDataStore::engGenerateMapItems(
   } while(true);
   // done
   // we are done if state is syncdone (no more sync commands will occur)
-  if (fState==dss_syncsend) {
-    PDEBUGPRINTFX(DBG_PROTO,("TSuperDataStore: Finished sending chached Map items from previous session"))
-  }
-  else if (fState==dss_syncdone) {
-    fState=dss_done;
+  if (testState(dssta_dataaccessdone)) {
+    changeState(dssta_clientmapssent,true);
     PDEBUGPRINTFX(DBG_PROTO,("TSuperDataStore: Finished generating Map items, server has finished <sync>, we are done now"))
   }
+  #ifdef SYDEBUG
+  // else if we are not yet dssta_syncgendone -> this is the end of a early pending map send
+  else if (!dbgTestState(dssta_syncgendone)) {
+    PDEBUGPRINTFX(DBG_PROTO,("TSuperDataStore: Finished sending cached Map items from last session"))
+  }
+  // otherwise, we are not really finished with the maps yet (but with the current map command)
   else {
     PDEBUGPRINTFX(DBG_PROTO,("TSuperDataStore: Finished generating Map items for now, but server still sending <Sync>"))
   }
+  #endif
   PDEBUGENDBLOCK("MapGenerate");
   return true;
 } // TSuperDataStore::engGenerateMapItems

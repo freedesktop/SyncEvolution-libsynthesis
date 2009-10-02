@@ -151,10 +151,10 @@ typedef TSyError localstatus;
 #define SYSYNC_SERVER_DEVID "SySync Server"
 #define SYSYNC_CLIENT_DEVID "SySync Client"
 #ifndef SYNCML_SERVER_DEVTYP
-  #define SYNCML_SERVER_DEVTYP "server"; // could also be "workstation"
+  #define SYNCML_SERVER_DEVTYP "server" // could also be "workstation"
 #endif
 #ifndef SYNCML_CLIENT_DEVTYP
-  #define SYNCML_CLIENT_DEVTYP "workstation"; // general case, could also be "handheld" or "pda"...
+  #define SYNCML_CLIENT_DEVTYP "workstation" // general case, could also be "handheld" or "pda"...
 #endif
 
 // SyncML SyncCap mask bits

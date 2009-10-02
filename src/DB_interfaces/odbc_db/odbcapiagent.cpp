@@ -1714,16 +1714,18 @@ bool TODBCApiAgent::ParseParamSubst(
 // do generic substitutions
 void TODBCApiAgent::DoSQLSubstitutions(string &aSQL)
 {
-  #ifndef BASED_ON_BINFILE_CLIENT
-  // substitute: %u = userkey
-  StringSubst(aSQL,"%u",fUserKey,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
-  // substitute: %d = devicekey
-  StringSubst(aSQL,"%d",fDeviceKey,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
-  #ifdef SCRIPT_SUPPORT
-  // substitute: %C = domain name (such as company selector)
-  StringSubst(aSQL,"%C",fDomainName,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
-  #endif
-  #endif
+  #ifndef BINFILE_ALWAYS_ACTIVE
+  if (!binfilesActive()) {
+    // substitute: %u = userkey
+    StringSubst(aSQL,"%u",fUserKey,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
+    // substitute: %d = devicekey
+    StringSubst(aSQL,"%d",fDeviceKey,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
+    #ifdef SCRIPT_SUPPORT
+    // substitute: %C = domain name (such as company selector)
+    StringSubst(aSQL,"%C",fDomainName,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
+    #endif
+  }
+  #endif // BINFILE_ALWAYS_ACTIVE
   #ifdef SCRIPT_SUPPORT
   // substitute %sv(sessionvarname) = session variable by name
   string::size_type i=0;

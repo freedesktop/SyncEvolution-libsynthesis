@@ -4670,6 +4670,8 @@ bool TLocalEngineDS::engProcessRemoteItem(
   if (IS_SERVER)
 	  return engProcessRemoteItemAsServer(syncitemP,aStatusCommand); // status, must be set to correct status code (ok / error)
   #endif
+  // neither
+  return false;
 } // TLocalEngineDS::engProcessRemoteItem
 
 
@@ -5818,9 +5820,11 @@ void TLocalEngineDS::engRequestEnded(void)
   }
 } // TLocalEngineDS::engRequestEnded
 
+#endif // SYSYNC_SERVER
 
 
-#else
+
+#ifdef SYSYNC_CLIENT
 
 // Client Case
 // ===========
@@ -6216,7 +6220,7 @@ bool TLocalEngineDS::isAddFromLastSession(cAppCharP aRemoteID)
 // - called to generate Map items
 //   Returns true if now finished for this datastore
 //   also sets fState to dss_done when finished
-bool TLocalEngineDS::engGenerateMapItems(TMapCommand *aMapCommandP)
+bool TLocalEngineDS::engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP aLocalIDPrefix)
 {
   #ifdef USE_SML_EVALUATION
   sInt32 leavefree = fSessionP->getNotUsableBufferBytes();
@@ -6232,6 +6236,10 @@ bool TLocalEngineDS::engGenerateMapItems(TMapCommand *aMapCommandP)
     // add item
     string locID = (*pos).first;
     dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
+    // add local ID prefix, if any
+    if (aLocalIDPrefix && *aLocalIDPrefix)
+      locID.insert(0,aLocalIDPrefix);
+    // add it to map command
     aMapCommandP->addMapItem(locID.c_str(),(*pos).second.c_str());
     // check if we could send this command
     #ifdef USE_SML_EVALUATION
@@ -6290,6 +6298,8 @@ bool TLocalEngineDS::engGenerateMapItems(TMapCommand *aMapCommandP)
 
 
 #endif // SYSYNC_SERVER
+
+
 
 // - called to mark an already generated (but probably not sent or not yet statused) item
 //   as "to-be-resumed", by localID or remoteID (latter only in server case).

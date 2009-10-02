@@ -718,10 +718,6 @@ public:
   /// @param[in] aNotYetInMapPackage set if we are still in sync-from-server package
   /// @note usually, client starts sending maps while still receiving syncops from server
   void engClientStartOfMapMessage(bool aNotYetInMapPackage);
-  /// called to generate Map items
-  /// @note Returns true if now finished for this datastore
-  /// @note also sets fState to dss_done when finished
-  SUPERDS_VIRTUAL bool generateMapItems(TMapCommand *aMapCommandP);
   /// Client only: returns number of unsent map items
   SUPERDS_VIRTUAL sInt32 numUnsentMaps(void);
   #endif // SYSYNC_CLIENT
@@ -790,10 +786,10 @@ public:
   /// called to mark maps confirmed, that is, we have received ok status for them
   #ifdef SYSYNC_CLIENT
   SUPERDS_VIRTUAL void engMarkMapConfirmed(cAppCharP aLocalID, cAppCharP aRemoteID);
-  /// Client only: called to generate Map items
-  /// - Returns true if now finished for this datastore
-  /// - also sets fState to dss_done when finished
-  SUPERDS_VIRTUAL bool engGenerateMapItems(TMapCommand *aMapCommandP);
+  /// called to generate Map items
+  /// @note Returns true if now finished for this datastore
+  /// @note also sets fState to done when finished
+  SUPERDS_VIRTUAL bool engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP aLocalIDPrefix);
   /// Client only: Check if the remoteid was used by an add command not
   /// fully mapped&confirmed in the previous session
   bool isAddFromLastSession(cAppCharP aRemoteID);

@@ -117,6 +117,13 @@ uInt32 TSmlCommand::getDbgMask(void)
 } // TSmlCommand::getDbgMask
 #endif
 
+
+TSyncAppBase *TSmlCommand::getSyncAppBase(void)
+{
+	return fSessionP ? fSessionP->getSyncAppBase() : NULL;	
+} // TSmlCommand::getSyncAppBase
+
+
 // get name of certain command
 const char *TSmlCommand::getNameOf(TSmlCommandTypes aCmdType)
 {
@@ -3034,7 +3041,7 @@ void TMapCommand::generateMapItems(void)
 {
   // let datastore add Map items (eventually none)
   fInProgress = !(
-    fLocalDataStoreP->engGenerateMapItems(this)
+    fLocalDataStoreP->engGenerateMapItems(this,NULL)
   );
 } // TMapCommand::generateMapItems
 

@@ -267,6 +267,14 @@ public:
     TStatusCommand &aStatusCommand, // pre-set 200 status, can be modified in case of errors
     bool &aQueueForLater // will be set if command must be queued for later (re-)execution
   );
+  // - info about needed auth type
+  virtual TAuthTypes requestedAuthType(void);
+  virtual bool isAuthTypeAllowed(TAuthTypes aAuthType);
+  // - called when incoming SyncHdr fails to execute
+  virtual bool syncHdrFailure(bool aTryAgain);
+  // device info (uses defaults in this base class, override to customize)
+  virtual string getDeviceType(void);
+  virtual string getDeviceID(void);
 
 
 	#ifdef SYSYNC_CLIENT
@@ -285,8 +293,6 @@ public:
   // - Prepares connection-related stuff. Will be called after all
   //   session init is done, but before first request is sent
   virtual localstatus PrepareConnect(void) { return LOCERR_OK; };
-  // called when incoming SyncHdr fails to execute
-  virtual bool syncHdrFailure(bool aTryAgain);
   // retry older protocol, returns false if no older protocol to try
   bool retryOlderProtocol(bool aSameVersionRetry=false, bool aOldMessageInBuffer=false);
   // prepares client session such that it will do a retry to start a session
@@ -318,9 +324,6 @@ public:
   cAppCharP getProxyHost(void) { return fProxyHost.c_str(); };
   cAppCharP getProxyUser(void) { return fProxyUser.c_str(); };
   cAppCharP getProxyPassword(void) { return fProxyPassword.c_str(); };
-  // info about needed auth type
-  virtual TAuthTypes requestedAuthType(void) { return auth_none; }; // client does not require auth by default
-  virtual bool isAuthTypeAllowed(TAuthTypes /* aAuthType */) { return true; }; // client accepts any auth by default
   // special behaviour
   virtual bool devidWithUserHash(void) { return false; }; // do not include user name to make a hash-based pseudo-device ID by default
   // session handling
@@ -330,12 +333,7 @@ public:
 
   #ifdef SYSYNC_SERVER
   virtual SmlPcdataPtr_t newResponseURIForRemote(void); // response URI
-  // info about needed auth type
-  virtual TAuthTypes requestedAuthType(void);
-  virtual bool isAuthTypeAllowed(TAuthTypes aAuthType);
   // Request processing
-  // - called when incoming SyncHdr fails to execute
-  virtual bool syncHdrFailure(bool aTryAgain);
   // - end of request (to make sure even incomplete SyncML messages get cleaned up properly)
   bool EndRequest(bool &aHasData, string &aRespURI, uInt32 aReqBytes); // returns true if session must be deleted
   // - buffer answer in the session's buffer if transport allows it
@@ -382,9 +380,6 @@ protected:
   // - message start and end
   virtual bool ClientMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand &aStatusCommand, bool aBad=false);
   virtual void ClientMessageEnded(bool aIncomingFinal);
-  // device info (uses defaults in this base class, override to customize)
-  virtual string getDeviceType(void);
-  virtual string getDeviceID(void);
   // if set, SML processing errors will not be reported
   // (in case session wants to re-try something)
   bool fIgnoreMsgErrs;
@@ -442,9 +437,6 @@ protected:
   virtual void getNextNonce(const char *aDeviceID, string &aNextNonce);
   // - get nonce string, which is expected to be used by remote party for MD5 auth.
   virtual void getAuthNonce(const char *aDeviceID, string &aAuthNonce);
-  // device info (uses defaults for server, override to customize)
-  virtual string getDeviceID(void) { return SYSYNC_SERVER_DEVID; }
-  virtual string getDeviceType(void) { return SYNCML_SERVER_DEVTYP; }
   #ifdef ENGINE_LIBRARY
   // Engine interface
   // - process step

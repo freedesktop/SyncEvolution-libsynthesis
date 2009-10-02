@@ -709,24 +709,6 @@ sInt32 TStdLogicDS::getNumberOfChanges(void)
 } // TStdLogicDS::getNumberOfChanges
 
 
-/// @brief called to have all non-yet-generated sync commands as "to-be-resumed"
-void TStdLogicDS::logicMarkOnlyUngeneratedForResume(void)
-{
-  // we do not maintain the map/bookmark list at this level, so
-  // derived class (ODBC, BinFile etc.) must make sure that their list is
-  // clean (no marks from previous sessions) before calling this inherited version
-  implMarkOnlyUngeneratedForResume();
-  // Now add those that we have already received from the implementation
-  TSyncItemPContainer::iterator pos;
-  for (pos = fItems.begin(); pos != fItems.end(); ++pos) {
-    // let datastore mark these unprocessed
-    TSyncItem *syncitemP = (*pos);
-    // mark it for resume by ID
-    logicMarkItemForResume(syncitemP->getLocalID(),syncitemP->getRemoteID(),true); // these are unsent
-  }
-} // TStdLogicDS::logicMarkOnlyUngeneratedForResume
-
-
 
 // - called to let server generate sync commands for client
 //   Returns true if now finished (or aborted) for this datastore
@@ -881,8 +863,11 @@ localstatus TStdLogicDS::logicProcessMap(cAppCharP aRemoteID, cAppCharP aLocalID
 } // TStdLogicDS::logicProcessMap
 
 
+#endif // SYSYNC_SERVER
 
-#else
+
+
+#ifdef SYSYNC_CLIENT
 
 // Client Case
 // ===========
@@ -910,19 +895,6 @@ localstatus TStdLogicDS::startDataAccessForClient(void)
   localstatus sta=implStartDataRead();
   return sta;
 } // TStdLogicDS::startDataAccessForClient
-
-
-/// @brief called to have all non-yet-generated sync commands as "to-be-resumed"
-void TStdLogicDS::logicMarkOnlyUngeneratedForResume(void)
-{
-  // we do not maintain the map/bookmark list at this level, so
-  // derived class (ODBC, BinFile etc.) must make sure that their list is
-  // clean (no marks from previous sessions) before calling this inherited version
-  implMarkOnlyUngeneratedForResume();
-  // in client case, fItems does not contain ungenerated/unprocessed items
-  // so we don't have anything more do here for now
-} // TStdLogicDS::logicMarkOnlyUngeneratedForResume
-
 
 
 // called to generate sync sub-commands as client for remote server
@@ -1032,7 +1004,40 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
 } // TStdLogicDS::logicGenerateSyncCommandsAsClient
 
 
-#endif // client case
+#endif // SYSYNC_CLIENT
+
+
+/// @brief called to have all non-yet-generated sync commands as "to-be-resumed"
+void TStdLogicDS::logicMarkOnlyUngeneratedForResume(void)
+{
+	if (IS_SERVER) {
+  	#ifdef SYSYNC_SERVER
+    // we do not maintain the map/bookmark list at this level, so
+    // derived class (ODBC, BinFile etc.) must make sure that their list is
+    // clean (no marks from previous sessions) before calling this inherited version
+    implMarkOnlyUngeneratedForResume();
+    // Now add those that we have already received from the implementation
+    TSyncItemPContainer::iterator pos;
+    for (pos = fItems.begin(); pos != fItems.end(); ++pos) {
+      // let datastore mark these unprocessed
+      TSyncItem *syncitemP = (*pos);
+      // mark it for resume by ID
+      logicMarkItemForResume(syncitemP->getLocalID(),syncitemP->getRemoteID(),true); // these are unsent
+    }
+    #endif // SYSYNC_SERVER
+  }
+  else {
+  	#ifdef SYSYNC_CLIENT
+    // we do not maintain the map/bookmark list at this level, so
+    // derived class (ODBC, BinFile etc.) must make sure that their list is
+    // clean (no marks from previous sessions) before calling this inherited version
+    implMarkOnlyUngeneratedForResume();
+    // in client case, fItems does not contain ungenerated/unprocessed items
+    // so we don't have anything more do here for now
+    #endif // SYSYNC_CLIENT
+  }
+} // TStdLogicDS::logicMarkOnlyUngeneratedForResume
+
 
 
 // called to process incoming item operation

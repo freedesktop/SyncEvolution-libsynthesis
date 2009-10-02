@@ -13,7 +13,6 @@
 
 // required headers
 #include "syncappbase.h"
-#include "syncsessiondispatch.h"
 #include "syncagent.h"
 
 
@@ -90,12 +89,12 @@ public:
 
 
 // engine server transport config
-class TEngineCommConfig: public TCommConfig
+class TEngineServerCommConfig: public TCommConfig
 {
   typedef TCommConfig inherited;
 public:
-  TEngineCommConfig(TConfigElement *aParentElementP);
-  virtual ~TEngineCommConfig();
+  TEngineServerCommConfig(TConfigElement *aParentElementP);
+  virtual ~TEngineServerCommConfig();
   // config vars
   bool fSessionIDCGI;
   string fSessionIDCGIPrefix;

@@ -540,6 +540,8 @@ public:
   // convenience version for getting time
   lineartime_t getSystemNowAs(timecontext_t aContext) { return sysync::getSystemNowAs(aContext,getAppZones()); };
 protected:
+	// Server or client
+  bool fIsServer;
   // Application custom time zones
   GZones fAppZones;
   // Destruction flag
@@ -553,6 +555,8 @@ protected:
   // request count
   sInt32 fRequestCount; // count of requests
 public:
+	// this is called to control behaviour for builds that can be client OR server
+  bool isServer(void) { return fIsServer; };
   #ifdef SYSER_REGISTRATION
   // somewhat scattered within object to make reverse engineering harder
   bool fRegOK; // updated by checkRegInfo, used to disable hard-coded-expiry

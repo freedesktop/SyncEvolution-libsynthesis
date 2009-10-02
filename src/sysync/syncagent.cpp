@@ -789,6 +789,29 @@ void TSyncAgent::MessageEnded(bool aIncomingFinal)
 }
 
 
+// starting with engine version 2.0.8.7 a client's device ID (in devinf) is no longer
+// a constant string, but the device's unique ID
+string TSyncAgent::getDeviceID(void)
+{
+  if (fLocalURI.empty()) {
+  	if (IS_SERVER)
+	    return SYSYNC_SERVER_DEVID; // return default ID
+  	else  	
+	    return SYSYNC_CLIENT_DEVID; // return default ID
+  }
+  else
+    return fLocalURI;
+} // TSyncAgent::getDeviceID
+
+
+// ask syncappbase for device type
+string TSyncAgent::getDeviceType(void)
+{
+  // taken from configuration or default for engine type (client/server)
+  return getSyncAppBase()->getDevTyp();
+} // TSyncAgent::getDeviceType
+
+
 #ifdef SYSYNC_CLIENT
 
 // initialize the client session and link it with the SML toolkit
@@ -882,23 +905,6 @@ localstatus TSyncAgent::LocalLogin(void)
   #endif
   return LOCERR_OK;
 } // TSyncAgent::LocalLogin
-
-
-// starting with engine version 2.0.8.7 a client's device ID (in devinf) is no longer
-// a constant string, but the device's unique ID
-string TSyncAgent::getDeviceID(void)
-{
-  if (fLocalURI.empty())
-    return SYSYNC_CLIENT_DEVID; // return default ID
-  else
-    return fLocalURI;
-} // TSyncAgent::getDeviceID
-
-string TSyncAgent::getDeviceType(void)
-{
-  // taken from configuration or SYSYNC_CLIENT_DEVTYP
-  return getSyncAppBase()->getDevTyp();
-}
 
 
 
@@ -2497,22 +2503,35 @@ TAgentConfig *TSyncAgent::getServerConfig(void)
 } // TSyncAgent::getServerConfig
 
 
+#endif // SYSYNC_SERVER
+
+
 // info about requested auth type
 TAuthTypes TSyncAgent::requestedAuthType(void)
 {
-  return getServerConfig()->fRequestedAuth;
+	if (IS_SERVER) {
+  	#ifdef SYSYNC_SERVER
+	  return getServerConfig()->fRequestedAuth;
+    #endif
+  }
+  else {
+  	return auth_none; // client does not require auth
+  }
 } // TSyncAgent::requestedAuthType
 
 
 // check if auth type is allowed
 bool TSyncAgent::isAuthTypeAllowed(TAuthTypes aAuthType)
 {
-  return aAuthType>=getServerConfig()->fRequiredAuth;
+	if (IS_SERVER) {
+  	#ifdef SYSYNC_SERVER
+	  return aAuthType>=getServerConfig()->fRequiredAuth;
+    #endif
+  }
+  else {
+  	return true; // client accepts any auth
+  }
 } // TSyncAgent::isAuthTypeAllowed
-
-
-#endif // SYSYNC_SERVER
-
 
 
 // called when incoming SyncHdr fails to execute

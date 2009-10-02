@@ -1152,6 +1152,7 @@ extern "C" {
 
 // constructor
 TSyncAppBase::TSyncAppBase() :
+  fIsServer(false),
   fDeleting(false),
   fConfigP(NULL),
   fRequestCount(0),
@@ -2577,6 +2578,7 @@ string TSyncAppBase::getModel(void) {
 	return CUST_SYNC_MODEL;
 } // TSyncAppBase::getModel
 
+
 // hardware version
 string TSyncAppBase::getHardwareVersion(void) {
   #ifdef ENGINEINTERFACE_SUPPORT
@@ -2589,6 +2591,7 @@ string TSyncAppBase::getHardwareVersion(void) {
   getPlatformString(pfs_device_name, s);
   return s;
 } // TSyncAppBase::getHardwareVersion
+
 
 // firmware version (depends a lot on the context - OS version?)
 string TSyncAppBase::getFirmwareVersion(void) {
@@ -2603,6 +2606,7 @@ string TSyncAppBase::getFirmwareVersion(void) {
   return s;
 } // TSyncAppBase::getHardwareVersion
 
+
 // hardware type (PDA, PC, ...)
 string TSyncAppBase::getDevTyp() {
   #ifdef ENGINEINTERFACE_SUPPORT
@@ -2611,8 +2615,12 @@ string TSyncAppBase::getDevTyp() {
   }
   #endif
   // if no string configured, return default
-  return SYNCML_CLIENT_DEVTYP;
+  if (isServer())
+  	return SYNCML_SERVER_DEVTYP;
+  else
+    return SYNCML_CLIENT_DEVTYP;
 } // TSyncAppBase::getDevTyp
+
 
 #ifdef APP_CAN_EXPIRE
 

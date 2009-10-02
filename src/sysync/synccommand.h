@@ -63,6 +63,7 @@ typedef enum {
 // forward
 class TStatusCommand;
 class TSyncSession;
+class TSyncAppBase;
 
 
 // abstract base command class
@@ -82,6 +83,8 @@ public:
   TDebugLogger *getDbgLogger(void);
   uInt32 getDbgMask(void);
   #endif
+  // - get session owner (dispatcher/clientbase)
+  TSyncAppBase *getSyncAppBase(void);  
   #ifndef USE_SML_EVALUATION
   // - get (approximated) message size required for sending it
   virtual uInt32 messageSize(void);

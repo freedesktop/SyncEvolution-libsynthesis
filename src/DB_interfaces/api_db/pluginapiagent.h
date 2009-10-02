@@ -146,14 +146,14 @@ public:
   // - get nonce string, which is expected to be used by remote party for MD5 auth.
   virtual void getAuthNonce(const char *aDeviceID, string &aAuthNonce);
   #endif // SYSYNC_SERVER
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   // - check device ID related stuff
   virtual void CheckDevice(const char *aDeviceID);
   // - remote device is analyzed, eventually save status
   virtual void remoteAnalyzed(void);
   // - check login for this session (everything else is done by CustomAgent's SessionLogin)
   virtual bool CheckLogin(const char *aOriginalUserName, const char *aModifiedUserName, const char *aAuthString, TAuthSecretTypes aAuthStringType, const char *aDeviceID);
-  #endif // not BASED_ON_BINFILE_CLIENT
+  #endif // not BINFILE_ALWAYS_ACTIVE
   // - logout
   void LogoutApi(void);
   // current database date & time

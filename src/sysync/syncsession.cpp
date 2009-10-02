@@ -980,7 +980,17 @@ TSyncSession::TSyncSession(
   if (PDEBUGTEST(DBG_HOT)) {
     // Show Session Start
     PDEBUGPRINTFX(DBG_HOT,(
-      "==== Session started with SyncML Engine Version %d.%d.%d.%d",
+      "==== %s Session started with SyncML (%s%c%s) Engine Version %d.%d.%d.%d",
+      IS_SERVER ? "Server" : "Client",
+      #ifdef SYSYNC_SERVER
+      "Server",
+      #endif
+      #if defined(SYSYNC_SERVER) && defined(SYSYNC_CLIENT)
+      '+',
+      #endif
+      #ifdef SYSYNC_SERVER
+      "Client",
+      #endif
       SYSYNC_VERSION_MAJOR,
       SYSYNC_VERSION_MINOR,
       SYSYNC_SUBVERSION,

@@ -117,6 +117,9 @@ TSyncAgent *TSyncSessionDispatch::getSySyToolSession(void)
 TSyncSessionDispatch::TSyncSessionDispatch() :
   TSyncAppBase()
 {
+  // this is a server engine
+  fIsServer = true;
+  // other init
   #ifdef SYSYNC_TOOL
   fToolSessionHP=NULL; // no tool session yet
   #endif

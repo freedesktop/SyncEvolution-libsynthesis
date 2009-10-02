@@ -220,7 +220,7 @@ protected:
   // Client only: called to generate Map items
   // - Returns true if now finished for this datastore
   // - also sets fState to dss_done when finished
-  virtual bool engGenerateMapItems(TMapCommand *aMapCommandP);
+  virtual bool engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP aLocalIDPrefix);
   // Client only: returns number of unsent map items
   virtual sInt32 numUnsentMaps(void);
   /// client: called to generate sync sub-commands to be sent to server

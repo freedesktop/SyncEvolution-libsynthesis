@@ -344,7 +344,8 @@ TSyncClientBase::TSyncClientBase() :
   TSyncAppBase(),
   fClientSessionP(NULL)
 {
-  // nop so far
+  // this is a client engine
+  fIsServer = false;
 } // TSyncClientBase::TSyncClientBase
 
 

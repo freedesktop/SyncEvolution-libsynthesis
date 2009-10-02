@@ -38,11 +38,11 @@ public:
   virtual void ResetSession(void); // Resets session (but unlike TerminateSession, session might be re-used)
   void InternalResetSession(void); // static implementation for calling through virtual destructor and virtual ResetSession();
   // user authentication
-  #ifdef SYSYNC_SERVER
-  // - server should implement it, so we make it abstract here again (altough there is
+  #ifndef SYSYNC_CLIENT
+  // - server-only build should implement it, so we make it abstract here again (altough there is
   //   an implementation for simpleauth in session.
   virtual bool SessionLogin(const char *aUserName, const char *aAuthString, TAuthSecretTypes aAuthStringType, const char *aDeviceID) = 0;
-  #endif // SYSYNC_SERVER
+  #endif // not SYSYNC_CLIENT
 }; // TStdLogicAgent
 
 

@@ -461,7 +461,7 @@ void TPluginApiAgent::getNextNonce(const char *aDeviceID, string &aNextNonce)
 #endif // SYSYNC_CLIENT
 
 
-#ifndef BASED_ON_BINFILE_CLIENT
+#ifndef BINFILE_ALWAYS_ACTIVE
 
 
 // check device related stuff
@@ -642,7 +642,7 @@ bool TPluginApiAgent::CheckLogin(const char *aOriginalUserName, const char *aMod
   }
 } // TPluginApiAgent::CheckLogin
 
-#endif // not BASED_ON_BINFILE_CLIENT
+#endif // not BINFILE_ALWAYS_ACTIVE
 
 
 // - logout api
