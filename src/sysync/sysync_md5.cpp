@@ -104,14 +104,6 @@ void md5::Init (SYSYNC_MD5_CTX *context)
   /* initialize the padding space, don't know if this is necessary */
   MD5_memset ((SYSYNC_POINTER)context->PADDING, 0, 64);
   context->PADDING[0]=0x80;
-  // note: this does the same thing as the original:
-  /* moved to SYSYNC_MD5_CTX as statics are not allowed in some environments
-  static uInt8 PADDING[64] = {
-    0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  };
-  */
 }
 
 /* MD5 block update operation. Continues an MD5 message-digest

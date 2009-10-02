@@ -517,7 +517,7 @@ TSyncSessionHandle *TSyncSessionDispatch::CreateAndEnterServerSession(cAppCharP 
           time(NULL);
         sid =
           ((sid >> 16) & 0xFFFF) + ((sid << 47) & 0x7FFF000000000000LL) + // aaaa00000000dddd
-          (((uInt32)sessionHP) << 16); // 0000bbbbcccc0000
+          ((((uIntPtr)sessionHP)&0xFFFFFFFF) << 16); // 0000bbbbcccc0000
         // - make a string of it
         StringObjPrintf(SessionIDString,"%lld",sid);
       }

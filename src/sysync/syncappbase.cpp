@@ -1182,6 +1182,9 @@ TSyncAppBase::TSyncAppBase() :
     #endif
     sysync_glob_setanchor(this);
   #endif
+  #ifdef MD5_TEST_FUNCS
+  md5::dotest();
+  #endif
   // init profiling
   TP_INIT(fTPInfo);
   TP_START(fTPInfo,TP_general);

@@ -1964,7 +1964,7 @@ SQLHDBC TODBCApiAgent::getODBCConnectionHandle(void)
       throw;
     }
   }
-  PDEBUGPRINTFX(DBG_DBAPI+DBG_EXOTIC,("Session: using connection handle 0x%lX",(uInt32)fODBCConnectionHandle));
+  PDEBUGPRINTFX(DBG_DBAPI+DBG_EXOTIC,("Session: using connection handle 0x%lX",(uIntArch)fODBCConnectionHandle));
   return fODBCConnectionHandle;
 } // TODBCApiAgent::getODBCConnectionHandle
 

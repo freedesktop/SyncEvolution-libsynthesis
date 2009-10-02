@@ -849,7 +849,7 @@ SQLHDBC TODBCApiDS::getODBCConnectionHandle(void)
     PDEBUGPRINTFX(DBG_DBAPI+DBG_EXOTIC,("Datastore %s does not own a DB connection yet -> pulling connection from session level",getName()));
     fODBCConnectionHandle = fAgentP->pullODBCConnectionHandle();
   }
-  PDEBUGPRINTFX(DBG_DBAPI+DBG_EXOTIC,("Datastore %s: using connection handle 0x%lX",getName(),(uInt32)fODBCConnectionHandle));
+  PDEBUGPRINTFX(DBG_DBAPI+DBG_EXOTIC,("Datastore %s: using connection handle 0x%lX",getName(),(uIntArch)fODBCConnectionHandle));
   return fODBCConnectionHandle;
 } // TODBCApiDS::getODBCConnectionHandle
 

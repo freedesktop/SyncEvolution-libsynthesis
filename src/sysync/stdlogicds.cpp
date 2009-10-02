@@ -424,7 +424,7 @@ bool TStdLogicDS::threadedStartSync(void)
   // Note: ThreadMayChangeNow() has been posted already by startingThread()
   PDEBUGPRINTFX(DBG_HOT,("******* starting background thread for reading sync set..."));
   fStartSyncStatus.setStatusCode(200); // assume ok
-  if (!fStartSyncThread.launch(StartSyncThreadFunc,(uInt32)this)) { // pass datastoreP as param
+  if (!fStartSyncThread.launch(StartSyncThreadFunc,(uIntArch)this)) { // pass datastoreP as param
     // starting thread failed
     PDEBUGPRINTFX(DBG_ERROR,("******* Failed starting background thread for reading sync set"));
     return false;

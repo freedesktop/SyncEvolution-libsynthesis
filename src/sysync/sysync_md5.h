@@ -50,7 +50,12 @@ typedef uInt8 *SYSYNC_POINTER;
 typedef uInt16 SYSYNC_UINT2;
 
 /* UINT4 defines a four byte word */
-typedef uInt32 SYSYNC_UINT4;
+/* Note: "typedef uInt32 SYSYNC_UINT4;" is unreliable as uInt32 was 64bit in some weird builds */
+#if !defined(__WORDSIZE) || (__WORDSIZE < 32)
+typedef unsigned long SYSYNC_UINT4;
+#else
+typedef unsigned int SYSYNC_UINT4;
+#endif 
 
 /* MD5 context. */
 typedef struct {
@@ -69,6 +74,7 @@ void Final (uInt8 [16], SYSYNC_MD5_CTX *);
 /* for test */
 void String (const char *aString, char *s);
 void Print (uInt8 *digest, char * &s);
+void dotest(void);
 #endif
 
 } // end namespace md5
