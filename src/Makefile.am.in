@@ -54,7 +54,7 @@ LIBSYNTHESIS_CFLAGS = \
 	$(PCRE_CFLAGS) $(SQLITE3_CFLAGS) $(ZLIB_CFLAGS) $(XMLPARSE_CFLAGS) $(LIBICAL_CFLAGS) $(LIBECAL_CFLAGS)
 libsynthesis_la_CFLAGS = $(LIBSYNTHESIS_CFLAGS)
 libsynthesis_la_CXXFLAGS = $(LIBSYNTHESIS_CFLAGS)
-libsynthesis_la_LIBADD = $(PCRE_LIBS) $(SQLITE3_LIBS) $(XMLPARSE_LIBS) $(LIBICAL_LIBS) $(LIBECAL_LIBS) libsmltk.la
+libsynthesis_la_LIBADD = $(PCRE_LIBS) $(SQLITE3_LIBS) $(XMLPARSE_LIBS) $(LIBICAL_LIBS) $(LIBECAL_LIBS) libsmltk.la -lz
 if COND_XMLPARSE
 LIBSYNTHESIS_CFLAGS += -I$(srcdir)/expat -I$(srcdir)/expat/xmltok -I$(srcdir)/expat/xmlparse
 libsynthesis_la_SOURCES += \
