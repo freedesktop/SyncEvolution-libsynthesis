@@ -46,6 +46,7 @@
 
 #if defined MACOSX
 	#define ENGINE_ENTRY ENTRY_C
+	#define ENGINE_ENTRY_CXX
 	
 	#ifdef __GNUC__
 	  #define ENTRY_ATTR __attribute__((visibility("default")))
@@ -56,9 +57,11 @@
   /* Visual Studio 2005 requires a specific entry point definition */
   /* This definition is empty for all other platforms */
   #define ENGINE_ENTRY ENTRY_C _declspec(dllexport)
+  #define ENGINE_ENTRY_CXX ENGINE_ENTRY
   #define ENTRY_ATTR
 #else
 	#define ENGINE_ENTRY ENTRY_C
+	#define ENGINE_ENTRY_CXX
 	#define ENTRY_ATTR
 #endif
 
