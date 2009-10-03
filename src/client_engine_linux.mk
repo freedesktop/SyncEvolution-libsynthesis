@@ -134,7 +134,7 @@ CLIENTENGINE=\
   sysync_SDK/Sources/enginemodulebase.cpp\
   sysync/engineentry.cpp\
   sysync/engineinterface.cpp\
-  sysync/syncclient.cpp\
+  sysync/syncagent.cpp\
   sysync/syncclientbase.cpp
 
 ODBC_DB=\
