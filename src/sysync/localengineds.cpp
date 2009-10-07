@@ -767,7 +767,7 @@ bool TTypeSupportConfig::localStartElement(const char *aElementName, const char 
         }
 				else
 	      	return fail("bad value for 'preferred'");
-      }      
+      }
     }
     // now add datatype
     if (preferred) {
@@ -1162,7 +1162,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
 	/// Init type negotiation
   /// - for sending data
   fLocalSendToRemoteTypeP = NULL;
-  fRemoteReceiveFromLocalTypeP = NULL;  
+  fRemoteReceiveFromLocalTypeP = NULL;
   /// - for receiving data
   fLocalReceiveFromRemoteTypeP = NULL;
   fRemoteSendToLocalTypeP = NULL;
@@ -2424,7 +2424,7 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
       if (
         (
           (
-            (!fLastRemoteAnchor.empty() && 
+            (!fLastRemoteAnchor.empty() &&
             	( (fLastRemoteAnchor==aLastRemoteAnchor)
                 #ifdef SYSYNC_CLIENT
                 || (fSessionP->fLenientMode)
@@ -2437,7 +2437,7 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
         )
         || fSlowSync // if slow sync is requested by the remote anyway, we don't need to be in sync anyway, so just go on
       ) {
-      	if (fLastRemoteAnchor!=aLastRemoteAnchor && fSessionP->fLenientMode) {
+      	if (!(fLastRemoteAnchor==aLastRemoteAnchor) && fSessionP->fLenientMode) {
         	PDEBUGPRINTFX(DBG_ERROR,("Warning - remote anchor mismatch but tolerated in lenient mode"));
         }
         // sync state ok or Slow sync requested anyway:
@@ -2721,12 +2721,12 @@ localstatus TLocalEngineDS::engInitForSyncOps(
         LocalReceiveFromRemoteTypeP = LocalSendToRemoteTypeP;
       }
       else {
-      	// no specific "blind" preference, use my own normally preferred types 
+      	// no specific "blind" preference, use my own normally preferred types
 	      LocalSendToRemoteTypeP = getPreferredTxItemType(); // send in preferred tx type of local datastore
 	      LocalReceiveFromRemoteTypeP = getPreferredRxItemType(); // receive in preferred rx type of local datastore
       }
 			// same type on both end (as only local type exists)
-      RemoteReceiveFromLocalTypeP = LocalSendToRemoteTypeP; // same on both end       
+      RemoteReceiveFromLocalTypeP = LocalSendToRemoteTypeP; // same on both end
       RemoteSendToLocalTypeP = LocalReceiveFromRemoteTypeP; // same on both end (as only local type exists)
       // create "remote" datastore with matching properties to local one
       PDEBUGPRINTFX(DBG_ERROR,("Warning: No DevInf for remote datastore, running blind sync attempt"));
