@@ -101,7 +101,11 @@ bool getPlatformString(TPlatformStringID aStringID, string &aString)
       // My specific subdirectory for storing my app data/prefs
       userInfoP = getpwuid(getuid());
       aString = userInfoP->pw_dir; // user home dir
+      #ifdef ANDROID
+      aString += "/data/com.sysync/" APPDATA_SUBDIR; // application specific subdir for android
+      #else
       aString += "/.sysync/" APPDATA_SUBDIR; // application specific subdir
+      #endif
       break;
     #endif
     /*
@@ -127,7 +131,10 @@ bool getPlatformString(TPlatformStringID aStringID, string &aString)
 
 
 extern "C" {
+  #ifndef ANDROID
   #include <ctime>
+  #endif
+
   #include <sys/stat.h>
 }
 
