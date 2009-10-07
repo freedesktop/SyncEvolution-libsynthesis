@@ -159,8 +159,8 @@ enum Version {
   VP_CB_Version11        = 0x01050200,
   /** V1.6.0.X : Tunnel support                                  */
   VP_Tunnel              = 0x01060000,
-  /** V1.6.0.X : Current version, use 'Plugin_Version()'         */
-  VP_CurrentVersion      = 0x01060000,
+  /** V1.6.1.X : Current version, use 'Plugin_Version()'         */
+  VP_CurrentVersion      = 0x01060100,
 
   /** -------- : Bad/undefined version                           */
   VP_BadVersion          = 0xffffffff,
