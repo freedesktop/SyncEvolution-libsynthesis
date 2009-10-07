@@ -54,11 +54,12 @@ clientprovisioning_inc.cpp
 \*_tables_inc.cpp
 syncsessiondispatch.cpp
 platform_thread.cpp
+enginestubs.c
 EOF`"
 
 sed -e "s;@LIBSYNTHESIS_SOURCES@;`find ${ENGINE_SOURCES} syncapps/clientEngine_custom syncapps/serverEngine_custom sysync_SDK/DB_Interfaces/text_db \( -name '*.cpp' -o -name '*.[ch]' \) \! \( ${SDK_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_SOURCES_BOTH@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_SOURCES_SDK_ONLY@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \( ${SDK_FILES} \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} \) -printf '%p '`;" \
+    -e "s;@LIBSYNTHESISSDK_SOURCES_BOTH@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
+    -e "s;@LIBSYNTHESISSDK_SOURCES_SDK_ONLY@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \( ${SDK_FILES} \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
     -e "s;@LIBSMLTK_SOURCES@;`find syncml_tk \( -name '*.cpp' -o -name '*.[ch]' \) \! \( -wholename syncml_tk/src/sml/\*/palm/\* -o -wholename syncml_tk/src/sml/\*/win/\* \) -printf '%p '`;" \
     -e "s;@LIBSYNTHESISSDK_HEADERS@;`find sysync_SDK/Sources \( -name '*.h' \) -printf 'synthesis/%f '`;" \
     Makefile.am.in >Makefile.am

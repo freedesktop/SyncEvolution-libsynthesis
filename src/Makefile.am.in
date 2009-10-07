@@ -28,7 +28,7 @@ ENGINE_AGE = 3
 CLEANFILES =
 EXTRA_DIST =
 
-lib_LTLIBRARIES = libsmltk.la libsynthesis.la libsynthesissdk.la
+lib_LTLIBRARIES = libsmltk.la libsynthesis.la libsynthesissdk.la libsynthesisstubs.la
 nobase_include_HEADERS = @LIBSYNTHESISSDK_HEADERS@ synthesis/target_options.h
 
 # Configuration header files are searched in this order:
@@ -118,6 +118,10 @@ libsynthesissdk_la_CPPFLAGS = \
 	-D_GNU_SOURCE=1 \
 	-I$(srcdir)/sysync_SDK/Sources \
 	-I$(srcdir)/Targets/ReleasedProducts/SDK
+
+libsynthesisstubs_la_LDFLAGS = -static
+libsynthesisstubs_la_SOURCES = sysync_SDK/Sources/enginestubs.c
+libsynthesisstubs_la_CPPFLAGS = $(libsynthesissdk_la_CPPFLAGS)
 
 # All files needed by libsynthesissdk.a come from either
 # sysync_SDK/Sources (shared between engine and SDK) or
