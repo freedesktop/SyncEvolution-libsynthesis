@@ -59,12 +59,17 @@ digest= H(B64(H(server-identifier:password)):nonce:B64(H(notification)))
 */
 
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include "prefix_file.h"
+#include "sync_include.h"
 #include "san.h"
 #include "sysync_md5.h"
 #include "sysync_b64.h"
 
-#ifndef PUSHALERTER
+#ifndef WITHOUT_SAN_1_1
 #include "sysync_utils.h"
 #endif
 
@@ -352,8 +357,7 @@ void SanPackage::ReleaseNotificationBody()
 } // ReleaseNotificationBody
 
 
-// not available for pushalerter tool
-#ifndef PUSHALERTER
+#ifndef WITHOUT_SAN_1_1
 // general callback entry for all others
 static Ret_t univ( ... )
 {
@@ -503,7 +507,7 @@ TSyError SanPackage::Check_11( void* san, size_t sanSize )
 
   return err;
 } // Check_11
-#endif
+#endif // WITHOUT_SAN_1_1
 
 
 TSyError SanPackage::PassSan( void* san, size_t sanSize )
@@ -514,7 +518,7 @@ TSyError SanPackage::PassSan( void* san, size_t sanSize )
   ReleasePackage();
 //printf( "here we will have the potential 1.1 -> 1.2 conversion\n" );
 
-  #ifndef PUSHALERTER
+  #ifndef WITHOUT_SAN_1_1
                err= Check_11  ( san,sanSize );
     if (!err)  err= GetPackage( san,sanSize );
   //use_as_12= err==SML_ERR_XLT_INCOMP_WBXML_VERS;
