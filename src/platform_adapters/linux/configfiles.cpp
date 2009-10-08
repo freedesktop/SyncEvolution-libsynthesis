@@ -36,7 +36,11 @@ static bool getOSVersion(string &aOSVersion)
 static bool getHardwareName(string &aHardwareName)
 {
   // Obtain Device name
+  #ifdef ANDROID
+  aHardwareName="Android Device";
+  #else
   aHardwareName="Linux PC";
+  #endif
   return true;
 } // getHardwareName
 
@@ -239,7 +243,11 @@ bool getLocalDeviceID(string &aURI)
       hostName=szHostname; // just name of machine
   }
   // generate URI from name
+  #ifdef ANDROID
+  aURI="android:";
+  #else
   aURI="linux:"; // %%% SCTS does not like http:// here, so we take os:xxxx
+  #endif
   // add name of this machine (fully qualified if possible)
   aURI+=hostName;
   // this is more or less unique

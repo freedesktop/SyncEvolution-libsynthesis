@@ -84,6 +84,8 @@
     #define SYSYNC_PLATFORM_NAME "iPhoneOS"
   #elif defined(MACOSX)
     #define SYSYNC_PLATFORM_NAME "MacOSX"
+  #elif defined(ANDROID)
+    #define SYSYNC_PLATFORM_NAME "Android"
   #elif defined(LINUX)
     #define SYSYNC_PLATFORM_NAME "Linux"
   #elif defined(__PALM_OS__)
