@@ -740,7 +740,7 @@ bool TCustomImplAgent::SessionLogin(const char *aUserName, const char *aAuthStri
     #else
     // client without need for local login
     return true;
-    #warning "we could probably eliminate much more code here"
+    //#warning "we could probably eliminate much more code here"
     #endif
   }
   #endif // SYSYNC_CLIENT

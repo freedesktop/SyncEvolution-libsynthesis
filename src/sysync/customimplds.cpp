@@ -212,14 +212,14 @@ void TCustomDSConfig::clear(void)
   fDataIsUTC=false; // compatibility flag only, will set fDataTimeZone to TCTX_UTC at Resolve if set
   fDataTimeZone=TCTX_SYSTEM; // default to local system time
   fUserZoneOutput=true; // by default, non-floating timestamps are moved to user zone after reading from DB. Only if zone context for timestamp fields is really retrieved from the DB on a per record level, this can be switched off
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   // - flag indicating that admin tables have DS 1.2 support (map entrytype, map flags, fResumeAlertCode, fLastSuspend, fLastSuspendIdentifier
   fResumeSupport=false;
   fResumeItemSupport=false; // no item resume as well
   // - admin capability info
   fSyncTimeStampAtEnd=false; // if set, time point of sync is taken AFTER last write to DB (for single-user DBs like FMPro). Note that target table layout is different in this case!
   fOneWayFromRemoteSupported=false; // compatible with old layout of target tables, no support
-  #endif // not BASED_ON_BINFILE_CLIENT
+  #endif // not BINFILE_ALWAYS_ACTIVE
   fStoreSyncIdentifiers=false; // compatible with old layout of target tables, no support
   // clear embedded
   fFieldMappings.clear();
@@ -263,7 +263,7 @@ bool TCustomDSConfig::localStartElement(const char *aElementName, const char **a
     expectTimezone(fDataTimeZone);
   else if (strucmp(aElementName,"userzoneoutput")==0)
     expectBool(fUserZoneOutput);
-  #ifndef BASED_ON_BINFILE_CLIENT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   // - admin capability info
   else if (strucmp(aElementName,"synctimestampatend")==0)
     expectBool(fSyncTimeStampAtEnd);
@@ -273,7 +273,7 @@ bool TCustomDSConfig::localStartElement(const char *aElementName, const char **a
     expectBool(fResumeSupport);
   else if (strucmp(aElementName,"resumeitemsupport")==0)
     expectBool(fResumeItemSupport);
-  #endif
+  #endif // BINFILE_ALWAYS_ACTIVE
   else if (
     strucmp(aElementName,"storelastsyncidentifier")==0 ||
     strucmp(aElementName,"storesyncidentifiers")==0
@@ -1191,7 +1191,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
     MapEntryTypeNames[aEntryType],
     aLocalID && *aLocalID ? aLocalID : "<none>",
     aRemoteID ? (*aRemoteID ? aRemoteID : "<set none>") : "<do not change>",
-    aMapFlags,
+    (long)aMapFlags,
     (int)aDelete
   ));
   // - if there is a localID, search map entry (even if it is deleted)
@@ -1205,7 +1205,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
           "- found entry by entrytype/localID='%s' - remoteid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
           aLocalID,
           (*pos).remoteid.c_str(),
-          (*pos).mapflags,
+          (long)(*pos).mapflags,
           (int)(*pos).changed,
           (int)(*pos).deleted,
           (int)(*pos).added,
@@ -1230,7 +1230,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
           "- found entry by remoteID='%s' - localid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
           aRemoteID,
           (*pos).localid.c_str(),
-          (*pos).mapflags,
+          (long)(*pos).mapflags,
           (int)(*pos).changed,
           (int)(*pos).deleted,
           (int)(*pos).added,
@@ -1308,7 +1308,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
           PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
             "- cleanup: removing same remoteID from other entry with localid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
             (*pos2).localid.c_str(),
-            (*pos2).mapflags,
+            (long)(*pos2).mapflags,
             (int)(*pos2).changed,
             (int)(*pos2).deleted,
             (int)(*pos2).added,
@@ -1928,7 +1928,7 @@ void TCustomImplDS::implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteI
   PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC+DBG_HOT,(
     "localID='%s' marked for resending by setting mapflag_resend (AND mark for eventual resume!), flags now=0x%lX",
     (*pos).localid.c_str(),
-    (*pos).mapflags
+    (long)(*pos).mapflags
   ));
 } // TCustomImplDS::implMarkItemForResend
 
@@ -1981,7 +1981,7 @@ void TCustomImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteI
       PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
         "implMarkItemForResume: localID='%s', has mapFlags=0x%lX and was probably executed at remote -> NOT marked for resume",
         (*pos).localid.c_str(),
-        (*pos).mapflags
+        (long)(*pos).mapflags
       ));
       (*pos).markforresume=false;
     }
@@ -1991,7 +1991,7 @@ void TCustomImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteI
       PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
         "implMarkItemForResume: localID='%s', has mapFlags=0x%lX and was %s executed at remote%s -> mark for resume",
         (*pos).localid.c_str(),
-        (*pos).mapflags,
+        (long)(*pos).mapflags,
         aUnSent ? "NOT" : "probably",
         fSessionP->getSessionConfig()->fRelyOnEarlyMaps ? " (relying on early maps)" : ""
       ));
@@ -2151,7 +2151,7 @@ localstatus TCustomImplDS::implGetItem(
               "Item localID='%s' already has map entry: remoteid='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
               syncsetitemP->localid.c_str(),
               (*pos).remoteid.c_str(),
-              (*pos).mapflags,
+              (long)(*pos).mapflags,
               (int)(*pos).changed,
               (int)(*pos).deleted,
               (int)(*pos).added,

@@ -1723,7 +1723,7 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
       MapEntryTypeNames[(*pos).entrytype],
       (*pos).localid.c_str(),
       (*pos).remoteid.c_str(),
-      (*pos).mapflags,
+      (long)(*pos).mapflags,
       (int)(*pos).changed,
       (int)(*pos).deleted,
       (int)(*pos).added,
@@ -1854,9 +1854,9 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
       // - fLastTargetURI    = item ID (string, if limited in length should be long enough for large IDs, >=64 chars recommended)
       adminData+="\r\nlasttargetURI:"; StrToCStrAppend( fLastTargetURI.c_str(), adminData,true );
       // - fPITotalSize      = uInt32, total item size
-      adminData+="\r\ntotalsize:"; StringObjAppendPrintf( adminData,"%ld", fPITotalSize );
+      adminData+="\r\ntotalsize:"; StringObjAppendPrintf( adminData,"%ld", (long)fPITotalSize );
       // - fPIUnconfirmedSize= uInt32, unconfirmed part of item size
-      adminData+="\r\nunconfirmedsize:"; StringObjAppendPrintf( adminData,"%ld", fPIUnconfirmedSize );
+      adminData+="\r\nunconfirmedsize:"; StringObjAppendPrintf( adminData,"%ld", (long)fPIUnconfirmedSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, store it as well to make ReadBlob easier (mallloc)
       adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%ld", blSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, 0=none
@@ -2241,7 +2241,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
       MapEntryTypeNames[mapEntry.entrytype],
       mapEntry.localid.c_str(),
       mapEntry.remoteid.c_str(),
-      mapEntry.mapflags
+      (long)mapEntry.mapflags
     ));
     // save entry in list
     mapEntry.changed=false; // not yet changed
