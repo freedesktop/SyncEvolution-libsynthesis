@@ -1286,7 +1286,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
       // check if contents change, update if so
       if (
         (((*pos).mapflags & ~mapflag_useforresume) != aMapFlags) || // flags different (useForResume not tested!)
-        (aRemoteID && (*pos).remoteid!=aRemoteID) // remoteID different
+        (aRemoteID && !((*pos).remoteid==aRemoteID)) // remoteID different
       ) {
         // new RemoteID (but not NULL = keep existing) or different mapflags were passed -> this is a real change
         if (aRemoteID)
