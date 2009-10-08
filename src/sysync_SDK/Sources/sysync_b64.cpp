@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "sysync_b64.h"
-#include "profiling.h"
+#include "sync_include.h"
 
 using namespace b64;
 
@@ -55,7 +55,7 @@ char *b64::encode (const uInt8 *instr, uInt32 len, uInt32 *outlenP, sInt16 maxLi
       (outlen/maxLineLen+1) << (crLineEnd ? 0 : 1);
   }
 
-  outstr = (char *)sysync_malloc(outlen*sizeof(char));
+  outstr = (char *)malloc(outlen*sizeof(char));
   memset(outstr,0,outlen);
 
   linechars=0;
@@ -146,7 +146,7 @@ uInt8 *b64::decode(const char *instr, uInt32 len, uInt32 *outlenP)
 
   // this should always be more than enough len:
   // 3 times number of quads touched plus one for NUL terminator
-  outstr = (uInt8 *)sysync_malloc(((3*(len/4+1))+1) * sizeof(char));
+  outstr = (uInt8 *)malloc(((3*(len/4+1))+1) * sizeof(char));
   if (!outstr) return NULL;
   q=outstr;
 
@@ -237,7 +237,7 @@ uInt8 *b64::decode(const char *instr, uInt32 len, uInt32 *outlenP)
   // this should always be more than enough len
   outlen = (3*(quads+1))+1;
 
-  outstr = (uInt8 *)sysync_malloc(outlen * sizeof(char));
+  outstr = (uInt8 *)malloc(outlen * sizeof(char));
   memset(outstr,0,outlen);
   for (i = 0; i < quads; i++) {
 
