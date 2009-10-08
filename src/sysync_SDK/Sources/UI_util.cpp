@@ -10,6 +10,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
 
 #include "prefix_file.h"
 #include  "UI_util.h"
