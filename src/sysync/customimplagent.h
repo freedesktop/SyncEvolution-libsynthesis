@@ -176,7 +176,11 @@ public:
   virtual localstatus InitializeTunnelSession(cAppCharP aDatastoreName);
   virtual TLocalEngineDS *getTunnelDS();
   #endif
-  // Login and device management only if not based on binfile client
+  #ifndef BASED_ON_BINFILE_CLIENT
+  // if binfiles are not compiled in, they are always inactive (otherwise binfileclient parent defines this method)
+  bool binfilesActive(void) { return false; };  
+  #endif
+  // Login and device management only if not exclusively based on binfile client
   #ifndef BINFILE_ALWAYS_ACTIVE
   // - login for this session
   virtual bool SessionLogin(const char *aUserName, const char *aAuthString, TAuthSecretTypes aAuthStringType, const char *aDeviceID);

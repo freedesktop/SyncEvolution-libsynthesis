@@ -1725,7 +1725,7 @@ void TODBCApiAgent::DoSQLSubstitutions(string &aSQL)
     StringSubst(aSQL,"%C",fDomainName,2,fConfigP->fDataCharSet,fConfigP->fDataLineEndMode,fConfigP->fQuotingMode);
     #endif
   }
-  #endif // BINFILE_ALWAYS_ACTIVE
+  #endif // not BINFILE_ALWAYS_ACTIVE
   #ifdef SCRIPT_SUPPORT
   // substitute %sv(sessionvarname) = session variable by name
   string::size_type i=0;
