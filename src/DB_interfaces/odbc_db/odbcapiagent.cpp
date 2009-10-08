@@ -43,7 +43,7 @@ int execSQL(int argc, const char *argv[])
   const char *sql = NULL;
 
   // show only one row by default
-  long maxrows=1;
+  sInt32 maxrows=1;
 
   // check for argument
   if (argc<1) {

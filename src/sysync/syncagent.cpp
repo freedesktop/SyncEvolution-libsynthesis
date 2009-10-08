@@ -2722,7 +2722,7 @@ bool TSyncAgent::handleHeaderStatus(TStatusCommand *aStatusCmdP)
     }
     // return handled status
     return handled;
-    #endif SYSYNC_SERVER
+    #endif // SYSYNC_SERVER
   }
   else {
   	// nothing special

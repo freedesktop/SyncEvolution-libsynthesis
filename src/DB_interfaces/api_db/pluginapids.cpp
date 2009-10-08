@@ -1827,8 +1827,8 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
   }
 
   /// For datastores that can resume in middle of a chunked item (fConfigP->fResumeItemSupport==true):
-  void* blPtr = fPIStoredDataP; // position
-  ulong blSize= fPIStoredSize;  // actualbytes
+  void*   blPtr = fPIStoredDataP; // position
+  memSize blSize= fPIStoredSize;  // actualbytes
 
   if (dsResumeChunkedSupportedInDB()) {
     ///   - fPartialItemState = state of partial item (TPartialItemState enum):
@@ -2170,8 +2170,8 @@ localstatus TPluginApiDS::apiLoadAdminData(
                 if (err)
                   break;
 
-                ulong rema= b.fSize;
-                if (dp+rema > lim)
+                memSize rema= b.fSize;
+                if  (dp+rema > lim)
                   rema= lim-dp;    // avoid overflow
                 memcpy( dp, b.fPtr, rema ); dp+= rema;
                 fDBApi_Admin.DisposeBlk( b );         // we have now a copy => remove it
