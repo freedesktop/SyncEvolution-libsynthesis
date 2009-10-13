@@ -113,6 +113,13 @@ TSyError TClientEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
       // return the session pointer as handle
       aNewSessionH=(SessionH)clientBaseP->fClientSessionP;
     }
+    else {
+    	// error: make sure it is deleted in case it was half-constructed
+    	if (clientBaseP->fClientSessionP) {
+      	delete clientBaseP->fClientSessionP;
+        clientBaseP->fClientSessionP = NULL;
+      }
+    }
     #else
     return LOCERR_NOTIMP; // tunnel not implemented
     #endif
