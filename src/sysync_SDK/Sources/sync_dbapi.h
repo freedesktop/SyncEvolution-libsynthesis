@@ -670,8 +670,7 @@ _ENTRY_ bool ReadNextMapItem( CContext aContext, MapID mID, bool aFirst );
 /*! Map table handling: Insert a map item of this context
  *
  *  @param  <aContext>   The datastore context
- *  @param  <mID>        MapID ( with \<localID>,\<remoteID>, <flags> and \<ident> ).
- *                       A new item with <localID> will be added.
+ *  @param  <mID>        MapID ( with \<localID>,\<remoteID>, \<flags> and \<ident> ).
  *
  *  @return  error code, if this MapID can't be inserted, or if already existing
  *
@@ -683,9 +682,9 @@ _ENTRY_ TSyError InsertMapItem( CContext aContext, cMapID mID );
 /*! Map table handling: Update a map item of this context
  *
  *  @param  <aContext>   The datastore context
- *  @param  <mID>        MapID ( with \<localID>,\<remoteID>, <flags> and \<ident> ).
- *                       If there is already a MapID element with localID, it
- *                       will be update, else created.
+ *  @param  <mID>        MapID ( with \<localID>,\<remoteID>, \<flags> and \<ident> ).
+ *                       If there is already a MapID element with \<localID> and \<ident>,
+ *                       it will be updated, else created.
  *
  *  @return  error code, if this MapID can't be updated (e.g. not yet existing).
  *
@@ -697,9 +696,9 @@ _ENTRY_ TSyError UpdateMapItem( CContext aContext, cMapID mID );
 /*! Map table handling: Delete a map item of this context
  *
  *  @param  <aContext>   The datastore context
- *  @param  <mID>        MapID ( with \<localID>,\<remoteID>, <flags> and \<ident> ).
+ *  @param  <mID>        MapID ( with \<localID>,\<remoteID>, \<flags> and \<ident> ).
  *
- *  @return  error code, if this MapID can't be deleted,
+ *  @return  error code, if this MapID can't deleted,
  *                    or if this MapID does not exist.
  *
  *  USED ONLY WITH \<plugin_datastoredadmin>

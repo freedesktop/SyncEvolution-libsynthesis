@@ -114,10 +114,11 @@ TSyError UI_Connect( UI_Call_In &aCI, appPointer &aDLL, bool &aIsServer,
   CVersion   engVersion;
   appPointer fFunc;
 
-  typedef TSyError (*GetCEProc)( UI_Call_In* aCI, CVersion *aEngVersion,
-                                                  CVersion  aPrgVersion,
-                                                  uInt16    aDebugFlags );
-  GetCEProc fConnectEngine= NULL;
+//typedef TSyError (*GetCEProc)( UI_Call_In* aCI, CVersion *aEngVersion,
+//                                                CVersion  aPrgVersion,
+//                                                uInt16    aDebugFlags );
+//GetCEProc fConnectEngine= NULL;
+  ConnectEngine_Func fConnectEngine= NULL;
 
   aIsServer = false;
   do {
@@ -135,14 +136,14 @@ TSyError UI_Connect( UI_Call_In &aCI, appPointer &aDLL, bool &aIsServer,
 
     if (IsLib( name.c_str() )) {
       if (name == "[]") {
-#ifdef DBAPI_LINKED
-        fConnectEngine= SYSYNC_EXTERNAL(ConnectEngine);
-#endif
+        #ifdef DBAPI_LINKED
+          fConnectEngine= SYSYNC_EXTERNAL(ConnectEngine);
+        #endif
       } else if (name == "[server:]") {
         aIsServer=true;
-#ifdef DBAPI_SRV_LINKED
-        fConnectEngine= SySync_srv_ConnectEngine;
-#endif
+        #ifdef DBAPI_SRV_LINKED
+          fConnectEngine= SySync_srv_ConnectEngine;
+        #endif
       }
 
       break;
@@ -172,12 +173,12 @@ TSyError UI_Connect( UI_Call_In &aCI, appPointer &aDLL, bool &aIsServer,
 
     cAppCharP              fN= SyFName;
     err=   DLL_Func( aDLL, fN,   fFunc );
-    fConnectEngine=   (GetCEProc)fFunc;
+    fConnectEngine=   (ConnectEngine_Func)fFunc;
     if   (dbg) printf( "func err=%d '%s' %s\n", err, fN, RefStr( (void*)fConnectEngine ).c_str() );
 
     if (!fConnectEngine) { fN=   FName;
       err= DLL_Func( aDLL, fN,   fFunc );
-      fConnectEngine= (GetCEProc)fFunc;
+      fConnectEngine= (ConnectEngine_Func)fFunc;
       if (dbg) printf( "func err=%d '%s' %s\n", err, fN, RefStr( (void*)fConnectEngine ).c_str() );
    } // if
 
@@ -248,7 +249,7 @@ TSyError UI_Disconnect( UI_Call_In aCI, appPointer aDLL, bool aIsServer )
 } // UI_Disconnect
 
 
-
+/*
 // <uContext> will be casted to the UIContext* structure
 UIContext* UiC( CContext uContext ) { return (UIContext*)uContext; }
 
@@ -278,7 +279,7 @@ TSyError UI_DeleteContext( CContext uContext )
   delete     uc;      // delete context
   return LOCERR_OK;
 } // UI_DeleteContext
-
+*/
 
 } // namespace sysync
 /* eof */

@@ -26,6 +26,10 @@
 #include <malloc.h>
 #endif
 
+#ifdef ANDROID
+#include "log.h"
+#endif
+
 #define MyDB "SDK"                /* local debug name */
 #define SDKversionMask 0xffff00ff /* Old mask for version comparison: Omit OS identifier */
 #define maxmsglen      1024       /* Maximum string length for callback string */
@@ -113,7 +117,11 @@ cAppCharP MyPlatform( void )
     #endif
 
   #elif defined  LINUX
-    p= "PLATFORM:Linux";
+    #ifdef ANDROID
+      p= "PLATFORM:Android";
+    #else
+      p= "PLATFORM:Linux";
+    #endif
 
 /* elif **** for JAVA defined at the Java code ******** */
 /*  p= "PLATFORM:Java" */
@@ -449,7 +457,15 @@ TSyError SDK_Size( void* aCB, uInt32 *sSize )
 
 /* ---------- debug output ----------------------------------- */
 /* prints directly to the screen */
-static void ConsolePuts( char* msg ) { printf( "%s\n", msg ); }
+static void ConsolePuts( cAppCharP msg )
+{
+  #ifdef ANDROID
+    __android_log_write( ANDROID_LOG_DEBUG, "ConsolePuts", msg );
+  #else
+    printf( "%s\n", msg );
+  #endif
+} // ConsolePuts
+
 
 #if !defined(SYSYNC_ENGINE) && !defined(UIAPI_LINKED)
   /* the Synthesis SyncML engine has its own implementation */

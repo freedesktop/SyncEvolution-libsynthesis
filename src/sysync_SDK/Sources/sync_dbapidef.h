@@ -29,13 +29,13 @@
 #include "sync_include.h"
 #include "sync_declarations.h"
 
-#ifdef JNI_SUPPORT
-  #ifdef MACOSX
-    #include <JavaVM/jni.h>
-  #else
-    #include <jni.h>
-  #endif
-#endif
+//#ifdef JNI_SUPPORT
+//  #ifdef MACOSX
+//    #include <JavaVM/jni.h>
+//  #else
+//    #include <jni.h>
+//  #endif
+//#endif
 
 /* export prefix and suffix is dependent on platform and source language */
 #ifdef __cplusplus
