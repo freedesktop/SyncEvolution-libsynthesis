@@ -3506,6 +3506,32 @@ static TSyError readConnectDoc(
 } // readConnectDoc
 
 
+// - time when session was last used
+static TSyError readLastUsed(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  // return it
+  return TStructFieldsKey::returnLineartime(mykeyP->fAgentP->getSessionLastUsed(), aBuffer, aBufSize, aValSize);
+} // readLastUsed
+
+
+// - server only: check session timeout
+static TSyError readTimedOut(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+	// check if session has timed out
+  bool timedout = mykeyP->fAgentP->getSessionLastUsed()+mykeyP->fAgentP->getSessionConfig()->getSessionTimeout() < mykeyP->fAgentP->getSystemNowAs(TCTX_UTC);
+  // return it
+  return TStructFieldsKey::returnInt(timedout, sizeof(bool), aBuffer, aBufSize, aValSize);
+} // readTimedOut
+
+
 #ifdef SYSYNC_SERVER
 
 // - server only: read respURI enable flag
@@ -3529,6 +3555,7 @@ static TSyError writeSendRespURI(
 	mykeyP->fAgentP->fUseRespURI = *((uInt8P)aBuffer);
   return LOCERR_OK;
 } // writeSendRespURI
+
 
 #endif // SYSYNC_SERVER
 
@@ -3578,6 +3605,8 @@ static const TStructFieldInfo ServerParamFieldInfos[] =
   { "connectURI", VALTYPE_TEXT, false, 0, 0, &readConnectURI, NULL },
   { "connectHost", VALTYPE_TEXT, false, 0, 0, &readConnectHost, NULL },
   { "connectDoc", VALTYPE_TEXT, false, 0, 0, &readConnectDoc, NULL },
+  { "timedout", VALTYPE_INT8, false, 0, 0, &readTimedOut, NULL },
+  { "lastused", VALTYPE_TIME64, false, 0, 0, &readLastUsed, NULL },
   #ifdef SYSYNC_SERVER
   { "sendrespuri", VALTYPE_INT8, true, 0, 0, &readSendRespURI, &writeSendRespURI },
   #endif

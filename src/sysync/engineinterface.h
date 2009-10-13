@@ -327,6 +327,7 @@ public:
   // - static helper for procedural string readers
   static TSyError returnString(cAppCharP aReturnString, appPointer aBuffer, memSize aBufSize, memSize &aValSize);
   static TSyError returnInt(sInt32 aInt, memSize aIntSize, appPointer aBuffer, memSize aBufSize, memSize &aValSize);
+  static TSyError returnLineartime(lineartime_t aTime, appPointer aBuffer, memSize aBufSize, memSize &aValSize);
 
 protected:
 

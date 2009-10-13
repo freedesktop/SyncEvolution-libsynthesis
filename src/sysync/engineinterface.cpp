@@ -741,6 +741,16 @@ TSyError TStructFieldsKey::returnInt(sInt32 aInt, memSize aIntSize, appPointer a
 } // returnInt
 
 
+TSyError TStructFieldsKey::returnLineartime(lineartime_t aTime, appPointer aBuffer, memSize aBufSize, memSize &aValSize)
+{
+	aValSize=sizeof(lineartime_t);
+  if (aBufSize==0) return LOCERR_OK; // measuring size
+  if (aBufSize<aValSize) return LOCERR_BUFTOOSMALL;
+  *((lineartime_t *)aBuffer) = aTime;
+}
+
+
+
 
 // get value's ID (e.g. internal index)
 sInt32 TStructFieldsKey::GetValueID(cAppCharP aName)
