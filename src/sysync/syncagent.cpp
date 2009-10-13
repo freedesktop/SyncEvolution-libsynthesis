@@ -679,8 +679,8 @@ TSyncAgent::~TSyncAgent()
     // show session data transfer
     PDEBUGPRINTFX(DBG_HOT,(
       "Session data transfer statistics: incoming bytes=%ld, outgoing bytes=%ld",
-      fIncomingBytes,
-      fOutgoingBytes
+      (long)fIncomingBytes,
+      (long)fOutgoingBytes
     ));
     // DO NOT remove session from dispatcher here,
     //   this is the task of the dispatcher itself!
@@ -1716,8 +1716,6 @@ SmlPcdataPtr_t TSyncAgent::newResponseURIForRemote(void)
 // called after successful decoding of an incoming message
 bool TSyncAgent::ServerMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand &aStatusCommand, bool aBad)
 {
-  Ret_t err=SML_ERR_OK;
-
   // message not authorized by default
   fMessageAuthorized=false;
   
@@ -1744,7 +1742,7 @@ bool TSyncAgent::ServerMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand 
     if (fIncomingMsgID>1) {
       PDEBUGPRINTFX(DBG_ERROR,(
         "New session gets first message with MsgID=%ld (should be 1). Might be due to retries, adjusting OutgoingID as well",
-        fIncomingMsgID
+        (long)fIncomingMsgID
       ));
       fOutgoingMsgID=fIncomingMsgID-1; // to make it match what client expects
     }
@@ -2191,8 +2189,8 @@ void TSyncAgent::ServerMessageEnded(bool aIncomingFinal)
   // End of outgoing message
   PDEBUGPRINTFX(DBG_HOT,(
     "=================> Finished generating outgoing message #%ld, request=%ld",
-    fOutgoingMsgID,
-    getSyncAppBase()->requestCount()
+    (long)fOutgoingMsgID,
+    (long)getSyncAppBase()->requestCount()
   ));
   PDEBUGENDBLOCK("SyncML_Outgoing");
 } // TSyncAgent::ServerMessageEnded
@@ -2237,8 +2235,8 @@ bool TSyncAgent::EndRequest(bool &aHasData, string &aRespURI, uInt32 aReqBytes)
     PDEBUGPRINTFX(DBG_HOT,(
 	    "========= Finished retried request with re-sending buffered answer (session %sin progress), incoming bytes=%ld, outgoing bytes=%ld",
 	    fInProgress ? "" : "NOT ",
-	    aReqBytes,
-	    fBufferedAnswerSize
+	    (long)aReqBytes,
+	    (long)fBufferedAnswerSize
 	  ));
 	  aHasData=false; // we do not have data in the sml instance (but we have/had some in the retry re-send buffer)
   }
@@ -2250,9 +2248,9 @@ bool TSyncAgent::EndRequest(bool &aHasData, string &aRespURI, uInt32 aReqBytes)
 	  PDEBUGPRINTFX(DBG_HOT,(
 	    "========= Finished request (session %sin progress), processing time=%ld msec, incoming bytes=%ld, outgoing bytes=%ld",
 	    fInProgress ? "" : "NOT ",
-	    (sInt32)((getSystemNowAs(TCTX_UTC)-getLastRequestStarted()) * nanosecondsPerLinearTime / 1000000),
-	    aReqBytes,
-      getOutgoingMessageSize()
+	    (long)((getSystemNowAs(TCTX_UTC)-getLastRequestStarted()) * nanosecondsPerLinearTime / 1000000),
+	    (long)aReqBytes,
+      (long)getOutgoingMessageSize()
 	  ));	  
 	  // return RespURI (is empty if none specified or equal to message source URI)
 	  aRespURI = fRespondURI;
@@ -2277,9 +2275,9 @@ bool TSyncAgent::EndRequest(bool &aHasData, string &aRespURI, uInt32 aReqBytes)
     if (t<fRequestMinTime) {
   	  PDEBUGPRINTFX(DBG_HOT,(
   	    "requestmintime is set to %ld seconds, we have spent only %ld seconds so far -> sleeping %ld seconds",
-  	    fRequestMinTime,
-  	    t,
-  	    fRequestMinTime-t
+  	    (long)fRequestMinTime,
+  	    (long)t,
+  	    (long)fRequestMinTime-t
   	  ));
       CONSOLEPRINTF(("  ...delaying response by %ld seconds because requestmintime is set to %ld",fRequestMinTime,fRequestMinTime-t));
   	  sleepLineartime((lineartime_t)(fRequestMinTime-t)*secondToLinearTimeFactor);

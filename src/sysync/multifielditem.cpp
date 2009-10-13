@@ -1168,11 +1168,11 @@ sInt16 TMultiFieldItem::standardCompareWith(
             PDEBUGPRINTFX(DBG_DATA+DBG_MATCH,("- not equal because fid=%hd not same in both items:",i));
             getField(i)->getAsString(ds);
             PDEBUGPRINTFX(DBG_DATA+DBG_MATCH+DBG_USERDATA,(
-              "- this item  : '%-0.1000s'",ds.c_str()
+              "- this item  : '%-.1000s'",ds.c_str()
             ));
             aItem.getField(i)->getAsString(ds);
             PDEBUGPRINTFX(DBG_DATA+DBG_MATCH+DBG_USERDATA,(
-              "- other item : '%-0.1000s'",ds.c_str()
+              "- other item : '%-.1000s'",ds.c_str()
             ));
             PDEBUGPRINTFX(DBG_DATA+DBG_MATCH,(
               "- thisItem.CompareWith(otherItem) = %hd",
@@ -1194,7 +1194,7 @@ sInt16 TMultiFieldItem::standardCompareWith(
             if (aDebugShow) {
               PDEBUGPRINTFX(DBG_DATA+DBG_MATCH,(
                 "- Cutoff detected, field considered equal, maxsize(thisitem)=%ld, maxsize(otheritem)=%ld",
-                s1,s2
+                (long)s1,(long)s2
               ));
             }
             #endif
@@ -1400,7 +1400,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
           string ds;
           getFieldRef(i).getAsString(ds);
           PDEBUGPRINTFX(DBG_DATA+DBG_CONFLICT+DBG_USERDATA,(
-            "- assigned value '%" FMT_LENGTH("0.40") "s' to winning (which had nothing assigned here)",
+            "- assigned value '%" FMT_LENGTH(".40") "s' to winning (which had nothing assigned here)",
             FMT_LENGTH_LIMITED(40,ds.c_str())
           ));
           #endif
@@ -1420,7 +1420,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
               string ds;
               winningField.getAsString(ds);
               PDEBUGPRINTFX(DBG_DATA+DBG_CONFLICT+DBG_USERDATA,(
-                "- copied value '%" FMT_LENGTH("0.40") "s' from loosing to empty winning",
+                "- copied value '%" FMT_LENGTH(".40") "s' from loosing to empty winning",
                 FMT_LENGTH_LIMITED(40,ds.c_str())
               ));
               #endif
@@ -1434,7 +1434,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
             winningField.getAsString(ds1);
             loosingField.getAsString(ds2);
             PDEBUGPRINTFX(DBG_DATA+DBG_CONFLICT+DBG_USERDATA,(
-              "- try merging winning value '%" FMT_LENGTH("0.40") "s' with loosing value '%" FMT_LENGTH("0.40") "s'",
+              "- try merging winning value '%" FMT_LENGTH(".40") "s' with loosing value '%" FMT_LENGTH(".40") "s'",
               FMT_LENGTH_LIMITED(40,ds1.c_str()),
               FMT_LENGTH_LIMITED(40,ds2.c_str())
             ));
@@ -1444,7 +1444,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
             #ifdef SYDEBUG
             winningField.getAsString(ds1);
             PDEBUGPRINTFX(DBG_DATA+DBG_CONFLICT+DBG_USERDATA,(
-              "  merged %sthing, winning value is '%" FMT_LENGTH("0.40") "s'",
+              "  merged %sthing, winning value is '%" FMT_LENGTH(".40") "s'",
               aChangedThis ? "some" : "no",
               FMT_LENGTH_LIMITED(40,ds1.c_str())
             ));
@@ -1469,7 +1469,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
         winningField.getAsString(wfv);
         loosingField.getAsString(lfv);
         PDEBUGPRINTFX(DBG_DATA+DBG_CONFLICT+DBG_USERDATA,(
-          "Winning and loosing Field '%s' not equal: '%" FMT_LENGTH("0.30") "s' <> '%" FMT_LENGTH("0.30") "s'",
+          "Winning and loosing Field '%s' not equal: '%" FMT_LENGTH(".30") "s' <> '%" FMT_LENGTH(".30") "s'",
           fFieldDefinitionsP->fFields[i].TCFG_CSTR(fieldname),
           FMT_LENGTH_LIMITED(30,wfv.c_str()),FMT_LENGTH_LIMITED(30,lfv.c_str())
         ));
@@ -1490,7 +1490,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
         string ds;
         winningField.getAsString(ds);
         PDEBUGPRINTFX(DBG_DATA+DBG_CONFLICT+DBG_USERDATA,(
-          "- updated fields such that both have same value '%" FMT_LENGTH("0.40") "s'",
+          "- updated fields such that both have same value '%" FMT_LENGTH(".40") "s'",
           FMT_LENGTH_LIMITED(40,ds.c_str())
         ));
         #endif

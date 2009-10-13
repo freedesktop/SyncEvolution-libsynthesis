@@ -548,8 +548,8 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
         ));
         PDEBUGPRINTFX(DBG_ERROR,(
           "Warning: Synchronisation involves more items (%ld) than client can possibly manage (%ld)",
-          (sInt32)fItems.size(),
-          (sInt32)getRemoteDatastore()->getMaxID()
+          (long)fItems.size(),
+          (long)getRemoteDatastore()->getMaxID()
         ));
       }
     }
@@ -732,8 +732,8 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
   if (fMaxItemCount> 0) {
     PDEBUGPRINTFX(DBG_DATA+DBG_HOT,(
       "Info: Max number of items to be sent in this session is limited to %ld (already sent by now=%ld)",
-      fMaxItemCount,
-      fItemsSent
+      (long)fMaxItemCount,
+      (long)fItemsSent
     ));
   }
   #endif

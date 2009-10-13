@@ -1890,7 +1890,6 @@ const char *TLocalEngineDS::parseOption(
   #ifdef OBJECT_FILTERING
   if (strucmp(aOptName,"fi")==0) {
     if (!aArguments) return NULL;
-    bool filterok=false; // assume invalid
     // make sync set filter expression
     string f;
     aArguments=parseFilterCGI(aArguments,fLocalSendToRemoteTypeP,f); // if type being used for sending to remote is known here, use it
@@ -1904,7 +1903,6 @@ const char *TLocalEngineDS::parseOption(
   #ifdef SYNCML_TAF_SUPPORT
   else if (strucmp(aOptName,"tf")==0) {
     if (!aArguments) return NULL;
-    bool filterok=false; // assume invalid
     // make temporary filter (or TAF) expression
     aArguments=parseFilterCGI(aArguments,fLocalSendToRemoteTypeP,fTargetAddressFilter); // if type being used for sending to remote is known here, use it
     // Note: TAF filters are always evaluated internally as we need all SyncSet records
@@ -4347,10 +4345,10 @@ void TLocalEngineDS::showStatistics(void)
     StringObjAppendPrintf(stats,"Rejected with error:         %9ld   %9ld\n\n",(long)fLocalItemsError,(long)fRemoteItemsError);
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
-      StringObjAppendPrintf(stats,"SlowSync Matches:            %9ld\n",fSlowSyncMatches);
-      StringObjAppendPrintf(stats,"Server won Conflicts:        %9ld\n",fConflictsServerWins);
-      StringObjAppendPrintf(stats,"Client won Conflicts:        %9ld\n",fConflictsClientWins);
-      StringObjAppendPrintf(stats,"Conflicts with Duplication:  %9ld\n\n",fConflictsDuplicated);
+      StringObjAppendPrintf(stats,"SlowSync Matches:            %9ld\n",(long)fSlowSyncMatches);
+      StringObjAppendPrintf(stats,"Server won Conflicts:        %9ld\n",(long)fConflictsServerWins);
+      StringObjAppendPrintf(stats,"Client won Conflicts:        %9ld\n",(long)fConflictsClientWins);
+      StringObjAppendPrintf(stats,"Conflicts with Duplication:  %9ld\n\n",(long)fConflictsDuplicated);
     }
     #endif
     StringObjAppendPrintf(stats,"Content Data Bytes sent:     %9ld\n",(long)fOutgoingDataBytes);

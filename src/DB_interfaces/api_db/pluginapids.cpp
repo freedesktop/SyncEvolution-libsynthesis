@@ -2367,10 +2367,10 @@ void TPluginApiDS::dsLogSyncResult(void)
   logData+="\r\ndeviceupdated:"; StringObjAppendPrintf(logData,"%ld",(long)fRemoteItemsUpdated);
   #ifdef SYSYNC_SERVER
   if (IS_SERVER) {
-    logData+="\r\nslowsyncmatches:"; StringObjAppendPrintf(logData,"%ld",fSlowSyncMatches);
-    logData+="\r\nserverwins:"; StringObjAppendPrintf(logData,"%ld",fConflictsServerWins);
-    logData+="\r\nclientwins:"; StringObjAppendPrintf(logData,"%ld",fConflictsClientWins);
-    logData+="\r\nduplicated:"; StringObjAppendPrintf(logData,"%ld",fConflictsDuplicated);
+    logData+="\r\nslowsyncmatches:"; StringObjAppendPrintf(logData,"%ld",(long)fSlowSyncMatches);
+    logData+="\r\nserverwins:"; StringObjAppendPrintf(logData,"%ld",(long)fConflictsServerWins);
+    logData+="\r\nclientwins:"; StringObjAppendPrintf(logData,"%ld",(long)fConflictsClientWins);
+    logData+="\r\nduplicated:"; StringObjAppendPrintf(logData,"%ld",(long)fConflictsDuplicated);
   } // server
   #endif // SYSYNC_SERVER
   logData+="\r\nsessionbytesin:"; StringObjAppendPrintf(logData,"%ld",(long)fSessionP->getIncomingBytes());

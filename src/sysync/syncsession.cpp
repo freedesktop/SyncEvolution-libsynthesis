@@ -2893,7 +2893,8 @@ void TSyncSession::nextMessageRequest(void)
           ));
           TStatusCommand *fakeStatusCmdP = new TStatusCommand(this);
           bool queueforlater=false;
-          bool ok=processSyncStart(
+          /* bool ok= */
+          processSyncStart(
             fakeSyncCmdP,
             *fakeStatusCmdP,
             queueforlater // will be set if command must be queued for later re-execution
