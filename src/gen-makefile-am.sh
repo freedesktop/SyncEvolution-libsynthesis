@@ -14,6 +14,8 @@ enginemodulebridge.h
 stringutil.cpp
 stringutil.h
 target_options.h
+san.cpp
+san.h
 timeutil.cpp
 timeutil.h
 UI_util.cpp
