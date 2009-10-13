@@ -542,7 +542,7 @@ bool TSettingsKeyImpl::checkFieldAttrs(cAppCharP aName, size_t &aBaseNameSize, s
     return true; // asking for flag mask only
   return false; // aFldID is only the flag mask, caller must add base index
 } // TSettingsKeyImpl::checkFieldAttrs
-  
+
 
 
 // helper for returning generic field attribute type
@@ -555,7 +555,7 @@ bool TSettingsKeyImpl::checkAttrValueType(sInt32 aID, uInt16 &aValType)
   return false;
 } // TSettingsKeyImpl::checkAttrValueType
 
-  
+
 
 // helper for returning generic field attribute values
 bool TSettingsKeyImpl::checkAttrValue(
@@ -633,7 +633,7 @@ TSyError TReadOnlyInfoKey::GetValueInternal(
 )
 {
 	if (checkAttrValue(aID,aArrayIndex,aBuffer,aBufSize,aValSize))
-  	return LOCERR_OK;  
+  	return LOCERR_OK;
   const TReadOnlyInfo *infoP = &(getInfoTable()[aID]);
   memSize siz = infoP->valSiz;
   if (siz==0 && infoP->valType==VALTYPE_TEXT)
@@ -684,7 +684,7 @@ TSyError TConfigVarKey::GetValueInternal(
   appPointer aBuffer, memSize aBufSize, memSize &aValSize
 ) {
 	if (checkAttrValue(aID,aArrayIndex,aBuffer,aBufSize,aValSize))
-  	return LOCERR_OK;  
+  	return LOCERR_OK;
   string s;
   if (!fEngineInterfaceP->getSyncAppBase()->getConfigVar(fVarName.c_str(),s))
     return DB_NotFound;
@@ -747,6 +747,7 @@ TSyError TStructFieldsKey::returnLineartime(lineartime_t aTime, appPointer aBuff
   if (aBufSize==0) return LOCERR_OK; // measuring size
   if (aBufSize<aValSize) return LOCERR_BUFTOOSMALL;
   *((lineartime_t *)aBuffer) = aTime;
+  return LOCERR_OK;
 }
 
 
@@ -815,7 +816,7 @@ TSyError TStructFieldsKey::GetValueInternal(
 )
 {
 	if (checkAttrValue(aID,aArrayIndex,aBuffer,aBufSize,aValSize))
-  	return LOCERR_OK;  
+  	return LOCERR_OK;
   const TStructFieldInfo *fldinfoP = &(getFieldsTable()[aID]);
   // check for programmatic access to value
   if (fldinfoP->getValueProc) {
@@ -1794,7 +1795,7 @@ static TSyError internal_ConnectEngine(
   CVersion *aEngVersionP,
   CVersion aPrgVersion,
   uInt16 aDebugFlags
-)  
+)
 {
   // create new engine
   TEngineModuleBase *engine = NULL;
@@ -1835,7 +1836,7 @@ static TSyError internal_ConnectEngine(
     // - get the version
     if (aEngVersionP) *aEngVersionP = Plugin_Version(0);
   }
-  return   err;	
+  return   err;
 } // internal_ConnectEngine
 
 
