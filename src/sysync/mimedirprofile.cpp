@@ -1999,13 +1999,24 @@ static void finalizeProperty(
   ssize_t n=0,llen=0;
   ssize_t lastlwsp=-1; // no linear white space found so far
   bool explf;
-  const char *firstunwritten=proptext; // none written yet
+  cAppCharP firstunwritten=proptext; // none written yet
   while (proptext && (c=*proptext)!=0) {
     // remember position of last lwsp (space or TAB)
     if (c==' ' || c==0x09) lastlwsp=n;
-    // next char
-    n++;
-    proptext++;
+    // next (UTF8) char
+    // Note: we prevent folding within UTF8 sequences as result string would become inconvertible e.g. into UTF16
+    uInt32 uc;
+    cAppCharP nP = UTF8toUCS4(proptext, uc);
+    if (uc!=0) {
+    	// UTF-8 compliant byte (or byte sequence), skip as an entiety
+      n += nP-proptext;
+      proptext = nP;
+    }
+    else {
+    	// Not UTF-8 compliant, simply one byte
+      n++;
+      proptext++;
+    }
     // check for optional break indicator
     if (c=='\b') {
       aString.append(firstunwritten,n-1); // copy what we have up to that '\b'
