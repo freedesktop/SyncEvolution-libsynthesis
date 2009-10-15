@@ -2791,6 +2791,11 @@ sInt16 TMimeDirProfileHandler::generateProperty(
     encodeValues(encoding,fDefaultOutCharset,elemtext,proptext,fDoNotFoldContent);
     // - fold, copy and terminate (CRLF) property into aString output
     finalizeProperty(proptext.c_str(),aString,aMimeMode,fDoNotFoldContent,encoding==enc_quoted_printable);
+    // - special case: base64 (but not B) encoded value must have an extra CRLF even if folding is
+    //   disabled, so we need to insert it here (because non-folding mode eliminates it from being
+    //   generated automatically in encodeValues/finalizeProperty)
+    if (fDoNotFoldContent && encoding==enc_base64)
+			aString.append("\x0D\x0A"); // extra CRLF terminating a base64 encoded property (note, base64 only occurs in mimo_old)
     // - property generated
     return GENPROP_NONEMPTY;
   }
