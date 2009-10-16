@@ -571,14 +571,6 @@ public:
     #ifdef ODBCAPI_SUPPORT
     try {
       agentP->commitAndCloseScriptStatement();
-      /*
-      if (agentP->fScriptStatement!=SQL_NULL_HANDLE) {
-        // only commit if we have used a statement at all in scripts
-        SafeSQLFreeHandle(SQL_HANDLE_STMT,agentP->fScriptStatement);
-        agentP->fScriptStatement=SQL_NULL_HANDLE;
-        SafeSQLEndTran(SQL_HANDLE_DBC,agentP->getODBCConnectionHandle(),SQL_COMMIT);
-      }
-      */
     }
     catch (exception &e) {
       POBJDEBUGPRINTFX(aFuncContextP->getSession(),DBG_ERROR,(
@@ -878,13 +870,13 @@ TODBCApiAgent::TODBCApiAgent(TSyncAppBase *aAppBaseP, TSyncSessionHandle *aSessi
   // get config for agent and save direct link to agent config for easy reference
   fConfigP = static_cast<TOdbcAgentConfig *>(getRootConfig()->fAgentConfigP);
   // Note: Datastores are already created from config
-  #ifdef SCRIPT_SUPPORT
   #ifdef ODBCAPI_SUPPORT
-  // - rebuild afterconnect script
-  TScriptContext::rebuildContext(getSyncAppBase(),fConfigP->fAfterConnectScript,fAfterConnectContext,this,true);
   // - assign default DB connection string and password
   fSessionDBConnStr = fConfigP->fDBConnStr;
   fSessionDBPassword = fConfigP->fPassword;
+  #ifdef SCRIPT_SUPPORT
+  // - rebuild afterconnect script
+  TScriptContext::rebuildContext(getSyncAppBase(),fConfigP->fAfterConnectScript,fAfterConnectContext,this,true);
   #endif
   #endif
 } // TODBCApiAgent::TODBCApiAgent
@@ -1979,13 +1971,6 @@ SQLHDBC TODBCApiAgent::pullODBCConnectionHandle(void)
   #ifdef SCRIPT_SUPPORT
   // make sure eventual script statement gets disposed, as connection is now owned by datastore
   commitAndCloseScriptStatement();
-  /*
-  if (fScriptStatement!=SQL_NULL_HANDLE) {
-    PDEBUGPRINTFX(DBG_DBAPI+DBG_EXOTIC,("Script statement exists, connection pulled into DS -> closing the script statement now"));
-    SafeSQLFreeHandle(SQL_HANDLE_STMT,fScriptStatement);
-    fScriptStatement=SQL_NULL_HANDLE;
-  }
-  */
   #endif
   return connhandle;
 } // TODBCApiAgent::pullODBCConnectionHandle
