@@ -66,7 +66,9 @@
 #endif
 
 /* compose name of external symbols with C binding:
- * by default use parameter as-is (backwards compatibility),
+ * by default use parameter as-is (backwards compatibility) for client,
+ * and use "SySync_srv_" prefix for server.
+ * Newer builds usually use "SySync_" as prefix for client entry points.
  * can be changed in any file that is included before
  * this file
  */
