@@ -2647,6 +2647,10 @@ Ret_t TSyncSession::handleStatus(TStatusCommand *aStatusCommandP)
               PDEBUGPRINTFX(DBG_SESSION,("Status ignored, command considered done -> deleted"));
             }
             else {
+              // let descendants know when we process a required status
+              if ((*pos)->statusEssential()) {
+                essentialStatusReceived();
+              }
               // normally process status
               if ((*pos)->handleStatus(aStatusCommandP)) {
                 PDEBUGPRINTFX(DBG_SESSION,("Status: processed, removed command '%s' from status wait queue",(*pos)->getName()));
