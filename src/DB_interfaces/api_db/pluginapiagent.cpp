@@ -33,7 +33,7 @@ namespace sysync {
 
 #ifdef SYDEBUG
 
-extern "C" void SessionLogDebugPuts(void *aCallbackRef, const char *aText)
+void SessionLogDebugPuts(void *aCallbackRef, const char *aText)
 {
   if (aCallbackRef) {
     POBJDEBUGPUTSX(static_cast<TSyncSession *>(aCallbackRef),DBG_DBAPI+DBG_PLUGIN,aText);
@@ -41,7 +41,7 @@ extern "C" void SessionLogDebugPuts(void *aCallbackRef, const char *aText)
 } // SessionLogDebugPuts
 
 
-extern "C" void SessionLogDebugExotic(void *aCallbackRef, const char *aText)
+void SessionLogDebugExotic(void *aCallbackRef, const char *aText)
 {
   if (aCallbackRef) {
     POBJDEBUGPUTSX(static_cast<TSyncSession *>(aCallbackRef),DBG_DBAPI+DBG_PLUGIN+DBG_EXOTIC,aText);
@@ -49,7 +49,7 @@ extern "C" void SessionLogDebugExotic(void *aCallbackRef, const char *aText)
 } // SessionLogDebugExotic
 
 
-extern "C" void SessionLogDebugBlock(void *aCallbackRef, const char *aTag, const char *aDesc, const char *aAttrText )
+void SessionLogDebugBlock(void *aCallbackRef, const char *aTag, const char *aDesc, const char *aAttrText )
 {
   if (aCallbackRef) {
     bool collapsed=false;
@@ -59,7 +59,7 @@ extern "C" void SessionLogDebugBlock(void *aCallbackRef, const char *aTag, const
 } // SessionLogDebugBlock
 
 
-extern "C" void SessionLogDebugEndBlock(void *aCallbackRef, const char *aTag)
+void SessionLogDebugEndBlock(void *aCallbackRef, const char *aTag)
 {
   if (aCallbackRef) {
     if (aTag && aTag[0]=='-') aTag++;
@@ -68,7 +68,7 @@ extern "C" void SessionLogDebugEndBlock(void *aCallbackRef, const char *aTag)
 } // SessionLogDebugEndBlock
 
 
-extern "C" void SessionLogDebugEndThread(void *aCallbackRef)
+void SessionLogDebugEndThread(void *aCallbackRef)
 {
   if (aCallbackRef) {
     static_cast<TSyncSession *>(aCallbackRef)->getDbgLogger()->DebugThreadOutputDone(false); // leave session thread record live until session dies
@@ -80,7 +80,7 @@ extern "C" void SessionLogDebugEndThread(void *aCallbackRef)
 
 #ifdef ENGINEINTERFACE_SUPPORT
 
-extern "C" TSyError SessionOpenSessionKey(void* aCB, SessionH aSessionH, KeyH *aKeyH, uInt16 aMode)
+TSyError SessionOpenSessionKey(void* aCB, SessionH aSessionH, KeyH *aKeyH, uInt16 aMode)
 {
   // Note: aSessionH must be NULL, as we are implicitly in a session context and cannot specify the session
   if (!aCB || !aKeyH || aSessionH!=NULL) return LOCERR_BADPARAM;

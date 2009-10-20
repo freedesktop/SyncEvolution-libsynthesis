@@ -35,8 +35,14 @@
 /* - we are not at the SyncML engine's side here */
 #undef  SYSYNC_ENGINE
 
-/* - but we link directly to the module */
-#define DBAPI_LINKED 1
+/*
+ * On Linux, the configure script's config.h determines whether
+ * we link against the engine directly. When not using config.h,
+ * enable this unconditionally.
+ */
+#ifndef HAVE_CONFIG_H
+# define DBAPI_LINKED 1
+#endif
 
 /*
  * The libsynthesis shared library uses SySync_ as prefix for C

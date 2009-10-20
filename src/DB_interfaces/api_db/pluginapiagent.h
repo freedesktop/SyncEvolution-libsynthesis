@@ -55,14 +55,14 @@ namespace sysync {
 
 // Session level callback adaptor functions
 #ifdef SYDEBUG
-extern "C" void SessionLogDebugPuts(void *aCallbackRef, const char *aText);
-extern "C" void SessionLogDebugExotic(void *aCallbackRef, const char *aText);
-extern "C" void SessionLogDebugBlock(void *aCallbackRef, const char *aTag, const char *aDesc, const char *aAttrText );
-extern "C" void SessionLogDebugEndBlock(void *aCallbackRef, const char *aTag);
-extern "C" void SessionLogDebugEndThread(void *aCallbackRef);
+void SessionLogDebugPuts(void *aCallbackRef, const char *aText);
+void SessionLogDebugExotic(void *aCallbackRef, const char *aText);
+void SessionLogDebugBlock(void *aCallbackRef, const char *aTag, const char *aDesc, const char *aAttrText );
+void SessionLogDebugEndBlock(void *aCallbackRef, const char *aTag);
+void SessionLogDebugEndThread(void *aCallbackRef);
 #endif // SYDEBUG
 #ifdef ENGINEINTERFACE_SUPPORT
-extern "C" TSyError SessionOpenSessionKey(void* aCB, SessionH aSessionH, KeyH *aKeyH, uInt16 aMode);
+TSyError SessionOpenSessionKey(void* aCB, SessionH aSessionH, KeyH *aKeyH, uInt16 aMode);
 #endif // ENGINEINTERFACE_SUPPORT
 
 

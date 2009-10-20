@@ -28,7 +28,13 @@ ENGINE_AGE = 2
 CLEANFILES =
 EXTRA_DIST =
 
-lib_LTLIBRARIES = libsmltk.la libsynthesis.la libsynthesisserver.la libsynthesissdk.la
+lib_LTLIBRARIES = libsmltk.la libsynthesissdk.la
+if COND_SYNCML_SERVER
+lib_LTLIBRARIES += libsynthesissrv.la
+endif
+if COND_SYNCML_CLIENT
+lib_LTLIBRARIES += libsynthesis.la
+endif
 nobase_include_HEADERS = @LIBSYNTHESISSDK_HEADERS@ synthesis/target_options.h
 
 # Configuration header files are searched in this order:
@@ -76,21 +82,21 @@ libsynthesis_la_CFLAGS = \
 	$(LIBICAL_CFLAGS) \
 	$(LIBECAL_CFLAGS)
 libsynthesis_la_CXXFLAGS = $(libsynthesis_la_CFLAGS)
-libsynthesis_la_LIBADD = $(PCRE_LIBS) $(SQLITE3_LIBS) $(XMLPARSE_LIBS) $(LIBICAL_LIBS) $(LIBECAL_LIBS) libsmltk.la
+libsynthesis_la_LIBADD = $(PCRE_LIBS) $(SQLITE3_LIBS) $(XMLPARSE_LIBS) $(LIBICAL_LIBS) $(LIBECAL_LIBS) libsmltk.la -lz
 libsynthesis_la_LDFLAGS = -version-info $(ENGINE_CURRENT):$(ENGINE_REVISION):$(ENGINE_AGE) \
 	-Wl,--version-script=$(srcdir)/synthesis-linker.map
 libsynthesis_la_DEPENDENCIES = $(srcdir)/synthesis-linker.map libsmltk.la
 
 
-libsynthesisserver_la_SOURCES = @LIBSYNTHESISSERVER_SOURCES@ \
+libsynthesissrv_la_SOURCES = @LIBSYNTHESISSRV_SOURCES@ \
 	$(XMLPARSE_SOURCES)
-libsynthesisserver_la_CPPFLAGS = $(libsynthesis_la_CPPFLAGS)
-libsynthesisserver_la_CFLAGS = $(subst clientEngine,serverEngine, \
+libsynthesissrv_la_CPPFLAGS = -Dsysync=sysyncsrv $(libsynthesis_la_CPPFLAGS)
+libsynthesissrv_la_CFLAGS = $(subst clientEngine,serverEngine, \
 	$(subst clientengine_demo_x86_linux_prefix.h,serverengine_opensource_linux_prefix.h, $(libsynthesis_la_CFLAGS)))
-libsynthesisserver_la_CXXFLAGS = $(libsynthesisserver_la_CFLAGS)
-libsynthesisserver_la_LIBADD = $(libsynthesis_la_LIBADD)
-libsynthesisserver_la_LDFLAGS = $(libsynthesis_la_LDFLAGS)
-libsynthesisserver_la_DEPENDENCIES = $(libsynthesis_la_DEPENDENCIES)
+libsynthesissrv_la_CXXFLAGS = $(libsynthesissrv_la_CFLAGS)
+libsynthesissrv_la_LIBADD = $(libsynthesis_la_LIBADD)
+libsynthesissrv_la_LDFLAGS = $(libsynthesis_la_LDFLAGS)
+libsynthesissrv_la_DEPENDENCIES = $(libsynthesis_la_DEPENDENCIES)
 
 if COND_XMLPARSE
 XMLPARSE_CFLAGS_BUILTIN = -I$(srcdir)/expat -I$(srcdir)/expat/xmltok -I$(srcdir)/expat/xmlparse

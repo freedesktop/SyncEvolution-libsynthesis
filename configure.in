@@ -41,6 +41,27 @@ if test "$enable_evolution_compatibility" == "yes"; then
    LIBECAL_LIBS=
 fi
 
+AC_ARG_WITH(syncml-engines,
+            AS_HELP_STRING([--with-syncml-engines=client|server|both|none],
+                           [Determines which kind of support for SyncML is built.
+                           Default is both. When both engines are disabled, only the SDK
+                           is built. Besides not building unneeded code, this
+                           option also determines which engines have to be linked
+                           directly when building without shared libraries (--disable-shared).
+                           In that case, the SDK has hard dependencies on the
+                           engine's entry points (SySync(_src)_ConnectEngine, ...).]),
+            [SYNCML_ENGINES="$withval"], SYNCML_ENGINES=both)
+
+case $SYNCML_ENGINES in
+      both) SYNCML_SERVER="yes"; SYNCML_CLIENT="yes";;
+      client) SYNCML_CLIENT="yes";;
+      server) SYNCML_SERVER="yes";;
+      none) true;;
+      *) AC_ERROR([Invalid value for --with-syncml-engines: $SYNCML_ENGINES]);;
+esac
+AM_CONDITIONAL([COND_SYNCML_SERVER], [test "$SYNCML_SERVER" = "yes"])
+AM_CONDITIONAL([COND_SYNCML_CLIENT], [test "$SYNCML_CLIENT" = "yes"])
+
 AC_ARG_WITH(xmltok,
         AS_HELP_STRING([--with-xmltok=<builtin|system|path>],
                        [Chooses which xmltok/xmlparse gets used.
@@ -111,8 +132,13 @@ AC_CHECK_HEADER(stdint.h)
 
 echo "enable dynamic $enable_shared"
 if test "$enable_shared" = "no"; then
-   AC_DEFINE(UIAPI_LINKED, 1, [libsynthesis.a linked statically])
-   AC_DEFINE(DBAPI_LINKED, 1, [libsynthesis.a linked statically])
+   if test "$SYNCML_CLIENT" = "yes"; then
+         AC_DEFINE(UIAPI_LINKED, 1, [libsynthesis.a linked statically])
+         AC_DEFINE(DBAPI_LINKED, 1, [libsynthesis.a linked statically])
+   fi
+   if test "$SYNCML_SERVER" = "yes"; then
+         AC_DEFINE(DBAPI_SRV_LINKED, 1, [libsynthesissrv.a linked statically])
+   fi
 fi
 AM_CONDITIONAL([COND_STATIC], [test "$enable_shared" = "no"])
 
