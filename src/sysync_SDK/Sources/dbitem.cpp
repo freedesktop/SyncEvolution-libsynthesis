@@ -493,6 +493,7 @@ TSyError TDBItem::UpdateField( void* aCB, cAppCharP fKey,
       hdI->len  += newLen-oldLen; // adapt the whole length
       actI->field= fVal;          // and assign value of the new field
       err= LOCERR_OK;             // the new value is assigned, everything is ok
+      fChanged= true;             // must be marked for a change
       break;
     } // if
   } // while
