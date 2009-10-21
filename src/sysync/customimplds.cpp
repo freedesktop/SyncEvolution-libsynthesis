@@ -442,15 +442,17 @@ void TCustomDSConfig::addTypeLimits(TLocalEngineDS *aLocalDatastoreP, TSyncSessi
 
 
 // proptotype to make compiler happy
-bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsArray, TFieldListConfig *aFieldListP, TFieldMapList &aFieldMapList, const char **aAttributes);
+bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsArray, TFieldListConfig *aFieldListP, TFieldMapList &aFieldMapList, const char **aAttributes, bool aUpdateParams);
 
 // parse map items
-bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsArray, TFieldListConfig *aFieldListP, TFieldMapList &aFieldMapList, const char **aAttributes)
+bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsArray, TFieldListConfig *aFieldListP, TFieldMapList &aFieldMapList, const char **aAttributes, bool aUpdateParams)
 {
-  TFieldMapItem *mapitemP;
+  TFieldMapItem *mapitemP = NULL;
   sInt16 fid = VARIDX_UNDEFINED;
 
-  // base field reference is possible for arrays too, to specify the relevant array size
+	// get name
+  const char* nam = cfgP->getAttr(aAttributes,"name");
+  // get base field reference is possible for arrays too, to specify the relevant array size
   const char* ref = cfgP->getAttr(aAttributes,aIsArray ? "sizefrom" : "references");
   if (ref) {
     // get fid for referenced field
@@ -461,24 +463,42 @@ bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsAr
     fid = TConfigElement::getFieldIndex(ref,aCustomDSConfig->fFieldMappings.fFieldListP);
     #endif
   }
-  #ifdef ARRAYDBTABLES_SUPPORT
-  if (aIsArray) {
-    // array container
-    mapitemP = aCustomDSConfig->newFieldMapArrayItem(aCustomDSConfig,cfgP);
-    // save size field reference if any
-    mapitemP->fid=fid;
-    // extra attributes for derived classes
-    mapitemP->checkAttrs(aAttributes);
-    // let array container parse details
-    cfgP->expectChildParsing(*mapitemP);
+	// now decide what to do
+	if (aUpdateParams) {
+  	// only updating params of existing map (non-arrays only!)
+		// - search for existing map item by name
+    TFieldMapList::iterator pos;
+    for (pos=aFieldMapList.begin(); pos!=aFieldMapList.end(); pos++) {
+      // check for name
+      TFieldMapItem *fmiP = static_cast<TFieldMapItem *>(*pos);
+      if (strucmp(nam,fmiP->getName())==0) {
+      	// found it
+      	mapitemP = fmiP;
+      }
+    }
+    if (!mapitemP) {
+      return cfgP->fail("mapredefine must refer to an existing map");
+		}
+	}
+  else {
+  	// creating a new map
+    #ifdef ARRAYDBTABLES_SUPPORT
+    if (aIsArray) {
+      // array container
+      mapitemP = aCustomDSConfig->newFieldMapArrayItem(aCustomDSConfig,cfgP);
+      // save size field reference if any
+      mapitemP->fid=fid;
+      // extra attributes for derived classes
+      mapitemP->checkAttrs(aAttributes);
+      // let array container parse details
+      cfgP->expectChildParsing(*mapitemP);
+    }
+    #endif
   }
-  else
-  #endif
-  {
+  if (!aIsArray) {
     // simple map
     cfgP->expectEmpty(); // plain maps may not have content
     // process creation of map item
-    const char* nam = cfgP->getAttr(aAttributes,"name");
     const char* type = cfgP->getAttr(aAttributes,"type");
     const char* mode = cfgP->getAttr(aAttributes,"mode");
     bool truncate = true;
@@ -525,8 +545,10 @@ bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsAr
     sInt16 setno=0; // default to 0
     if (!cfgP->getAttrShort(aAttributes,"set_no",setno,true))
       cfgP->fail("invalid set_no specification");
-    // create mapitem, name is SQL field name
-    mapitemP = aCustomDSConfig->newFieldMapItem(nam,cfgP);
+    // create mapitem, name is DB field name
+		if (!aUpdateParams) {
+	    mapitemP = aCustomDSConfig->newFieldMapItem(nam,cfgP);
+    }
     mapitemP->fid=fid;
     mapitemP->dbfieldtype=(TDBFieldType)ty;
     mapitemP->readable=rd;
@@ -542,8 +564,10 @@ bool parseMap(TCustomDSConfig *aCustomDSConfig, TConfigElement *cfgP, bool aIsAr
     // extra attributes for derived classes
     mapitemP->checkAttrs(aAttributes);
   } // if normal map
-  // - and add it to the list
-  aFieldMapList.push_back(mapitemP);
+  if (!aUpdateParams) {
+    // - and add it to the list
+    aFieldMapList.push_back(mapitemP);
+  }
   return true;
 } // parseMap
 
@@ -647,8 +671,8 @@ bool TFieldMapArrayItem::localStartElement(const char *aElementName, const char 
     // early resolve basic map scripts so map entries can refer to local vars
     if (!fScriptsResolved) ResolveArrayScripts();
     #endif
-    // now parse map
-    return parseMap(fCustomDSConfigP,this,false,fCustomDSConfigP->fFieldMappings.fFieldListP,fArrayFieldMapList,aAttributes);
+    // now parse new map item
+    return parseMap(fCustomDSConfigP,this,false,fCustomDSConfigP->fFieldMappings.fFieldListP,fArrayFieldMapList,aAttributes, false);
   }
   /* nested arrays not yet supported
   // %%%% Note: if we do support them, we need to update
@@ -659,7 +683,7 @@ bool TFieldMapArrayItem::localStartElement(const char *aElementName, const char 
     if (!fScriptsResolved) ResolveArrayScripts();
     #endif
     // now parse nested array map
-    return parseMap(fBaseFieldMappings,this,true,fFieldListP,fArrayFieldMapList,aAttributes);
+    return parseMap(fBaseFieldMappings,this,true,fFieldListP,fArrayFieldMapList,aAttributes, false);
   */
   else if (strucmp(aElementName,"maxrepeat")==0)
     expectInt16(fMaxRepeat);
@@ -798,7 +822,11 @@ bool TFieldMappings::localStartElement(const char *aElementName, const char **aA
     dscfgP->ResolveDSScripts();
     #endif
     // now parse map
-    return parseMap(dscfgP,this,false,fFieldListP,fFieldMapList,aAttributes);
+    return parseMap(dscfgP,this,false,fFieldListP,fFieldMapList,aAttributes, false);
+  }
+  else if (strucmp(aElementName,"mapredefine")==0) {
+    // allow specifying parameters for some maps in a automap generated mappings list
+    return parseMap(dscfgP,this,false,fFieldListP,fFieldMapList,aAttributes, true);
   }
   else if (strucmp(aElementName,"automap")==0) {
     // auto-create map entries for all fields in the field list
@@ -839,7 +867,7 @@ bool TFieldMappings::localStartElement(const char *aElementName, const char **aA
     dscfgP->ResolveDSScripts();
     #endif
     // now parse array map
-    return parseMap(dscfgP,this,true,fFieldListP,fFieldMapList,aAttributes);
+    return parseMap(dscfgP,this,true,fFieldListP,fFieldMapList,aAttributes,false);
   }
   #endif
   #ifdef SCRIPT_SUPPORT
