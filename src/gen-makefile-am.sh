@@ -8,7 +8,7 @@
 ENGINE_SOURCES="sysync DB_interfaces sysync_SDK/Sources Transport_interfaces/engine platform_adapters"
 
 # files needed exclusively for libsynthesissdk.a
-SDK_FILES="-false `sed -e 's/^/-o -name /' <<EOF
+cat > SDK_FILES <<EOF
 enginemodulebridge.cpp
 enginemodulebridge.h
 stringutil.cpp
@@ -20,7 +20,7 @@ timeutil.cpp
 timeutil.h
 UI_util.cpp
 UI_util.h
-EOF`"
+EOF
 
 # The distinction between client and server files is not
 # important and even likely to be wrong/incomplete. Right now,
@@ -28,7 +28,7 @@ EOF`"
 # kept out of libsynthesisdk.
 
 # files needed exclusively for the client engine
-CLIENT_FILES="-false `sed -e 's/^/-o -name /' <<EOF
+cat >CLIENT_FILES <<EOF
 binfile.cpp
 binfileimplds.cpp
 binfileimplclient.cpp
@@ -36,10 +36,10 @@ binfilebase.cpp
 engineclientbase.cpp
 syncclient.cpp
 syncclientbase.cpp
-EOF`"
+EOF
 
 # files needed exclusively for the server engine
-SERVER_FILES="-false `sed -e 's/^/-o -name /' <<EOF
+cat > SERVER_FILES <<EOF
 admindata.cpp
 admindata.h
 dbitem.cpp
@@ -48,20 +48,59 @@ blobs.cpp
 blobs.h
 enginesessiondispatch.cpp
 syncserver.cpp
-EOF`"
+EOF
 
 # files not needed anywhere at the moment
-EXTRA_FILES="-false `sed -e 's/^/-o -name /' <<EOF
+cat > EXTRA_FILES <<EOF
 clientprovisioning_inc.cpp
-\*_tables_inc.cpp
+.*_tables_inc.cpp
 syncsessiondispatch.cpp
 platform_thread.cpp
 enginestubs.c
-EOF`"
+EOF
 
-sed -e "s;@LIBSYNTHESIS_SOURCES@;`find ${ENGINE_SOURCES} syncapps/clientEngine_custom syncapps/serverEngine_custom sysync_SDK/DB_Interfaces/text_db \( -name '*.cpp' -o -name '*.[ch]' \) \! \( ${SDK_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_SOURCES_BOTH@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_SOURCES_SDK_ONLY@;`find sysync_SDK/Sources \( -name '*.cpp' -o -name '*.c' \) -a \( ${SDK_FILES} \) -a \! \( ${SERVER_FILES} -o ${CLIENT_FILES} -o ${EXTRA_FILES} \) -printf '%p '`;" \
-    -e "s;@LIBSMLTK_SOURCES@;`find syncml_tk \( -name '*.cpp' -o -name '*.[ch]' \) \! \( -wholename syncml_tk/src/sml/\*/palm/\* -o -wholename syncml_tk/src/sml/\*/win/\* \) -printf '%p '`;" \
-    -e "s;@LIBSYNTHESISSDK_HEADERS@;`find sysync_SDK/Sources \( -name '*.h' \) -printf 'synthesis/%f '`;" \
+# files to be included in libsynthesis
+cat EXTRA_FILES SDK_FILES > EXCLUDE_FILES
+LIBSYNTHESIS_SOURCES=`find ${ENGINE_SOURCES} \
+     syncapps/clientEngine_custom \
+     syncapps/serverEngine_custom \
+     sysync_SDK/DB_Interfaces/text_db \
+     \( -name '*.cpp' -o -name '*.[ch]' \) |
+    grep -v -E -f EXCLUDE_FILES`
+LIBSYNTHESIS_SOURCES=`echo $LIBSYNTHESIS_SOURCES`
+
+# files to be included in both libsynthesis and libsynthesissdk;
+# necessary when building as shared libraries with these files not
+# being exposed by libsynthesis
+cat SERVER_FILES CLIENT_FILES EXTRA_FILES > EXCLUDE_FILES
+LIBSYNTHESISSDK_SOURCES_BOTH=`find sysync_SDK/Sources \
+     \( -name '*.cpp' -o -name '*.c' \) |
+    grep -v -E -f EXCLUDE_FILES`
+LIBSYNTHESISSDK_SOURCES_BOTH=`echo $LIBSYNTHESISSDK_SOURCES_BOTH`
+
+# files only needed in libsynthesissdk
+cat SERVER_FILES CLIENT_FILES EXTRA_FILES > EXCLUDE_FILES
+LIBSYNTHESISSDK_SOURCES_ONLY=`find sysync_SDK/Sources \
+     \( -name '*.cpp' -o -name '*.c' \) |
+    grep -E -f SDK_FILES |
+    grep -v -E -f EXCLUDE_FILES`
+LIBSYNTHESISSDK_SOURCES_ONLY=`echo $LIBSYNTHESISSDK_SOURCES_ONLY`
+
+# files needed in libsmltk
+LIBSMLTK_SOURCES=`find syncml_tk \
+     \( -name '*.cpp' -o -name '*.[ch]' \) \
+     \! \( -wholename syncml_tk/src/sml/\*/palm/\* -o \
+           -wholename syncml_tk/src/sml/\*/win/\* \)`
+LIBSMLTK_SOURCES=`echo $LIBSMLTK_SOURCES`
+
+# header files required for using libsynthesissdk,
+# with "synthesis/" prefix
+LIBSYNTHESISSDK_HEADERS=`find sysync_SDK/Sources -name '*.h' | sed -e 's;.*/;synthesis/;'`
+LIBSYNTHESISSDK_HEADERS=`echo $LIBSYNTHESISSDK_HEADERS`
+
+sed -e "s;@LIBSYNTHESIS_SOURCES@;$LIBSYNTHESIS_SOURCES;" \
+    -e "s;@LIBSYNTHESISSDK_SOURCES_BOTH@;$LIBSYNTHESISSDK_SOURCES_BOTH;" \
+    -e "s;@LIBSYNTHESISSDK_SOURCES_SDK_ONLY@;$LIBSYNTHESISSDK_SOURCES_ONLY;" \
+    -e "s;@LIBSMLTK_SOURCES@;$LIBSMLTK_SOURCES;" \
+    -e "s;@LIBSYNTHESISSDK_HEADERS@;$LIBSYNTHESISSDK_HEADERS;" \
     Makefile.am.in >Makefile.am
