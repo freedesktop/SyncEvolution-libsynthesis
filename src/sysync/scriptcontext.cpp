@@ -38,7 +38,11 @@
   #define EXPRDBGTEST (debugon && fSessionP && ((fSessionP->getDbgMask() & (DBG_SCRIPTS|DBG_SCRIPTEXPR)) == (DBG_SCRIPTS|DBG_SCRIPTEXPR)))
   #define DBGSTRINGDEF(s) string s
   #define DBGVALUESHOW(s,v) dbgValueShow(s,v)
-  #define SHOWVARDEFS(t) showVarDefs(t)
+  #if SYDEBUG>1
+	  #define SHOWVARDEFS(t) showVarDefs(t)
+  #else
+  	#define SHOWVARDEFS(t)
+  #endif
 #else
   #define SCRIPTDBGMSGX(lvl,x)
   #define SCRIPTDBGMSG(x)
@@ -3311,7 +3315,7 @@ void TScriptContext::executeBuiltIn(TItemField *&aTermP, const TBuiltInFuncDef *
 } // TScriptContext::executeBuiltIn
 
 
-#ifdef SYDEBUG
+#if SYDEBUG>1
 void TScriptContext::showVarDefs(cAppCharP aTxt)
 {
   if (DEBUGTEST(DBG_SCRIPTS+DBG_EXOTIC)) {
