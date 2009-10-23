@@ -3581,7 +3581,7 @@ SmlDevInfDatastorePtr_t TLocalEngineDS::newDevInfDatastore(bool aAsServer, bool 
     dotname += fSessionP->SessionRelativeURI(fRemoteViewOfLocalURI.c_str());
     if (!fSessionP->fDSCgiInDevInf) {
       // remove CGI
-      int n=dotname.find("?");
+      string::size_type n=dotname.find("?");
       if (n!=string::npos)
         dotname.resize(n); // remove CGI
     }
