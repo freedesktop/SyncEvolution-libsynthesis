@@ -650,6 +650,12 @@ bool TSuperDataStore::engProcessRemoteItem(
         // is an internal irregularity
         regular=false;
         goto done;
+    case sop_reference_only:
+    case sop_move:
+    case sop_none:
+    case numSyncOperations:
+      // nothing to do or shouldn't happen
+      break;
     } // switch
   } // server
   #endif // SYSYNC_SERVER
@@ -681,6 +687,12 @@ bool TSuperDataStore::engProcessRemoteItem(
         // let subdatastore process
         regular=linkP->fDatastoreLinkP->engProcessRemoteItem(syncitemP,aStatusCommand);
         goto done;
+    case sop_reference_only:
+    case sop_move:
+    case sop_none:
+    case numSyncOperations:
+      // nothing to do or shouldn't happen
+      break;
     } // switch
   } // client
   #endif // SYSYNC_CLIENT
