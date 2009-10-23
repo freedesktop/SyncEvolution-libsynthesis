@@ -343,7 +343,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
           ((sid >> 16) & 0xFFFF) + ((sid << 47) & 0x7FFF000000000000LL) + // aaaa00000000dddd
           ((((uIntPtr)sessionHandleP)&0xFFFFFFFF) << 16); // 0000bbbbcccc0000
         // - make a string of it
-        StringObjPrintf(SessionIDString,"%lld",sid);
+        StringObjPrintf(SessionIDString,"%llu",(long long unsigned)sid);
       }
       // - create session object
       sessionP =
