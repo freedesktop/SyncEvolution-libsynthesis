@@ -973,7 +973,7 @@ bool TPluginApiDS::dsOptionFilterFetchesFromDB(void)
   // %%% tbd:
   // - attachments inhibit
   // - size limit
-  #if !defined _MSC_VER || defined WINCE
+  #if (!defined _MSC_VER || defined WINCE) && !defined(__GNUC__)
   #warning "attachments and limit filters not yet supported"
   #endif
   // - let plugin know and check (we can filter at DBlevel if plugin understands both start/end)
