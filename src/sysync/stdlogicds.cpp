@@ -765,7 +765,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
   #endif
   while (
     !isAborted() && // not aborted
-    (getDSConfig()->fMaxItemsPerMessage==0 || itemcount<getDSConfig()->fMaxItemsPerMessage==0) && // max item count per message not reached or not active
+    (getDSConfig()->fMaxItemsPerMessage==0 || itemcount<getDSConfig()->fMaxItemsPerMessage) && // max item count per message not reached or not active
     !fSessionP->outgoingMessageFull() && // message not full
     aNextMessageCommands.size()==0 // no commands already queued for next message
   ) {
