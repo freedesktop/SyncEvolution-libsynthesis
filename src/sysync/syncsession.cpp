@@ -3567,7 +3567,7 @@ localstatus TSyncSession::initSync(
   #ifdef OBJECT_FILTERING
   if (sta==LOCERR_OK) {
     // %%% check for DS 1.2 <filter> in <Sync> command as well (we do parse <filter> in <Alert> already)
-    #if !defined _MSC_VER || defined WINCE
+    #if (!defined _MSC_VER || defined WINCE) && !defined(__GNUC__)
     #warning "tbd %%%: check for DS 1.2 <filter> in <Sync> command as well (we do parse <filter> in <Alert> already)"
     #endif
   }
