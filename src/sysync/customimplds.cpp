@@ -1297,7 +1297,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
     // now item exists, set details
     (*pos).deleted=false; // in case we had it deleted before, but not yet saved
     // clear those flags shown in aClearFlags (by default: all) and set those in aMapFlags
-    (*pos).mapflags = (*pos).mapflags & ~aClearFlags | aMapFlags;
+    (*pos).mapflags = ((*pos).mapflags & ~aClearFlags) | aMapFlags;
     // now remove all other items with same remoteID (except if we have no or empty remoteID)
     if (aEntryType==mapentry_normal && aRemoteID && *aRemoteID) {
       // %%% note: this is strictly necessary only for add, but cleans up for update
