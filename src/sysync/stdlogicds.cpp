@@ -579,7 +579,7 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
     if (sta==LOCERR_OK) {
       // quick test: if number of items is > than allowed maxid of remote datatstore,
       // sync is unlikely to succeed
-      if (getRemoteDatastore()->getMaxID()<fItems.size()) {
+      if (getRemoteDatastore()->getMaxID()<(long)fItems.size()) {
         // this will not work, warn (but no longer abort session, as Siemens S55 guys don't like that)
         CONSOLEPRINTF((
           "Warning: Synchronisation involves more items (%ld) than client can possibly manage (%ld",
