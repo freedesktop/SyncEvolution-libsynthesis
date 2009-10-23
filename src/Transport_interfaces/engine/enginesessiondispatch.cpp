@@ -142,11 +142,11 @@ void TEngineSessionDispatch::generateRespURI(
   	// include session ID as CGI into RespURI
     aRespURI=aLocalURI;
     // see if there is already a sessionid in this localURI
-    sInt16 n=aRespURI.find(commCfgP->fSessionIDCGIPrefix);
+    string::size_type n=aRespURI.find(commCfgP->fSessionIDCGIPrefix);
     if (n!=string::npos) {
       n+=commCfgP->fSessionIDCGIPrefix.size(); // char after prefix
       // is already there, replace value with new value
-      sInt16 m=aRespURI.find_first_of("&?\n\r",n);
+      string::size_type m=aRespURI.find_first_of("&?\n\r",n);
       if (m==string::npos)
         aRespURI.replace(n,999,aSessionID);
       else
