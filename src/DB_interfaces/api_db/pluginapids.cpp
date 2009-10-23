@@ -2270,6 +2270,11 @@ localstatus TPluginApiDS::apiLoadAdminData(
 	        fPendingAddMaps[mapEntry.localid]=mapEntry.remoteid;
         break;
       #endif
+    case mapentry_invalid:
+    case mapentry_normal:
+    case numMapEntryTypes:
+      // nothing to do or should not occur
+      break;
     }
     // next is not first entry any more
     firstEntry=false;
