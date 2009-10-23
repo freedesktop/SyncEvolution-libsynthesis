@@ -461,7 +461,6 @@ TSyError TServerEngineInterface::SessionStep(SessionH aSessionH, uInt16 &aStepCm
   }
   // let server session handle it
   sessionHandleP->fSessionStatus = serverSessionP->SessionStep(aStepCmd, aInfoP);
-done:
   // return step status
   return sessionHandleP->fSessionStatus;
 } // TServerEngineInterface::SessionStep
