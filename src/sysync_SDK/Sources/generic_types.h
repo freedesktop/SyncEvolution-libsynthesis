@@ -64,7 +64,7 @@ typedef signed long sIntArch;
 
 
 /* TODO, FIXME %%%% for now, we need uInt32 to be 64bit actually */
-//#define UINT32_HAS_64BITS_ON_ARCH64 1
+/*#define UINT32_HAS_64BITS_ON_ARCH64 1 */
 
 
 #if defined(UINT32_HAS_64BITS_ON_ARCH64) || defined(__PALM_OS__) || (__WORDSIZE < 32)

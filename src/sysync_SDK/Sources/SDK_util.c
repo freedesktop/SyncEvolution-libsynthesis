@@ -464,7 +464,7 @@ static void ConsolePuts( cAppCharP msg )
   #else
     printf( "%s\n", msg );
   #endif
-} // ConsolePuts
+} /* ConsolePuts */
 
 
 #if !defined(SYSYNC_ENGINE) && !defined(UIAPI_LINKED)
