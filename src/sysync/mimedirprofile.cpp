@@ -1218,6 +1218,7 @@ TMimeDirProfileHandler::TMimeDirProfileHandler(
   fReceiverTimeContext = TCTX_UNKNOWN; // none in particular
   fDontSendEmptyProperties = false; // send all defined properties
   fDefaultOutCharset = chs_utf8; // standard
+  fDefaultInCharset = chs_utf8; // standard
   fDoQuote8BitContent = false; // no quoting needed per se
   fDoNotFoldContent = false; // standard requires folding
   fTreatRemoteTimeAsLocal = false; // only for broken implementations
@@ -3581,7 +3582,7 @@ bool TMimeDirProfileHandler::parseProperty(
 
   // init
   encoding=enc_none; // no encoding by default
-  charset=aMimeMode==mimo_standard ? chs_utf8 : chs_ansi; // UTF8 for real MIME-DIR (same as enclosing SyncML doc), ANSI encoding for pre-MIME-DIR (as used by T39m or V3i e.g.)
+  charset=aMimeMode==mimo_standard ? chs_utf8 : fDefaultInCharset; // always UTF8 for real MIME-DIR (same as enclosing SyncML doc), for mimo_old depends on <inputcharset> remote rule option (normally UTF-8)
   nameextmap=0; // no name extensions detected so far
   fieldoffsetfound=(aPropP->nameExts==NULL); // no first pass needed at all w/o nameExts, just use offs=0
   valuelist=aPropP->valuelist; // cache flag
@@ -4353,6 +4354,7 @@ void TMimeDirProfileHandler::getOptionsFromDatastore(void)
     fReceiverTimeContext = fRelatedDatastoreP->getSession()->fUserTimeContext; // default to user context
     fDontSendEmptyProperties = fRelatedDatastoreP->getSession()->fDontSendEmptyProperties;
     fDefaultOutCharset = fRelatedDatastoreP->getSession()->fDefaultOutCharset;
+    fDefaultInCharset = fRelatedDatastoreP->getSession()->fDefaultInCharset;
     fDoQuote8BitContent = fRelatedDatastoreP->getSession()->fDoQuote8BitContent;
     fDoNotFoldContent = fRelatedDatastoreP->getSession()->fDoNotFoldContent;
     fTreatRemoteTimeAsLocal = fRelatedDatastoreP->getSession()->fTreatRemoteTimeAsLocal;

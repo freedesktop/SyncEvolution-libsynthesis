@@ -484,6 +484,8 @@ private:
   bool fDontSendEmptyProperties;
   // - default output charset
   TCharSets fDefaultOutCharset;
+  // - default input interpretation charset
+  TCharSets fDefaultInCharset;
   // - user time context
   timecontext_t fReceiverTimeContext;
   // - set if any 8-bit content must be encoded QUOTED-PRINTABLE

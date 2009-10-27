@@ -405,7 +405,8 @@ void TRemoteRuleConfig::clear(void)
   fTreatCopyAsAdd=-1;
   fCompleteFromClientOnly=-1;
   fRequestMaxTime=-1; // not defined
-  fDefaultOutCharset=chs_unknown; // do not set the charset
+  fDefaultOutCharset=chs_unknown; // do not set the default output charset
+  fDefaultInCharset=chs_unknown; // do not set the default input interpretation charset
   // - options that also have a configurable session default
   fUpdateClientDuringSlowsync=-1;
   fUpdateServerDuringSlowsync=-1;
@@ -489,6 +490,8 @@ bool TRemoteRuleConfig::localStartElement(const char *aElementName, const char *
     expectInt32(fRequestMaxTime);
   else if (strucmp(aElementName,"outputcharset")==0)
     expectEnum(sizeof(fDefaultOutCharset),&fDefaultOutCharset,MIMECharSetNames,numCharSets);
+  else if (strucmp(aElementName,"inputcharset")==0)
+    expectEnum(sizeof(fDefaultInCharset),&fDefaultInCharset,MIMECharSetNames,numCharSets);
   else if (strucmp(aElementName,"rejectstatus")==0)
     expectUInt16(fRejectStatusCode);
   else if (strucmp(aElementName,"forceutc")==0)
@@ -1485,6 +1488,7 @@ void TSyncSession::InternalResetSessionEx(bool terminationCall)
   fTreatCopyAsAdd=false;
   fStrictExecOrdering=true; // SyncML standard requires strict ordering (of statuses, but this implies execution of commands, too)
   fDefaultOutCharset=chs_utf8; // SyncML content is usually UTF-8
+  fDefaultInCharset=chs_utf8; // SyncML content is usually UTF-8
   // defaults for possibly remote-dependent behaviour
   fCompleteFromClientOnly=getSessionConfig()->fCompleteFromClientOnly; // conform to standard by default
   fRequestMaxTime=getSessionConfig()->fRequestMaxTime;
@@ -4350,6 +4354,7 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
       if (ruleP->fCompleteFromClientOnly>=0) fCompleteFromClientOnly = ruleP->fCompleteFromClientOnly;
       if (ruleP->fRequestMaxTime>=0) fRequestMaxTime = ruleP->fRequestMaxTime;
       if (ruleP->fDefaultOutCharset!=chs_unknown) fDefaultOutCharset = ruleP->fDefaultOutCharset;
+      if (ruleP->fDefaultInCharset!=chs_unknown) fDefaultInCharset = ruleP->fDefaultInCharset;
       // - eventually override decisions that are otherwise made by session
       //   Note: this is not a single option because we had this before rule options were tristates.
       if (ruleP->fForceUTC>0) fRemoteCanHandleUTC=true;
@@ -4443,6 +4448,7 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Remote can handle UTC     : %s",boolString(fRemoteCanHandleUTC)));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Max Request time [sec]    : %ld",static_cast<long>(fRequestMaxTime)));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Content output charset    : %s",MIMECharSetNames[fDefaultOutCharset]));
+  PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Content input charset     : %s",MIMECharSetNames[fDefaultInCharset]));
   // done
   return LOCERR_OK;
 } // TSyncSession::checkRemoteSpecifics
