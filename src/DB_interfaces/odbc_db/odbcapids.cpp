@@ -2648,8 +2648,8 @@ bool TODBCApiDS::appendFilterTerm(string &aSQL, const char *&aPos, const char *a
           }
         }
         if (!mainfound) {
-          return false; // no such field
           PDEBUGPRINTFX(DBG_EXOTIC,("Could not find DB field for fid=%hd",fid));
+          return false; // no such field
         }
         // - translate for special values
         if (specialValue) {

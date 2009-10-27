@@ -4505,7 +4505,7 @@ void TLocalEngineDS::initPostFetchFiltering(void)
         fFilteringNeededForAll=true;
       // always return true if there is something to filter at all
       if (
-        fLocalDBFilter.empty() ||
+        !fLocalDBFilter.empty() ||
         !fDSConfigP->fInvisibleFilter.empty() ||
         !fSyncSetFilter.empty() ||
         !fDSConfigP->fRemoteAcceptFilter.empty()
