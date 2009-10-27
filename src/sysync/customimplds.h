@@ -708,6 +708,12 @@ protected:
   /// get next item's ID and modification status from the sync set.
   /// @return false if no item found
   virtual bool getNextItemInfo(localid_out_t &aLocalID, bool &aItemHasChanged);
+  /// get first item from the sync set. Caller obtains ownership if aItemP is not NULL after return
+  /// @return false if no item found
+  virtual bool getFirstItem(TSyncItem *&aItemP);
+  /// get next item from the sync set. Caller obtains ownership if aItemP is not NULL after return
+  /// @return false if no item found
+  virtual bool getNextItem(TSyncItem *&aItemP);
   /// get item by local ID from the sync set. Caller obtains ownership if aItemP is not NULL after return
   /// @return != LOCERR_OK  if item with specified ID is not found.
   virtual localstatus getItemByID(localid_t aLocalID, TSyncItem *&aItemP);
@@ -800,6 +806,7 @@ protected:
   #ifdef BASED_ON_BINFILE_CLIENT
   bool fSyncSetLoaded; // set if sync set is currently loaded
   bool makeSyncSetLoaded(bool aNeedAll);
+	localstatus getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP);
   #endif // BASED_ON_BINFILE_CLIENT
   bool fNoSingleItemRead; // if set, syncset list will also contain items
   bool fMultiFolderDB; // if set, we need the syncset list for finding container IDs later

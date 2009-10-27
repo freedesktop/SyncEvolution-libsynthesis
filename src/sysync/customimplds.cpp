@@ -1631,10 +1631,11 @@ localstatus TCustomImplDS::implStartDataRead()
     if (sta==LOCERR_OK) {
       // now make sure the syncset is loaded
       if (!makeSyncSetLoaded(
-        fSlowSync
+        fSlowSync // all items with data needed for slow sync
         #ifdef OBJECT_FILTERING
-        || fFilteringNeededForAll
+        || fFilteringNeededForAll // all item data needed for dynamic filtering
         #endif
+        || CRC_CHANGE_DETECTION // all item data needed when binfile must detect changes using CRC
       ))
         sta = 510; // error
     }
@@ -3167,7 +3168,42 @@ bool TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
 } // TCustomImplDS::makeSyncSetLoaded
 
 
-/// get first item's ID and modification status from the sync set
+/// get first item from the sync set. Caller obtains ownership if aItemP is not NULL after return
+/// @return false if no item found
+bool TCustomImplDS::getFirstItem(TSyncItem *&aItemP)
+{
+  // reset the iterator
+  fSyncSetPos = fSyncSetList.begin();
+  // now get first item's info
+  return getNextItem(aItemP);
+} // TCustomImplDS::getFirstItem
+
+
+/// get next item from the sync set. Caller obtains ownership if aItemP is not NULL after return
+/// @return false if no item found
+bool TCustomImplDS::getNextItem(TSyncItem *&aItemP)
+{
+  if (!fSyncSetLoaded)
+    return false; // no syncset, nothing to report
+  if (fSyncSetPos!=fSyncSetList.end()) {
+    // get the info
+    TSyError sta = getItemFromSyncSetItem(*fSyncSetPos,aItemP);
+    if (sta==LOCERR_OK) {
+      // advance to next item in sync set
+      fSyncSetPos++;
+      // successful
+      return true;
+    }
+  }
+  // no more items (or problem getting item)
+  return false;
+} // TCustomImplDS::getNextItem
+
+
+
+#ifdef CHANGEDETECTION_AVAILABLE
+
+/// get first item from the sync set, including data
 /// @return false if no item found
 bool TCustomImplDS::getFirstItemInfo(localid_out_t &aLocalID, bool &aItemHasChanged)
 {
@@ -3201,6 +3237,7 @@ bool TCustomImplDS::getNextItemInfo(localid_out_t &aLocalID, bool &aItemHasChang
   return false;
 } // TCustomImplDS::getNextItemInfo
 
+#endif // CHANGEDETECTION_AVAILABLE
 
 
 /// get item by local ID from the sync set. Caller obtains ownership if aItemP is not NULL after return
@@ -3215,12 +3252,19 @@ localstatus TCustomImplDS::getItemByID(localid_t aLocalID, TSyncItem *&aItemP)
   TSyncSetList::iterator syncsetpos = findInSyncSet(localid.c_str());
   if (syncsetpos==fSyncSetList.end())
     return 404; // not found
-  // return item already fetched or fetch it if not fetched before
-  TSyncSetItem *syncsetitemP = (*syncsetpos);
-  if (syncsetitemP->itemP) {
+  // return sync item from syncset item (fetches data now if not fetched before)
+  return getItemFromSyncSetItem(*syncsetpos,aItemP);
+} // TCustomImplDS::getItemByID
+
+
+// private helper: get item with data from sync set list. Retrieves item if not already
+// there from loading the sync set
+localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
+{
+  if (aSyncSetItemP->itemP) {
     // already fetched - pass it to caller and remove link in syncsetitem
-    aItemP = syncsetitemP->itemP;
-    syncsetitemP->itemP = NULL; // syncsetitem does not own it any longer
+    aItemP = aSyncSetItemP->itemP;
+    aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
   }
   else {
     // item not yet fetched (or already retrieved once), fetch it now
@@ -3230,17 +3274,17 @@ localstatus TCustomImplDS::getItemByID(localid_t aLocalID, TSyncItem *&aItemP)
     if (!aItemP)
       return 510;
     // - assign local id, as it is required by DoDataSubstitutions
-    aItemP->setLocalID(syncsetitemP->localid.c_str());
+    aItemP->setLocalID(aSyncSetItemP->localid.c_str());
     // - set default operation
     aItemP->setSyncOp(sop_replace);
     // Now fetch item (read phase)
-    localstatus sta=apiFetchItem(*((TMultiFieldItem *)aItemP),true,syncsetitemP);
+    localstatus sta=apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
     if (sta!=LOCERR_OK)
       return sta; // error
   }
   // ok
   return LOCERR_OK;
-} // TCustomImplDS::getItemByID
+} // TCustomImplDS::getItemFromSyncSetItem
 
 
 /// update item by local ID in the sync set. Caller retains ownership of aItemP
