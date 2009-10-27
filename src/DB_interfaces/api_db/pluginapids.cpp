@@ -1062,7 +1062,15 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
 
   // just let plugin know if we want data (if it actually does is the plugin's choice)
   if (aNeedAll) {
-  	// we'd like to get all data, let datastore know
+  	// we'll need all data in the datastore in the end, let datastore know
+    // Note: this is a suggestion to the plugin only - plugin does not need to follow it
+    //       and can return only ID/changed or all data for both states of this flag,
+    //       even changing on a item-by-item basis (can make sense for optimization).
+    //       The Plugin will return "1" here only in case it really follows the suggestion
+    //       an WILL return all data at ReadNextItem(). Otherwise, it may or may
+    //       not return data on a item by item basis (which is handled by the code
+    //       below). Therefore, at this time, the engine does not make use of the
+    //       ContextSupport() return value here.
     fDBApi_Data.ContextSupport("ReadNextItem:allfields\n\r");
   }
   #ifdef SCRIPT_SUPPORT
@@ -1109,9 +1117,10 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
         // two API variants
         #if defined(DBAPI_ASKEYITEMS) && defined(ENGINEINTERFACE_SUPPORT)
         if (fPluginDSConfigP->fItemAsKey) {
-          // ALWAYS prepare a multifield item, in case plugin wants to return data (it should not
-          // unless queried with ContextSupport("ReadNextItem:allfields"), but it does not harm
-          // if it still does except wasting memory
+          // ALWAYS prepare a multifield item, in case plugin wants to return data (it normally does not
+          // unless queried with ContextSupport("ReadNextItem:allfields"), but it's a per-item decision
+          // of the plugin itself (and probably overall optimization considerations for speed or memory)
+          // if it wants to follow the recommendation set with "ReadNextItem:allfields".
           // Note: check for canCreateItemForRemote() should be always true now as loading syncset has been
           //       moved within the progress of client sync session to a point where types ARE known.
           //       Pre-3.2 engines however called this routine early so types could be unknown here.
