@@ -517,7 +517,9 @@ void TBinfileImplDS::zapChangeLog(void)
     // kill all entries
     fChangeLog.truncate(0);
     // reset modcount
-    fChgLogHeader.modcount=0;
+    fChgLogHeader.modcount = 0;
+    fChgLogHeader.lastChangeCheckIdentifier[0] = 0;
+    fChgLogHeader.lastChangeCheck = noLinearTime;
     // make sure header is written
     fChangeLog.setExtraHeaderDirty();
     fChangeLog.flushHeader();
@@ -538,6 +540,7 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
   	// update records
     TChangeLogEntry *chglogEntryP = (TChangeLogEntry *)aNewRecordData;
     // check for special case that old record is V2 or V3 and was compiled without CHANGEDETECTION_AVAILABLE
+    uInt16 crc = 0;
     if ((aOldVersion==2 || aOldVersion==3) && aOldSize!=offsetof(TChangeLogEntry,modcount_created)) {
     	// this means that the records were compiled without CHANGEDETECTION_AVAILABLE and had a
       // dataCRC field between modcount and flags
@@ -551,8 +554,8 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
       int o = offsetof(TChangeLogEntry,flags);
       // - copy up to the CRC which is already there
 	    memcpy(aNewRecordData,aOldRecordData,o);
-      // - copy the CRC which is already there into the new V5 DB location
-      chglogEntryP->dataCRC = *((uInt16 *)((uInt8 *)aOldRecordData+o));
+      // - get the CRC which is already there to init the new V5 DB field below
+      crc = *((uInt16 *)((uInt8 *)aOldRecordData+o));
       // - also copy the flags
       chglogEntryP->flags = *((uInt8 *)((uInt8 *)aOldRecordData+o+sizeof(uInt16))); // next after dataCRC
       chglogEntryP->dummy = *((uInt8 *)((uInt8 *)aOldRecordData+o+sizeof(uInt16)+sizeof(uInt8))); // next after flags
@@ -566,9 +569,9 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
       // init new version 4 fields
       chglogEntryP->modcount_created = 0; // assume created before changelogging history started
     }
-    if (aOldVersion<5 && aOldVersion>3) {
-    	// init new V5 dataCRC, but only if this is not an update from V2 or V3 (which is handled above)
-      chglogEntryP->dataCRC = 0;
+    if (aOldVersion<5) {
+    	// init new V5 dataCRC; if we are updating from V2 or V3 (which is handled above) we'll assign the previous CRC here, 0 otherwise
+      chglogEntryP->dataCRC = crc;
     }
   }
   else if (aNewRecordData) {
