@@ -29,7 +29,11 @@ namespace sysync {
 
 
 // undefined field/var index
-// Note: this must be in 8-bit-negative range for current implementation of TScripTContext
+// Notes:
+// - positive indices address fields in the field list, negative indices address script variables
+// - this must be in 8-bit-negative range for current implementation of TScripTContext
+// - FID_NOT_SUPPORTED must be the same value as these are used interchangeably
+//   (historically FID_NOT_SUPPORTED was -1). Definition of FID_NOT_SUPPORTED checks this now.
 #define VARIDX_UNDEFINED -128
 
 
