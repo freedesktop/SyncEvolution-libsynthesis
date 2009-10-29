@@ -2524,7 +2524,9 @@ SmlEncoding_t TSyncAppBase::encodingFromData(cAppPointer aData, memSize aDataSiz
       if (p[0]==0xEF && p[1]==0xBB && p[2]==0xBF)
       	p+=3; // skip the BOM
       // now check for XML
-	    if (strnncmp((cAppCharP)p,"<?xml",5)==0) enc=SML_XML;
+	    if (strnncmp((cAppCharP)p,"<?xml",5)==0 ||
+                strnncmp((cAppCharP)p,"<SyncML",7)==0)
+                enc=SML_XML;
   	}
   }
   return enc;
