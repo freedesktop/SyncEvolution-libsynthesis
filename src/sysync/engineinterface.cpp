@@ -1805,6 +1805,19 @@ TSyError TEngineInterface::UpdateItemAsKey(SessionH aSessionH, KeyH aItemKey, cI
   return ds->TunnelUpdateItemAsKey(aItemKey,aID,updID);
 } // UpdateItemAsKey
 
+TSyError TEngineInterface::debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunction,
+                                     int aDbgLevel, cAppCharP aPrefix,
+                                     cAppCharP aText)
+{
+  #if defined(SYDEBUG)
+  static_cast<TSyncClientBase *>(getSyncAppBase())->getDbgLogger()->DebugPuts(/* aFile, aLine, aFunction, aPrefix */
+                                                                              aDbgLevel, aText);
+  return 0;
+  #else
+  return LOCERR_NOTIMP;
+  #endif
+} // debugPuts
+
 #endif // DBAPI_TUNNEL_SUPPORT
 
 
