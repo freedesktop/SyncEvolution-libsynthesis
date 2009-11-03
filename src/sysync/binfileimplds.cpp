@@ -544,9 +544,6 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
     if ((aOldVersion==2 || aOldVersion==3) && aOldSize!=offsetof(TChangeLogEntry,modcount_created)) {
     	// this means that the records were compiled without CHANGEDETECTION_AVAILABLE and had a
       // dataCRC field between modcount and flags
-      #ifdef RELEASE_VERSION
-      #error "test upgrade from iphone V2 first!"
-      #endif
       #if defined(WINCE) || defined(__PALM_OS__)
       #error "This code must be verified to check if upgrade works as intended with targets that did not have CHANGEDETECTION_AVAILABLE"
       #endif
