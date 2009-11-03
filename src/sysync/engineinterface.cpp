@@ -168,9 +168,9 @@ TSyError TSettingsKeyImpl::GetValueByID(
   // get native type of value (and check validity of ID - invalid IDs must return VALTYPE_UNKNOWN)
   uInt16 valType = GetValueType(aID);
   if (valType==VALTYPE_UNKNOWN) return DB_NotFound;
-  // direct return in case requested type matches native type
+  // direct return in case requested type matches native type or raw data (VALTYPE_BUF) is requested
   if (
-    (aValType == VALTYPE_BUF) ||
+    (aValType == VALTYPE_BUF) || // we want raw buffer data
     ((valType == aValType) &&
      (valType != VALTYPE_TEXT || (fCharSet==chs_utf8 && fLineEndMode==lem_cstr)) &&
      (valType != VALTYPE_TIME64 || ((fTimeMode & TMODE_MODEMASK)==TMODE_LINEARTIME)) )
@@ -183,21 +183,39 @@ TSyError TSettingsKeyImpl::GetValueByID(
       }
       else {
         // low level text routines do not set terminators for simplicity, so make sure we have one here
-        sta=GetValueInternal(aID,aArrayIndex,aBuffer,aBufSize-1,aValSize);
-        // make sure we have a NUL terminator
-        ((appCharP)aBuffer)[aBufSize-1]=0; // ultimate terminator
+        // - request only max one char less than buf can hold, so we always have room for a terminator
+        sta = GetValueInternal(aID,aArrayIndex,aBuffer,aBufSize-1,aValSize);
+        // - make sure we have a NUL terminator at the very end of the buffer in all cases
+        ((appCharP)aBuffer)[aBufSize-1] = 0; // ultimate terminator
+        // - also make sure we have a terminator at the end of the actual string
         if (sta==LOCERR_OK && aValSize<aBufSize)
-          ((appCharP)aBuffer)[aValSize]=0;
-        // return LOCERR_TRUNCATED if ok but buffer is not large enough
+          ((appCharP)aBuffer)[aValSize] = 0;
+        // signal LOCERR_TRUNCATED if ok, but buffer is not large enough
         if (sta==LOCERR_OK && aValSize>aBufSize-1) {
           sta = LOCERR_TRUNCATED;
-          aValSize=aBufSize-1; // return actual size, not untruncated one
+          aValSize = aBufSize-1; // return actual size, not untruncated one
         }
         return sta;
       }
     }
-    else
-      return GetValueInternal(aID,aArrayIndex,aBuffer,aBufSize,aValSize);
+    else {
+    	// non-text, simply return value
+      sta = GetValueInternal(aID,aArrayIndex,aBuffer,aBufSize,aValSize);
+      if (sta==LOCERR_OK && aBufSize && aBuffer && aValSize>aBufSize) {
+      	// not only measuring size, check for truncation
+      	if (aValType==VALTYPE_BUF) {
+        	// in case of buffer, we call this "truncated" (we don't know if the result is usable or not, depends on data itself)
+	        sta = LOCERR_TRUNCATED;
+	      	aValSize = aBufSize; // return actual size, not untruncated one
+        }
+        else {
+        	// in other cases, too small buffer makes result unusable, so we don't call it "truncated"
+          // AND: we return the needed buffer size
+        	sta = LOCERR_BUFTOOSMALL;
+        }
+      }
+      return sta;
+    }
   }
   // some kind of conversion needed
   // - get native size of value first
@@ -316,7 +334,7 @@ TSyError TSettingsKeyImpl::GetValueByID(
               aBufSize>0 ? aBufSize-2 : 0 // max output size (but no limit if measuring actual size)
             ))
               sta = LOCERR_TRUNCATED;
-            // return (eventually truncated) size
+            // return (possibly truncated) size
             aValSize=convStr.size();
             // this will be added as part of the content, and gives a 16bit NUL terminator
             convStr+=(char)0;
@@ -332,7 +350,7 @@ TSyError TSettingsKeyImpl::GetValueByID(
               aBufSize>0 ? aBufSize-1 : 0 // max output size (but no limit if measuring actual size)
             ))
               sta = LOCERR_TRUNCATED;
-            // return (eventually truncated) size
+            // return (possibly truncated) size
             aValSize=convStr.size();
           }
           // if requested, return value into buffer
@@ -408,7 +426,7 @@ TSyError TSettingsKeyImpl::SetValueByID(
       else {
         appendStringAsUTF8((cAppCharP)aBuffer, convStr, fCharSet, lem_cstr, true);
       }
-      // eventually convert text to native
+      // possibly convert text to native
       switch (valType) {
         case VALTYPE_TIME64:
           // convert text to internal time format
