@@ -955,7 +955,7 @@ void appendStringAsUTF8(const char *s, string &aVal, TCharSets aCharSet, TLineEn
       // normal add
       uInt16 i,seqlen=1; // assume logical char consists of single byte
       do {
-        seqlen=appendCharsAsUTF8(s-seqlen,aVal,aCharSet,seqlen); // add char (eventually with UTF8 expansion) to aVal
+        seqlen=appendCharsAsUTF8(s-seqlen,aVal,aCharSet,seqlen); // add char (possibly with UTF8 expansion) to aVal
         if (seqlen<=1) break; // done
         for (i=1;i<seqlen;i++) { if (*s==0) break; else s++; }
         if (i<seqlen) break; // not enough bytes

@@ -1400,7 +1400,7 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
         }
       }
       else {
-        // remote cannot handle UTC or time is floating (eventually dateonly or duration)
+        // remote cannot handle UTC or time is floating (possibly dateonly or duration)
         if (tsFldP->isFloating()) {
           // floating, show as-is
           ts = tsFldP->getTimestampAs(TCTX_UNKNOWN);
@@ -1873,7 +1873,7 @@ static void decodeValue(
       seqlen=1; // assume logical char consists of single byte
       chrs[0]=c;
       do {
-        seqlen=appendCharsAsUTF8(chrs,aVal,aCharset,seqlen); // add char (eventually with UTF8 expansion) to aVal
+        seqlen=appendCharsAsUTF8(chrs,aVal,aCharset,seqlen); // add char (possibly with UTF8 expansion) to aVal
         if (seqlen<=1) break; // done
         // need more bytes to encode entire char
         for (int i=1;i<seqlen;i++) {
@@ -1939,7 +1939,7 @@ static void decodeValue(
       seqlen=1; // assume logical char consists of single byte
       chrs[0]=c;
       do {
-        seqlen=appendCharsAsUTF8(chrs,aVal,aCharset,seqlen); // add char (eventually with UTF8 expansion) to aVal
+        seqlen=appendCharsAsUTF8(chrs,aVal,aCharset,seqlen); // add char (possibly with UTF8 expansion) to aVal
         if (seqlen<=1) break; // done
         // need more bytes to encode entire char
         for (int i=1;i<seqlen;i++) {
@@ -2709,7 +2709,7 @@ sInt16 TMimeDirProfileHandler::generateProperty(
         aBaseOffset, // offset relative to base field
         aRepeatOffset, // additional offset or array index
         elemtext,
-        aPropP->valuesep, // use valuelist separator between multiple values eventually generated from a list in a single field (e.g. CATEGORIES)
+        aPropP->valuesep, // use valuelist separator between multiple values possibly generated from a list in a single field (e.g. CATEGORIES)
         aMimeMode,
         false, // not a param
         true, // always escape ; in valuelist properties
@@ -2920,7 +2920,7 @@ void TMimeDirProfileHandler::generateMimeDir(TMultiFieldItem &aItem, string &aSt
       s.append(fVTimeZonePendingProfileP->levelName);
       finalizeProperty(s.c_str(),vtz,fMimeDirMode,false,false);
     } // for
-    // now insert the VTIMEZONE into the output string (so eventually making it appear BEFORE the
+    // now insert the VTIMEZONE into the output string (so possibly making it appear BEFORE the
     // properties that use TZIDs)
     aString.insert(fVTimeZoneInsertPos, vtz);
     // done
@@ -3059,7 +3059,7 @@ void TMimeDirProfileHandler::generateLevels(
       // generate sublevels, if any
       const TProfileDefinition *subprofileP = aProfileP->subLevels;
       while (subprofileP) {
-        // generate sublevels (eventually, none is generated)
+        // generate sublevels (possibly, none is generated)
         generateLevels(aItem,aString,subprofileP);
         // next
         subprofileP=subprofileP->next;
@@ -3176,7 +3176,7 @@ bool TMimeDirProfileHandler::MIMEStringToField(
           // Now tctx is the default zone to bet set for ALL values that are in floating notation
           // - check for special handling of misbehaving remotes
           if (fTreatRemoteTimeAsLocal || fTreatRemoteTimeAsUTC) {
-            // ignore time zone specs which might be present eventually
+            // ignore time zone specs which might be present possibly
             tsFldP->setAsISO8601(aText, tctx, true);
             // now force time zone to item/user context or UTC depending on flag settings
             tctx = fTreatRemoteTimeAsLocal ? fItemTimeContext : TCTX_UTC;

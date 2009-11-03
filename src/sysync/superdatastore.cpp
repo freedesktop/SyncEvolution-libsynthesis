@@ -1038,7 +1038,7 @@ localstatus TSuperDataStore::engSaveSuspendState(bool aAnyway)
           // save partial state if any
           if (pos->fDatastoreLinkP->fPartialItemState!=pi_state_save_outgoing) {
             // ONLY if we have no request for saving an outgoing item state already,
-            // we eventually need to save a pending incoming item
+            // we possibly need to save a pending incoming item
             // if there is an incompletely received item, let it update Partial Item (fPIxxx) state
             // (if it is an item of this datastore, that is).
             if (fSessionP->fIncompleteDataCommandP)

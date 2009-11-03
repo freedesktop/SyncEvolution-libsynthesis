@@ -1311,7 +1311,7 @@ lineartime_t TTimestampField::getTimestampAs(timecontext_t aTargetContext, timec
   }
   // return target context as actual context
   if (aActualContext) *aActualContext = aTargetContext;
-  // return timestamp, eventually truncated to date-only or time-only if requested
+  // return timestamp, possibly truncated to date-only or time-only if requested
   if (TCTX_IS_DATEONLY(aTargetContext))
     return lineartime2dateonlyTime(ts);
   else if (TCTX_IS_TIMEONLY(aTargetContext))
@@ -2046,7 +2046,7 @@ TSyError TItemFieldKey::GetValueInternal(
             if (fTimeMode & TMODE_FLAG_FLOATING)
               ts = tsFldP->getTimestampAs(TCTX_UNKNOWN); // as-is
             else
-              ts = tsFldP->getTimestampAs(TCTX_UTC,&tctx); // always as UTC, will be converted to SYSTEM eventually by caller
+              ts = tsFldP->getTimestampAs(TCTX_UTC,&tctx); // always as UTC, will be converted to SYSTEM possibly by caller
             // return timestamp
             valPtr = &ts;
           }

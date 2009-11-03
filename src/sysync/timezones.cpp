@@ -992,7 +992,7 @@ timecontext_t SelectTZ( TDaylightSavingZone zone, int bias, int biasDST, lineart
   bool dst, ok;
   bool withDST= zone!=EDstNone;
   timecontext_t t= tctx_tz_unknown;
-  bool special= false; // eventually needed true for NGage
+  bool special= false; // possibly needed true for NGage
 
   int  i; // go thru the whole list of time zones
   for (i=(int)tctx_tz_system+1; i<(int)tctx_numtimezones; i++) {

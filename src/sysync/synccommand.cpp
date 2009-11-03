@@ -620,7 +620,7 @@ bool TSyncHeader::execute(void)
           }
         }
         // call server/client specific message start in derived classes
-        statusCmdP=newStatusCommand(200); // prepare OK default status (will eventually be modified by MessageStarted())
+        statusCmdP=newStatusCommand(200); // prepare OK default status (will possibly be modified by MessageStarted())
         hdrok=fSessionP->MessageStarted(fSyncHdrElementP,*statusCmdP);
       }
       else {
@@ -1585,7 +1585,7 @@ bool TSyncOpCommand::handleStatus(TStatusCommand *aStatusCmdP)
     fSessionP->AbortSession(412,true); // local problem
   }
   else {
-    // end of non-split SyncOp means that eventually saved
+    // end of non-split SyncOp means that possibly saved
     // parts of partial outgoing item are now obsolete
     if (fDataStoreP->fPartialItemState==pi_state_save_outgoing) {
       fDataStoreP->fPartialItemState=pi_state_none; // not any more
@@ -1833,7 +1833,7 @@ void TSyncOpCommand::saveAsPartialItem(SmlItemPtr_t aItemP)
 } // TSyncOpCommand::saveAsPartialItem
 
 
-// - eventually substitute data with previous session's buffered left-overs from a chunked transfer
+// - possibly substitute data with previous session's buffered left-overs from a chunked transfer
 //   for resuming a chunked item transfer.
 bool TSyncOpCommand::checkChunkContinuation(void)
 {
@@ -2923,7 +2923,7 @@ TMapCommand::TMapCommand(
 // generate empty map element
 void TMapCommand::generateEmptyMapElement(void)
 {
-  // free eventually still existing map element
+  // free possibly still existing map element
   if (fMapElementP) FreeSmlElement();
   // create internal map element
   fMapElementP = SML_NEW(SmlMap_t);
@@ -3039,7 +3039,7 @@ bool TMapCommand::continueIssue(bool &aNewIssue)
 // add as many Map items as possible, update fInProgress
 void TMapCommand::generateMapItems(void)
 {
-  // let datastore add Map items (eventually none)
+  // let datastore add Map items (possibly none)
   fInProgress = !(
     fLocalDataStoreP->engGenerateMapItems(this,NULL)
   );

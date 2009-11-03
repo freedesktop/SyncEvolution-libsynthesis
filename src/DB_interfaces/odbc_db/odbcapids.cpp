@@ -1572,7 +1572,7 @@ bool TODBCApiDS::execSQLStatement(SQLHSTMT aStatement, string &aSQL, bool aNoDat
   if (aSQL.empty()) return true; // "ok", nothing to execute
   #ifdef SQLITE_SUPPORT
   if (fUseSQLite && aForData) {
-    // execute (eventually already prepared) statement in SQLite
+    // execute (possibly already prepared) statement in SQLite
     if (!fSQLiteStmtP) {
       // not yet prepared, do it now
       fAgentP->prepareSQLiteStatement(aSQL.c_str(),fSQLiteP,fSQLiteStmtP);
@@ -2267,7 +2267,7 @@ void TODBCApiDS::resetSQLParameterMaps(void)
 {
   #ifdef SQLITE_SUPPORT
   if (fUseSQLite) {
-    // resetting the parameter map finalizes any eventually running statement
+    // resetting the parameter map finalizes any possibly running statement
     if (fSQLiteStmtP) {
       sqlite3_finalize(fSQLiteStmtP);
       fSQLiteStmtP=NULL;
@@ -2644,7 +2644,7 @@ bool TODBCApiDS::appendFilterTerm(string &aSQL, const char *&aPos, const char *a
           if ((*pos)->setNo==0 && fid==(*pos)->fid) {
             if ((*pos)->isArray()) return false; // array fields cannot be used in filters
             // found
-            if (mainfound) break; // second match just breaks loop (time for date, eventually)
+            if (mainfound) break; // second match just breaks loop (time for date, possibly)
             // main
             mainpos=pos; // save position of main field
             mainfound=true;

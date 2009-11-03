@@ -495,7 +495,7 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
     fInitializing=true; // we enter the initialisation phase now
     fStartInit=true; // and we want to start the init
   }
-  // try starting init now (eventually repeats until it can be done)
+  // try starting init now (possibly repeats until it can be done)
   if (fStartInit) {
     PDEBUGPRINTFX(DBG_DATA,( "MultiThread %sabled", fMultiThread ? "en":"dis" ));
     #ifdef MULTI_THREAD_DATASTORE // combined define and flag
@@ -650,7 +650,7 @@ void TStdLogicDS::dontSendItemAsServer(TSyncItem *syncitemP)
 
 
 // - called when a item in the sync set changes its localID (due to local DB internals)
-//   Datastore must make sure that eventually cached items get updated
+//   Datastore must make sure that possibly cached items get updated
 // - NOTE: derivates must take care of updating map entries as well!
 void TStdLogicDS::dsLocalIdHasChanged(const char *aOldID, const char *aNewID)
 {
@@ -831,7 +831,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
     //   would be sent before the third..nth chunk of the previous command).
     TSmlCommand *cmdP = syncopcmdP;
     syncopcmdP=NULL;
-    // eventually, we have a NULL command here (e.g. in case it could not be generated due to MaxObjSize restrictions)
+    // possibly, we have a NULL command here (e.g. in case it could not be generated due to MaxObjSize restrictions)
     if (cmdP) {
       if (!fSessionP->issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) {
         alldone=false; // issue failed (no room in message), not finished so far
@@ -971,7 +971,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
     //   would be sent before the third..nth chunk of the previous command).
     TSmlCommand *cmdP = syncopcmdP;
     syncopcmdP=NULL;
-    // eventually, we have a NULL command here (e.g. in case it could not be generated due to MaxObjSize restrictions)
+    // possibly, we have a NULL command here (e.g. in case it could not be generated due to MaxObjSize restrictions)
     if (cmdP) {
       if (!fSessionP->issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) {
         alldone=false; // issue failed (no room in message), not finished so far

@@ -1028,7 +1028,7 @@ bool endDateFromCount(
           // occurrence interval can be at most 4 years in the future (safety abort)
           while (newYearsPassed<=4) {
             if (firstmask & ((uInt64)1<<(startmonth-1))) {
-              // eventually found an occurrence
+              // possibly found an occurrence
               // - is an occurrence only if that day exists in the month
               if (startday<=lastday) {
                 cnt--; // count it

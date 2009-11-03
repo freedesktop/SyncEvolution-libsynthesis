@@ -1177,7 +1177,7 @@ TMapContainer::iterator TCustomImplDS::findMapByRemoteID(const char *aRemoteID)
 #ifdef SYSYNC_SERVER
 
 // - called when a item in the sync set changes its localID (due to local DB internals)
-//   Datastore must make sure that eventually cached items get updated
+//   Datastore must make sure that possibly cached items get updated
 void TCustomImplDS::dsLocalIdHasChanged(const char *aOldID, const char *aNewID)
 {
   // find item in map
@@ -2231,7 +2231,7 @@ localstatus TCustomImplDS::implGetItem(
                     // - Those that were successfully modified in the suspended part of a session, but get modified
                     //   AGAIN between suspend and this resume will NOT be detected as changes any more. Therefore, for
                     //   items we see here that don't have the mapflag_useforresume, we need to check additionally if
-                    //   they eventually have changed AFTER THE LAST SUSPEND SAVE
+                    //   they possibly have changed AFTER THE LAST SUSPEND SAVE
                     if ((*pos).mapflags & mapflag_useforresume) {
                       PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("Resuming and found marked-for-resume -> send replace"));
                       sop=sop_wants_replace;
@@ -2743,7 +2743,7 @@ bool TCustomImplDS::implProcessItem(
     aStatusCommand.setStatusCode(510); // default DB error
     switch (sop) {
       /// @todo sop_copy is now implemented by read/add sequence
-      ///       in localEngineDS, but will be moved here later eventually
+      ///       in localEngineDS, but will be moved here later possibly
       case sop_add :
         // add item and retrieve new localID for it
         sta = apiAddItem(*myitemP,localID);
@@ -2773,7 +2773,7 @@ bool TCustomImplDS::implProcessItem(
           }
           // - status ok
           aStatusCommand.setStatusCode(201); // item added
-          // - add or update map entry (in client case, remoteID is irrelevant and eventually is not saved)
+          // - add or update map entry (in client case, remoteID is irrelevant and possibly is not saved)
           modifyMap(mapentry_normal,localID.c_str(),remoteID,0,false);
           ok=true;
         }
@@ -3022,7 +3022,7 @@ localstatus TCustomImplDS::implSaveEndOfSession(bool aUpdateAnchors)
         }
         #endif
       }
-      // also update opaque reference string eventually needed in DS API implementations
+      // also update opaque reference string possibly needed in DS API implementations
       fPreviousToRemoteSyncIdentifier = fCurrentSyncIdentifier;
     }
     // updating anchor means invalidating last Suspend
@@ -3102,7 +3102,7 @@ localstatus TCustomImplDS::zapSyncSet(void)
 
 #ifndef BINFILE_ALWAYS_ACTIVE
 
-// - save status information required to eventually perform a resume (as passed to datastore with
+// - save status information required to possibly perform a resume (as passed to datastore with
 //   implMarkOnlyUngeneratedForResume() and implMarkItemForResume())
 //   (or, in case the session is really complete, make sure that no resume state is left)
 localstatus TCustomImplDS::implSaveResumeMarks(void)
@@ -3124,7 +3124,7 @@ localstatus TCustomImplDS::implSaveResumeMarks(void)
     // if datastore can set modification timestamps, best time to save is start of sync
     fPreviousSuspendCmpRef = fCurrentSyncTime;
   }
-  // also update opaque reference string eventually needed in DS API implementations
+  // also update opaque reference string possibly needed in DS API implementations
   fPreviousSuspendIdentifier = fCurrentSyncIdentifier;
   // save admin data now
   localstatus sta=SaveAdminData(false,false); // not end of session, not successful end either
@@ -3369,7 +3369,7 @@ localstatus TCustomImplDS::zapDatastore(void)
     // make sure we have the sync set
     if (!makeSyncSetLoaded(false)) return 510; // error
   }
-  // Zap the sync set in this datastore (will eventually call zapSyncSet)
+  // Zap the sync set in this datastore (will possibly call zapSyncSet)
   return apiZapSyncSet();
 } // TCustomImplDS::zapDatastore
 

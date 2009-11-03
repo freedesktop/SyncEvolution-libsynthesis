@@ -3247,9 +3247,9 @@ namespace sysync {
 void TRootConfig::installAgentConfig(void)
 {
   #if defined(XML2GO_SUPPORT)
-  fAgentConfigP = new TXml2goAgentConfig(this); // xml2go (eventually on top of ODBC)
+  fAgentConfigP = new TXml2goAgentConfig(this); // xml2go (possibly on top of ODBC)
   #elif defined(SDK_SUPPORT)
-  fAgentConfigP = new TPluginAgentConfig(this); // plugin/SDK (eventually on top of ODBC)
+  fAgentConfigP = new TPluginAgentConfig(this); // plugin/SDK (possibly on top of ODBC)
   #elif defined(SQL_SUPPORT)
   fAgentConfigP = new TOdbcAgentConfig(this); // ODBC only
   #else

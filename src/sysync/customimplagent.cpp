@@ -752,7 +752,7 @@ bool TCustomImplAgent::SessionLogin(const char *aUserName, const char *aAuthStri
   #else
   #define DB_USERNAME fUserName.c_str()
   fDomainName.erase(); // no domain name
-  // second step: run script to eventually grant auth before any other method is
+  // second step: run script to possibly grant auth before any other method is
   // needed at all
   // - set status vars that can be referenced by context funcs in script
   fStandardAuthOK=false; // not yet authorized, for AUTHOK() func
@@ -780,7 +780,7 @@ bool TCustomImplAgent::SessionLogin(const char *aUserName, const char *aAuthStri
     if (resP) {
       // explicit auth or reject at this stage
       SYSYNC_TRY {
-        // - first let device register itself (and find devicekey eventually)
+        // - first let device register itself (and find devicekey possibly)
         CheckDevice(aDeviceID);
         // - now get auth result
         authok = resP->getAsBoolean();

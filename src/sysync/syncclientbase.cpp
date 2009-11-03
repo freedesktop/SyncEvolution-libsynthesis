@@ -417,7 +417,7 @@ localstatus TSyncClientBase::CreateTunnelSession(cAppCharP aDatastoreName)
 // create a new client session
 localstatus TSyncClientBase::CreateSession(void)
 {
-  // remove any eventually existing old session first
+  // remove any possibly existing old session first
   KillClientSession();
   // get config
   //TAgentConfig *configP = static_cast<TAgentConfig *>(getSyncAppBase()->getRootConfig()->fAgentConfigP);

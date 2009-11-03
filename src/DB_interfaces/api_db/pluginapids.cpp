@@ -2450,7 +2450,7 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize)
     memSize totalsize = 0; // not known
     memSize offs= 0;
 
-    if (!fBlobBuffer && neededBytes==0) neededBytes=200; // just read a bit to eventually obtain the total size
+    if (!fBlobBuffer && neededBytes==0) neededBytes=200; // just read a bit to possibly obtain the total size
     do {
       // read a block
       dberr = fApiDsP->fDBApi_Data.ReadBlob(

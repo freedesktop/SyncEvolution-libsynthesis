@@ -1834,7 +1834,7 @@ bool TBinfileImplDS::implProcessItem(
     // - now perform op
     switch (sop) {
       // %%% note: sop_copy is now implemented by read/add sequence
-      //     in localdatatstore, but will be moved here later eventually
+      //     in localdatatstore, but will be moved here later possibly
       case sop_add :
         // add record
         if ((sta=createItem(aItemP,newid,receiveOnly))!=LOCERR_OK) {
@@ -2009,7 +2009,7 @@ void TBinfileImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID,
 } // TBinfileImplDS::confirmItemOp
 
 
-// - save status information required to eventually perform a resume (as passed to datastore with
+// - save status information required to possibly perform a resume (as passed to datastore with
 //   implMarkOnlyUngeneratedForResume() and implMarkItemForResume())
 //   (or, in case the session is really complete, make sure that no resume state is left)
 localstatus TBinfileImplDS::implSaveResumeMarks(void)
@@ -2276,7 +2276,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   }
   // - save them
   fPendingMaps.close();
-  // Save last item info and eventually partial item data
+  // Save last item info and possibly partial item data
   TPendingItemHeader pendingItemHeader;
   memset((void*)&pendingItemHeader,0,sizeof(pendingItemHeader)); // make nicely empty by default
   bool saveit=false;

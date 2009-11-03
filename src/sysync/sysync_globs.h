@@ -400,7 +400,7 @@ typedef enum {
   psta_sync,            // sync package
   psta_initsync,        // combined initialisation and sync package
   psta_map,             // data update status / map
-  psta_supplement,      // extra packages eventually needed at end of session
+  psta_supplement,      // extra packages possibly needed at end of session
   // number of enums
   numPackageStates
 } TPackageStates;

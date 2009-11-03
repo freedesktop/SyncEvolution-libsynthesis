@@ -130,7 +130,7 @@ protected:
   virtual localstatus dsAfterStateChange(TLocalEngineDSState aOldState,TLocalEngineDSState aNewState);
   #ifdef SYSYNC_SERVER
   // - called when a item in the sync set changes its localID (due to local DB internals)
-  //   Datastore must make sure that eventually cached items get updated
+  //   Datastore must make sure that possibly cached items get updated
   virtual void dsLocalIdHasChanged(const char *aOldID, const char *aNewID);
   #endif
   /// @}
@@ -155,7 +155,7 @@ protected:
   /// called to mark an already sent item as "to-be-resent", e.g. due to temporary
   /// error status conditions, by localID or remoteID (latter only in server case).
   virtual void logicMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID);
-  /// save status information required to eventually perform a resume (as passed to datastore with
+  /// save status information required to possibly perform a resume (as passed to datastore with
   /// markOnlyUngeneratedForResume(), markItemForResume() and markItemForResend())
   /// (or, in case the session is really complete, make sure that no resume state is left)
   /// @note Must also save tempGUIDs (for server) and pending/unconfirmed maps (for client)
@@ -186,7 +186,7 @@ protected:
   ///   these can be non-virtual.
   /// @{
   //
-  /// save status information required to eventually perform a resume (as passed to datastore with
+  /// save status information required to possibly perform a resume (as passed to datastore with
   /// markOnlyUngeneratedForResume() and markItemForResume())
   /// (or, in case the session is really complete, make sure that no resume state is left)
   /// @note Must also save tempGUIDs (for server) and pending/unconfirmed maps (for client)

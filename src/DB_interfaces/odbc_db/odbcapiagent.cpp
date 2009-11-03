@@ -956,7 +956,7 @@ void TODBCApiAgent::ResetSession(void)
 #ifdef ODBCAPI_SUPPORT
 #ifdef SCRIPT_SUPPORT
 
-// commit and close eventually open script statement
+// commit and close possibly open script statement
 void TODBCApiAgent::commitAndCloseScriptStatement(void)
 {
   if (fODBCConnectionHandle!=SQL_NULL_HANDLE) {
@@ -1653,7 +1653,7 @@ bool TODBCApiAgent::ParseParamSubst(
   TDBFieldType dbfty=dbft_string; // default to string
   uInt32 colmaxsize=0;
   if (h<k) {
-    // more params specified (database field type and eventually column size)
+    // more params specified (database field type and possibly column size)
     h = aSQL.find(",",j);
     if (h==string::npos) { h=k; } // no third comma, only field type, use default column size)
     // get database field type
@@ -3227,7 +3227,7 @@ void TODBCApiAgent::prepareSQLiteStatement(
 {
   const char *sqltail;
 
-  // discard eventually existing one
+  // discard possibly existing one
   if (aStatement) {
     sqlite3_finalize(aStatement);
     aStatement=NULL;

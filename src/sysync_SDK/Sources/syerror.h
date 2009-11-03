@@ -47,7 +47,7 @@ enum TSyErrorEnum {
   DB_Forbidden = 403,
   /** object not found / unassigned field */
   DB_NotFound = 404,
-  /** command not allowed (eventually: at this time)*/
+  /** command not allowed (possibly: only at this time)*/
   DB_NotAllowed = 405,
 
   /** proxy authentication required */

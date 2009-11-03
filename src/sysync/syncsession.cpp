@@ -3693,7 +3693,7 @@ bool TSyncSession::processSyncOpItem(
       &ErrorFuncTable,
       &errctx // caller context
     );
-  // not completely handled, use eventually modified status code
+  // not completely handled, use possibly modified status code
   #ifdef SYDEBUG
   if (aStatusCommand.getStatusCode() != errctx.newstatuscode) {
     PDEBUGPRINTFX(DBG_ERROR,("Status: Session Script changed original status=%hd to %hd (original op was %s)",aStatusCommand.getStatusCode(),errctx.newstatuscode,SyncOpNames[errctx.syncop]));
@@ -4355,7 +4355,7 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
       if (ruleP->fRequestMaxTime>=0) fRequestMaxTime = ruleP->fRequestMaxTime;
       if (ruleP->fDefaultOutCharset!=chs_unknown) fDefaultOutCharset = ruleP->fDefaultOutCharset;
       if (ruleP->fDefaultInCharset!=chs_unknown) fDefaultInCharset = ruleP->fDefaultInCharset;
-      // - eventually override decisions that are otherwise made by session
+      // - possibly override decisions that are otherwise made by session
       //   Note: this is not a single option because we had this before rule options were tristates.
       if (ruleP->fForceUTC>0) fRemoteCanHandleUTC=true;
       if (ruleP->fForceLocaltime>0) fRemoteCanHandleUTC=false;
@@ -4423,7 +4423,7 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
     }
   }
   // show summary
-  PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("Summary of all behaviour options (eventually set by remote rule)"));
+  PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("Summary of all behaviour options (possibly set by remote rule)"));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Remote Description        : %s",fRemoteDescName.c_str()));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Legacy mode               : %s",boolString(fLegacyMode)));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Lenient mode              : %s",boolString(fLenientMode)));

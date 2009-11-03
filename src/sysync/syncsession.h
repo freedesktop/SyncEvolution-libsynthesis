@@ -526,7 +526,7 @@ public:
   virtual localstatus analyzeRemoteDevInf(
     SmlDevInfDevInfPtr_t aDevInfP
   );
-  // - get eventually cached devinf for specified device, passes ownership of
+  // - get possibly cached devinf for specified device, passes ownership of
   //   created devinf structure to caller
   //   returns false if no devinf could be loaded
   virtual bool loadRemoteDevInf(const char * /* aDeviceID */, SmlDevInfDevInfPtr_t & /* aDevInfP */) { return false; };
@@ -815,7 +815,7 @@ protected:
   // - check remote devinf to detect special behaviour needed for some clients. Base class
   //   does not do anything on server level (configured rules are handled at session level)
   virtual localstatus checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP);
-  // - remote device is analyzed, eventually save status
+  // - remote device is analyzed, possibly save status
   virtual void remoteAnalyzed(void) { /* nop */ };
   // SyncML Toolkit interface
   InstanceID_t fSmlWorkspaceID; // SyncML toolkit workspace instance ID

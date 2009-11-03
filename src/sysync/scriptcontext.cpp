@@ -3386,7 +3386,7 @@ bool TScriptContext::executeTest(
   TScriptContext *aCtxP,
   const string &aTScript,
   const TFuncTable *aFuncTableP, // context's function table, NULL if none
-  void *aCallerContext, // free pointer eventually having a meaning for context functions and chain function
+  void *aCallerContext, // free pointer possibly having a meaning for context functions and chain function
   TMultiFieldItem *aTargetItemP, // target (or "loosing") item
   bool aTargetWritable, // if set, target item may be modified
   TMultiFieldItem *aReferenceItemP, // reference for source (or "old" or "winning") item
@@ -3436,7 +3436,7 @@ bool TScriptContext::executeWithResult(
   TScriptContext *aCtxP,
   const string &aTScript,
   const TFuncTable *aFuncTableP, // context's function table, NULL if none
-  void *aCallerContext, // free pointer eventually having a meaning for context functions
+  void *aCallerContext, // free pointer possibly having a meaning for context functions
   TMultiFieldItem *aTargetItemP, // target (or "loosing") item
   bool aTargetWritable, // if set, target item may be modified
   TMultiFieldItem *aReferenceItemP, // reference for source (or "old" or "winning") item
@@ -3469,7 +3469,7 @@ bool TScriptContext::execute(
   TScriptContext *aCtxP,
   const string &aTScript,
   const TFuncTable *aFuncTableP, // context's function table, NULL if none
-  void *aCallerContext, // free pointer eventually having a meaning for context functions
+  void *aCallerContext, // free pointer possibly having a meaning for context functions
   TMultiFieldItem *aTargetItemP, // target (or "loosing") item
   bool aTargetWritable, // if set, target item may be modified
   TMultiFieldItem *aReferenceItemP, // reference for source (or "old" or "winning") item
@@ -3817,7 +3817,7 @@ TItemField *TScriptContext::evalTerm(TItemFieldTypes aResultType)
         evalParams(funccontextP);
         // copy current line for reference (as builtins have no own line number
         funccontextP->line=line;
-        // copy caller's context pointer (eventually modified by function table chaining)
+        // copy caller's context pointer (possibly modified by function table chaining)
         funccontextP->fCallerContext=callerContext;
         funccontextP->fParentContextP=this; // link to calling script context
         // copy target and reference item vars
@@ -3860,7 +3860,7 @@ TItemField *TScriptContext::evalTerm(TItemFieldTypes aResultType)
       funcscript=getSyncAppBase()->getRootConfig()->fScriptConfigP->getFunctionScript(*(p+2));
       if (!funcscript)
         SYSYNC_THROW(TSyncException(DEBUGTEXT("invalid user function index","scri7")));
-      // %%% add caching of function contexts here eventually.
+      // %%% possibly add caching of function contexts here.
       //     Now we rebuild a context for every function call. Not extremely efficient...
       funccontextP=NULL;
       rebuildContext(fAppBaseP,*funcscript,funccontextP,fSessionP,true);
@@ -3918,7 +3918,7 @@ TItemField *TScriptContext::evalTerm(TItemFieldTypes aResultType)
       //SCRIPTDBGMSGX(DBG_SCRIPTS+DBG_EXOTIC+DBG_SCRIPTEXPR,("- Literal BOOLEAN: %d",tk==TK_TRUE ? 1 : 0));
     }
     else if (tk==TK_NUMERIC_LITERAL) {
-      // %%% add fty_float later eventually
+      // %%% possibly add fty_float later
       // set type to integer if not another type requested
       //SCRIPTDBGMSGX(DBG_SCRIPTS+DBG_EXOTIC+DBG_SCRIPTEXPR,("- Literal number: %0.*s",*(p+1),p+2));
       if (termtype==fty_none) termtype=fty_integer;
@@ -4221,7 +4221,7 @@ bool TScriptContext::ExecuteScript(
   TItemField **aResultPP, // if not NULL, a result field will be returned here (must be deleted by caller)
   bool aAsFunction, // if set, this is a function call
   const TFuncTable *aFuncTableP, // context's function table, NULL if none
-  void *aCallerContext, // free pointer eventually having a meaning for context functions
+  void *aCallerContext, // free pointer possibly having a meaning for context functions
   TMultiFieldItem *aTargetItemP, // target (or "loosing") item
   bool aTargetWritable, // if set, target item may be modified
   TMultiFieldItem *aReferenceItemP, // reference for source (or "old" or "winning") item

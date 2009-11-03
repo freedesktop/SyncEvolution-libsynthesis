@@ -687,7 +687,7 @@ protected:
   virtual void implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID);
   /// called to have all non-yet-generated sync commands as "to-be-resumed"
   virtual void implMarkOnlyUngeneratedForResume(void);
-  /// save status information required to eventually perform a resume (as passed to datastore with
+  /// save status information required to possibly perform a resume (as passed to datastore with
   /// markOnlyUngeneratedForResume() and markItemForResume())
   /// (or, in case the session is really complete, make sure that no resume state is left)
   virtual localstatus implSaveResumeMarks(void);
@@ -777,7 +777,7 @@ protected:
   #endif // not BINFILE_ALWAYS_ACTIVE
   #ifdef SYSYNC_SERVER
   // - called when a item in the sync set changes its localID (due to local DB internals)
-  //   Datastore must make sure that eventually cached items get updated
+  //   Datastore must make sure that possibly cached items get updated
   virtual void dsLocalIdHasChanged(const char *aOldID, const char *aNewID);
   #endif // SYSYNC_SERVER
   // - target key (if needed by descendant)

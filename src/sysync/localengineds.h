@@ -152,7 +152,7 @@ public:
   //   (outgoing items will be made pass this filter with makePassFilter)
   string fRemoteAcceptFilter;
   // - filter will be applied to items read from the local database,
-  //   IN ADDITION to eventually specified target address filtering
+  //   IN ADDITION to possibly specified target address filtering
   string fLocalDBFilterConf;
   // - filter applied to incoming items with makePassFilter
   //   when there is no fSyncSetFilter or when applying fSyncSetFilter
@@ -233,7 +233,7 @@ typedef enum {
   dssta_syncmodestable,           ///< client&server, sync mode is now stable (all alerts and alert statuses are exchanged and processed), server is ready for early maps
   dssta_dataaccessstarted,        ///< client&server, user data access has started (e.g. loading of sync set in progress)
   dssta_syncsetready,             ///< client&server, sync set is ready and can be accessed with logicXXXX sync op calls
-  dssta_clientsyncgenstarted,     ///< client only, generation of sync command(s) in client for server has started (eventually, we send some pending maps first)
+  dssta_clientsyncgenstarted,     ///< client only, generation of sync command(s) in client for server has started (possibly, we send some pending maps first)
   dssta_serverseenclientmods,     ///< server only, server has seen all client modifications now
   dssta_serversyncgenstarted,     ///< server only, generation of sync command(s) in server for client has started
   dssta_syncgendone,              ///< client&server, generation of sync command(s) is complete
@@ -829,7 +829,7 @@ public:
   const char *filterCGIToString(cAppCharP aCGI, string &aFilter);
   */
   /// @brief parse "syncml:filtertype-cgi" filter, convert into internal filter syntax
-  ///  and eventually sets some special filter options (fDateRangeStart, fDateRangeEnd)
+  ///  and possibly sets some special filter options (fDateRangeStart, fDateRangeEnd)
   ///  based on "filterkeywords" available for the type passed (DS 1.2).
   ///  For parsing DS 1.1/1.0 TAF-style filters, aItemType can be NULL, no type-specific
   ///  filterkeywords can be parsed then.
@@ -961,7 +961,7 @@ protected:
   /// returns true if DB implementation supports resuming in midst of a chunked item (can save fPIxxx.. and related admin data)
   virtual bool dsResumeChunkedSupportedInDB(void) { return false; };
   /// called when a item in the sync set changes its localID (due to local DB internals)
-  /// Datastore must make sure that eventually cached items get updated
+  /// Datastore must make sure that possibly cached items get updated
   virtual void dsLocalIdHasChanged(const char *aOldID, const char *aNewID);
   /// called when request processing ends
   virtual void dsEndOfMessage(void) {}; // nop at this level
@@ -1048,7 +1048,7 @@ protected:
   /// called to mark an already sent item as "to-be-resent", e.g. due to temporary
   /// error status conditions, by localID or remoteID (latter only in server case).
   virtual void logicMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID) = 0;
-  /// save status information required to eventually perform a resume (as passed to datastore with
+  /// save status information required to possibly perform a resume (as passed to datastore with
   /// markOnlyUngeneratedForResume() and markItemForResume())
   /// (or, in case the session is really complete, make sure that no resume state is left)
   /// @note Must also save tempGUIDs (for server) and pending/unconfirmed maps (for client)

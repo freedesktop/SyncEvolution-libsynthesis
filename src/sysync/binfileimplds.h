@@ -827,7 +827,7 @@ protected:
   virtual void implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID);
   /// called to have all non-yet-generated sync commands as "to-be-resumed"
   virtual void implMarkOnlyUngeneratedForResume(void);
-  /// save status information required to eventually perform a resume (as passed to datastore with
+  /// save status information required to possibly perform a resume (as passed to datastore with
   /// markOnlyUngeneratedForResume() and markItemForResume())
   /// (or, in case the session is really complete, make sure that no resume state is left)
   virtual localstatus implSaveResumeMarks(void);
