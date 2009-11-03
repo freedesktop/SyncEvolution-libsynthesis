@@ -841,7 +841,7 @@ void TODBCApiDS::apiRebuildScriptContexts(void)
 
 #ifdef ODBCAPI_SUPPORT
 
-// - get (session level) ODBC handle
+// - get (DB level) ODBC handle
 SQLHDBC TODBCApiDS::getODBCConnectionHandle(void)
 {
   if (fODBCConnectionHandle==SQL_NULL_HANDLE && fAgentP) {
@@ -857,8 +857,12 @@ SQLHDBC TODBCApiDS::getODBCConnectionHandle(void)
 // - check for connection-level error
 void TODBCApiDS::checkConnectionError(SQLRETURN aResult)
 {
-  if (!fAgentP)
-    return;
+  if (!fAgentP) return;
+	if (fODBCConnectionHandle!=SQL_NULL_HANDLE) {
+  	// check on local connection
+  	fAgentP->checkODBCError(aResult,SQL_HANDLE_DBC,fODBCConnectionHandle);
+  }
+  // check on session level
   fAgentP->checkConnectionError(aResult);
 } // TODBCApiDS::checkConnectionError
 
