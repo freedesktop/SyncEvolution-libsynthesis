@@ -915,10 +915,6 @@ protected:
   /// zaps the entire datastore, returns LOCERR_OK if ok
   /// @return LOCERR_OK or error code.
   virtual localstatus zapDatastore(void) = 0;
-  /// get error code for last routine call that returned !=LOCERR_OK
-  /// @return platform specific DB error code
-  virtual uInt32 lastDBError(void) { return 0; };
-  virtual bool isDBError(uInt32 aErrCode) { return aErrCode!=0; } // standard implementation assumes 0=ok
   /// returns timestamp of this sync session (must be used to set mod-timestamp on added and changed records)
   lineartime_t getThisSyncTime(void) { return fCurrentSyncTime; }
   /// get reference time or count to be used as reference date for this sync's modifications

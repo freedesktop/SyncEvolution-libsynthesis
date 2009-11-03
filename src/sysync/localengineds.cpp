@@ -1330,6 +1330,21 @@ uInt16 TLocalEngineDS::isDatastore(const char *aDatastoreURI)
 } // TLocalEngineDS::isDatastore
 
 
+
+/// get DB specific error message text for dbg log, or empty string if none
+/// @return platform specific DB error text
+string TLocalEngineDS::lastDBErrorText(void)
+{
+  string s;
+  s.erase();
+  uInt32 err = lastDBError();
+  if (isDBError(err)) {
+	  StringObjPrintf(s," (DB specific error code = %ld)",(long)lastDBError());
+  }
+  return s;
+} // TLocalEngineDS::lastDBErrorText
+
+
 #ifdef SYSYNC_CLIENT
 
 // - init Sync Parameters (client case)
@@ -5788,8 +5803,13 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
     default :
       SYSYNC_THROW(TSyncException("Unknown sync op in TLocalEngineDS::processRemoteItemAsServer"));
   } // switch
-  if (ok)
+  if (ok) {
     OBJ_PROGRESS_EVENT(fSessionP->getSyncAppBase(),pev_itemprocessed,fDSConfigP,fLocalItemsAdded,fLocalItemsUpdated,fLocalItemsDeleted);
+  }
+  else {
+  	// if the DB has a error string to show, add it here
+		aStatusCommand.addItemString(lastDBErrorText().c_str());
+  }
   // done
   return ok;
 } // TLocalEngineDS::engProcessRemoteItemAsServer
@@ -5868,7 +5888,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsClient(
   // - must be in correct sync state
   if (!testState(dssta_syncgendone)) {
     // Modifications from server not allowed before client has done sync gen
-    // %%% we could eventually relax this one, depending on the DB
+    // %%% we could possibly relax this one, depending on the DB
     aStatusCommand.setStatusCode(403);
     PDEBUGPRINTFX(DBG_ERROR,("Server command not allowed before client has sent entire <sync>"));
     delete aSyncItemP;
@@ -6024,7 +6044,13 @@ bool TLocalEngineDS::engProcessRemoteItemAsClient(
         SYSYNC_THROW(TSyncException("Unknown sync op in TLocalEngineDS::processRemoteItemAsClient"));
     } // switch
     // processed
-    if (ok) OBJ_PROGRESS_EVENT(fSessionP->getSyncAppBase(),pev_itemprocessed,fDSConfigP,fLocalItemsAdded,fLocalItemsUpdated,fLocalItemsDeleted);
+    if (ok) {
+    	OBJ_PROGRESS_EVENT(fSessionP->getSyncAppBase(),pev_itemprocessed,fDSConfigP,fLocalItemsAdded,fLocalItemsUpdated,fLocalItemsDeleted);
+    }
+    else {
+      // if the DB has a error string to show, add it here
+      aStatusCommand.addItemString(lastDBErrorText().c_str());    
+    }
     return ok;
   }
 } // TLocalEngineDS::processRemoteItemAsClient

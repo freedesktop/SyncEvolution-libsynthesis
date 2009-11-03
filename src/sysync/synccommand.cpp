@@ -3883,27 +3883,12 @@ void TStatusCommand::addSourceRef(
 } // TStatusCommand::addSourceRef
 
 
-// add an Error code string Item to the status
-void TStatusCommand::addErrorCodeString(
-  uInt32 aErrCode,
-  const char *aText // optional descriptive text
-)
-{
-  string msg;
-  if (!aText) aText="Err";
-  StringObjPrintf(msg,"%s = %ld",aText,(long)aErrCode);
-  if (fStatusElementP) {
-    addItem(newStringDataItem(msg.c_str()));
-  }
-} // TStatusCommand::addItemString
-
-
-// add a String Item to the status
+// add a String Item to the status (only if not empty)
 void TStatusCommand::addItemString(
   const char *aItemString // item string to be added
 )
 {
-  if (fStatusElementP && aItemString) {
+  if (fStatusElementP && aItemString && *aItemString) {
     addItem(newStringDataItem(aItemString));
   }
 } // TStatusCommand::addItemString

@@ -1131,6 +1131,13 @@ protected:
     string *aTableNameP=NULL,
     string *aCGIP=NULL
   );
+  /// get DB specific error code for last routine call that returned !=LOCERR_OK
+  /// @return platform specific DB error code
+  virtual uInt32 lastDBError(void) { return 0; };
+  virtual bool isDBError(uInt32 aErrCode) { return aErrCode!=0; } // standard implementation assumes 0=ok
+  /// get error message text showing lastDBError for dbg log, or empty string if none
+  /// @return platform specific DB error text
+  virtual string lastDBErrorText(void);
   /// @}
 }; // TLocalEngineDS
 

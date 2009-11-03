@@ -1019,7 +1019,7 @@ error:
   // release buffered changelog
   if (existingentries) sysync_free(existingentries);
   // return state
-  PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("changeLogPreflight: numberOfLocalChanges=%ld, status=%hd (lastDBError=%ld, binfileerr=%hd)",(long)fNumberOfLocalChanges,sta,(long)lastDBError(),err));
+  PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("changeLogPreflight: numberOfLocalChanges=%ld, status=%hd (binfileerr=%hd)%s",(long)fNumberOfLocalChanges,sta,err,lastDBErrorText().c_str()));
   PDEBUGENDBLOCK("changeLogPreflight");
   return sta;
 } // TBinfileImplDS::changeLogPreflight
@@ -1600,14 +1600,14 @@ localstatus TBinfileImplDS::implGetItem(
           // error getting record
           if (sta==404) {
             // record seems to have vanished between preflight and now
-            PDEBUGPRINTFX(DBG_ERROR,("Record does not exist any more in database (DBErr=%ld) -> ignore",(long)lastDBError()));
+            PDEBUGPRINTFX(DBG_ERROR,("Record does not exist any more in database%s -> ignore",lastDBErrorText().c_str()));
             // simply don't include in sync set - next preflight will detect it deleted
             if (myitemP) delete myitemP; // delete in case we have some half-filled record here
             continue; // try next
           }
           else {
             // record does not exist
-            PDEBUGPRINTFX(DBG_ERROR,("Error getting Record from DB (DBErr=%ld) -> Status %hd",(long)lastDBError(),sta));
+            PDEBUGPRINTFX(DBG_ERROR,("Error getting Record from DB%s -> Status %hd",lastDBErrorText().c_str(),sta));
             goto error;
           }
         }
@@ -1642,7 +1642,7 @@ localstatus TBinfileImplDS::implGetItem(
   return LOCERR_OK;
 error:
   // general database error
-  PDEBUGPRINTFX(DBG_ERROR,("implGetItem error %hd, lastDBError=%ld",sta,(long)lastDBError()));
+  PDEBUGPRINTFX(DBG_ERROR,("implGetItem error %hd%s",sta,lastDBErrorText().c_str()));
   aSyncItemP=NULL;
   return sta;
 } // TBinfileImplDS::implGetItem
@@ -1793,7 +1793,7 @@ bool TBinfileImplDS::implRetrieveItemByID(
   // get item now
   if ((sta=getItemByID(localid,itemP))!=LOCERR_OK) {
     aStatusCommand.setStatusCode(sta); // report status
-    aStatusCommand.addErrorCodeString(lastDBError());
+    aStatusCommand.addItemString(lastDBErrorText().c_str());
     DEBUGPRINTFX(DBG_ERROR,("Item not found in database"));
     return false;
   }
@@ -1988,8 +1988,8 @@ bool TBinfileImplDS::implProcessItem(
 error:
   // report OS specific error codes as item text back to the originator
   ok=false;
-  PDEBUGPRINTFX(DBG_ERROR,("Database Error --> SyncML status %ld, dberr=%ld",(long)statuscode,(long)lastDBError()));
-  aStatusCommand.addErrorCodeString(lastDBError());
+  PDEBUGPRINTFX(DBG_ERROR,("Database Error --> SyncML status %ld%s",(long)statuscode,lastDBErrorText().c_str()));
+  //aStatusCommand.addItemString(lastDBErrorDbgText().c_str());
 done:
   aStatusCommand.setStatusCode(statuscode);
   return ok;

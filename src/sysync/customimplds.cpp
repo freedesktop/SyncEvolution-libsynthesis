@@ -3374,14 +3374,6 @@ localstatus TCustomImplDS::zapDatastore(void)
 } // TCustomImplDS::zapDatastore
 
 
-/// get error code for last routine call that returned !=LOCERR_OK
-/// @return platform specific DB error code
-uInt32 TCustomImplDS::lastDBError(void)
-{
-  return 0; // none available
-} // TCustomImplDS::lastDBError
-
-
 #endif // BASED_ON_BINFILE_CLIENT connecting methods
 
 

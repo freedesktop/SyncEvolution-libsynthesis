@@ -688,8 +688,6 @@ public:
   void addSourceRef(const char *aSourceRef); // Source LocURI of an item this status applies to
   // - add a String Item to an existing status
   void addItemString(const char *aItemString); // item string to be added
-  // - add an (internal) error code message as text item to the status
-  void addErrorCodeString(uInt32 aErrCode, const char *aText=NULL);
   // - add an Item to an existing status
   void addItem(SmlItemPtr_t aItemP); // existing item data structure, ownership is passed to Status
   // - move items from another status to this one (passes ownership of items and deletes them from original)

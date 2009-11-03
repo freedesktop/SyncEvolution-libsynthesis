@@ -738,10 +738,6 @@ protected:
   /// zaps the entire datastore, returns LOCERR_OK if ok
   /// @return LOCERR_OK or error code.
   virtual localstatus zapDatastore(void);
-  /// get error code for last routine call that returned !=LOCERR_OK
-  /// @return platform specific DB error code
-  virtual uInt32 lastDBError(void);
-
   /// @}
   #endif // BASED_ON_BINFILE_CLIENT
 
