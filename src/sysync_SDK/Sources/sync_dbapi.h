@@ -20,6 +20,10 @@
  * be called by the SyncML engine. A linkable library is available
  * (for C++) as well.
  *
+ * For more detailed information about the DBApi interface
+ * please consult the SDK_manual.pdf which contains a tutorial,
+ * detailed descriptions and some example code.
+ *
  * The flow for accessing the datastores is always the same:
  * The SyncML engine will call these routines step by step
  *
@@ -42,7 +46,6 @@
  *   9)  StartDataWrite
  *  10)  any number of random calls to:
  *         -  InsertItem
- *         -  FinalizeLocalID
  *         -  UpdateItem
  *         -  DeleteItem
  *         -  DeleteSyncSet
@@ -50,7 +53,8 @@
  *         -  WriteBlob
  *         -  ReadBlob
  *         -  DeleteBlob
- *         - [AdaptItem]   (optional)
+ *         - [AdaptItem]      (optional)
+ *         -  FinalizeLocalID (at the end)
  *  11)  EndDataWrite
  *
  *  12) [Write Admin Data] (optional)

@@ -1096,7 +1096,7 @@ public:
     // adjust
     char c = *(filler.c_str()); // NUL or filler char
     if (c!='0' && sign) {
-      s.insert(0,1,sign); // no zero-padding: insert sign before padding
+      s.insert((size_t)0,(size_t)1,sign); // no zero-padding: insert sign before padding
       sign=0; // done now
     }
     sInt32 n,sz = s.size() + (sign ? 1 : 0); // leave room for sign after zero padding
@@ -1106,7 +1106,7 @@ public:
       if (n<0)
         s.erase(0,-n); // delete at beginning
       else if (n>0 && c)
-        s.insert(0,n,c); // insert at beginning
+        s.insert((size_t)0,(size_t)n,c); // insert at beginning
     }
     else {
       // left aligned field
@@ -1114,11 +1114,11 @@ public:
       if (n<0)
         s.erase(sz-n,-n); // delete at end
       else if (n>0 && c)
-        s.insert(sz,n,c); // insert at end
+        s.insert((size_t)sz,(size_t)n,c); // insert at end
     }
     // insert plus now if filled with zeroes
     if (sign)
-      s.insert(0,1,sign); // insert sign after zero padding
+      s.insert((size_t)0,(size_t)1,sign); // insert sign after zero padding
     // return string
     aTermP->setAsString(s);
   } // func_NumFormat
