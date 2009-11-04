@@ -757,7 +757,7 @@ public:
     
     EMBVIRTUAL TSyError debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunction,
                                   int aDbgLevel, cAppCharP aLinePrefix,
-                                  cAppCharP aText) TUNNEL_IMPL;
+                                  cAppCharP aText);
 
     /// @}
 
