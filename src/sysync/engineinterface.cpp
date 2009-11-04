@@ -719,7 +719,8 @@ TSyError TConfigVarKey::SetValueInternal(
   cAppPointer aBuffer, memSize aValSize
 ) {
 	if (!aBuffer) return LOCERR_WRONGUSAGE; // cannot handle NULL values
-  if (!fEngineInterfaceP->getSyncAppBase()->setConfigVar(fVarName.c_str(),(cAppCharP)aBuffer))
+  string v; v.assign((cAppCharP)aBuffer,(size_t)aValSize); // copy because input could be unterminated string
+  if (!fEngineInterfaceP->getSyncAppBase()->setConfigVar(fVarName.c_str(),v.c_str()))
     return DB_NotFound;
   return LOCERR_OK;
 } // TConfigVarKey::SetValueInternal
@@ -896,8 +897,10 @@ TSyError TStructFieldsKey::SetValueInternal(
   else
     siz=aValSize;
   // copy data into struct
-  if (fldinfoP->valType==VALTYPE_TEXT_OBFUS)
-    assignMangledToCString((appCharP)valPtr, (cAppCharP)aBuffer, fldinfoP->valSiz, true); // always use entire buffer and fill it with garbage beyond end of actual data
+  if (fldinfoP->valType==VALTYPE_TEXT_OBFUS) {
+  	string v; v.assign((cAppCharP)aBuffer,aValSize);
+    assignMangledToCString((appCharP)valPtr, v.c_str(), fldinfoP->valSiz, true); // always use entire buffer and fill it with garbage beyond end of actual data
+  }
   else
     memcpy(valPtr,aBuffer,siz);
   // - struct modified, signal that (for derivates that might want to save the record on close)
