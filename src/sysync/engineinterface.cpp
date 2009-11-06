@@ -424,7 +424,8 @@ TSyError TSettingsKeyImpl::SetValueByID(
         appendUTF16AsUTF8((uInt16 *)aBuffer,aValSize/2,fBigEndian,convStr, true, true);
       }
       else {
-        appendStringAsUTF8((cAppCharP)aBuffer, convStr, fCharSet, lem_cstr, true);
+      	string s; s.assign((cAppCharP)aBuffer,aValSize);
+        appendStringAsUTF8(s.c_str(), convStr, fCharSet, lem_cstr, true);
       }
       // possibly convert text to native
       switch (valType) {
