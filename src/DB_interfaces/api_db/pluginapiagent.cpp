@@ -587,9 +587,22 @@ bool TPluginApiAgent::CheckLogin(const char *aOriginalUserName, const char *aMod
   }
   // api auth required
   TDB_Api_Str userKey;
+  TDB_Api_Str dbSecret;
   int pwmode = fDBApiSession.PasswordMode();
+  // check anonymous login
+  if (aAuthStringType==sectyp_anonymous) {
+  	if (pwmode==Password_ClrText_IN || pwmode==Password_MD5_Nonce_IN) {
+    	// modes that pass in credential string - pass empty credential string to signal "anonymous"
+	    authok = fDBApiSession.Login(aModifiedUserName,"",userKey)==LOCERR_OK;
+    }
+    else {
+    	// modes that get credential string from API - check that API returns empty string to signal "anonymous" login is ok
+	    authok = fDBApiSession.Login(aModifiedUserName,dbSecret,userKey)==LOCERR_OK;
+      authok = authok && dbSecret.empty(); // returned secret must be empty to allow anonymous login
+    }
+  }
   // check if we can auth at all
-  if (pwmode == Password_ClrText_IN) {
+  else if (pwmode == Password_ClrText_IN) {
     // we can auth only if we have a cleartext password from the remote
     if (aAuthStringType!=sectyp_clearpass) return false; // auth not possible
     // login with clear text password
@@ -601,23 +614,22 @@ bool TPluginApiAgent::CheckLogin(const char *aOriginalUserName, const char *aMod
     authok = fDBApiSession.Login(aModifiedUserName,aAuthString,userKey)==LOCERR_OK;
   }
   else {
-    TDB_Api_Str dbSecret;
     if (pwmode == Password_MD5_OUT) {
       // if the database has MD5, we can auth basic and SyncML 1.1 MD5, but not SyncML 1.0 MD5
       if (aAuthStringType==sectyp_md5_V10) return false; // auth with SyncML 1.0 MD5 not possible
     }
     // get Secret and preliminary authok (w/o password check yet) from database
-    authok= fDBApiSession.Login(aModifiedUserName,dbSecret,userKey)==LOCERR_OK;
+    authok = fDBApiSession.Login(aModifiedUserName,dbSecret,userKey)==LOCERR_OK;
     if (authok) {
       // check secret
       if (pwmode == Password_ClrText_OUT) {
         // we have the clear text password, check against what was transmitted from remote
-        authok=checkAuthPlain(aOriginalUserName,dbSecret.c_str(),nonce.c_str(),aAuthString,aAuthStringType);
+        authok = checkAuthPlain(aOriginalUserName,dbSecret.c_str(),nonce.c_str(),aAuthString,aAuthStringType);
       }
       else {
         // whe have the MD5 of user:password, check against what was transmitted from remote
         // Note: this can't work with non-V1.1 type creds
-        authok=checkAuthMD5(aOriginalUserName,dbSecret.c_str(),nonce.c_str(),aAuthString,aAuthStringType);
+        authok = checkAuthMD5(aOriginalUserName,dbSecret.c_str(),nonce.c_str(),aAuthString,aAuthStringType);
       }
     }
   }
