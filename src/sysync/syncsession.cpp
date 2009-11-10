@@ -3985,14 +3985,6 @@ bool TSyncSession::checkCredentials(const char *aUserName, const SmlCredPtr_t aC
         authok=false; // anyway, reject
         PDEBUGPRINTFX(DBG_ERROR,("Authorization failed (wrong type of creds), sending 401 + chal"));
       }
-      else if (!authok && isAuthTypeAllowed(auth_none)) {
-        // Accept all kinds of credentials, even invalid ones,
-        // when no authentication is required. The client
-        // would have been allowed to connect if it hadn't
-        // provided credentials. By accepting these invalid
-        // credentials we make the client setup easier.
-        authok=true;
-      }
       else if (!authok) {
         // auth type allowed, but auth itself not ok
         aStatusCommand.setStatusCode(401); // unauthorized, bad credentials
