@@ -4349,7 +4349,7 @@ TODBCFieldProxy::~TODBCFieldProxy()
 
 
 // fetch BLOB from DPAPI
-void TODBCFieldProxy::fetchBlob(size_t aNeededSize)
+void TODBCFieldProxy::fetchBlob(void)
 {
   if (!fFetched) {
     // if do not have anything yet and need something, read it now
@@ -4431,7 +4431,7 @@ void TODBCFieldProxy::fetchBlob(size_t aNeededSize)
 // returns size of entire blob
 size_t TODBCFieldProxy::getBlobSize(TStringField *aFieldP)
 {
-  fetchBlob(0);
+  fetchBlob();
   return fValue.size();
 } // TODBCFieldProxy::getBlobSize
 
@@ -4439,9 +4439,9 @@ size_t TODBCFieldProxy::getBlobSize(TStringField *aFieldP)
 // read from Blob from specified stream position and update stream pos
 size_t TODBCFieldProxy::readBlobStream(TStringField *aFieldP, size_t &aPos, void *aBuffer, size_t aMaxBytes)
 {
-  if (fValue.size()<=aPos || !fFetched) { // <=aPos instead of <
+  if (!fFetched) {
     // we need to read the body
-    fetchBlob(aPos+aMaxBytes);
+    fetchBlob();
   }
   // now copy from our value
   if (aPos>fValue.size()) return 0;

@@ -2267,7 +2267,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
     // Note: in the main map, these are marked deleted. Before the next saveAdminData, these will
     //       be re-added (=re-activated) from the extra lists if they still exist.
     switch (mapEntry.entrytype) {
-      #ifdef SYSYNC_SERVER 
+      #ifdef SYSYNC_SERVER
       case mapentry_tempidmap:
       	if (IS_SERVER)
 	        fTempGUIDMap[mapEntry.remoteid]=mapEntry.localid; // tempGUIDs are accessed by remoteID=tempID
@@ -2422,6 +2422,7 @@ TApiBlobProxy::TApiBlobProxy(
   fBlobID = aBlobID;
   fParentObjectID = aParentID;
   fBlobSize = 0;
+  fBlobSizeKnown = false;
   fFetchedSize = 0;
   fBufferSize = 0;
   fBlobBuffer = NULL; // nothing retrieved yet
@@ -2436,21 +2437,23 @@ TApiBlobProxy::~TApiBlobProxy()
 
 
 // fetch BLOB from DPAPI
-void TApiBlobProxy::fetchBlob(size_t aNeededSize)
+void TApiBlobProxy::fetchBlob(size_t aNeededSize, bool aNeedsTotalSize, bool aNeedsAllData)
 {
   TSyError dberr=LOCERR_OK;
 
   if (fBufferSize==0 || aNeededSize>fFetchedSize) {
     // if do not have anything yet or not enough yet, we need to read
-    void *bufP=NULL;
-    bool last=false;
-    bool first=fFetchedSize==0; // first if we haven't fetched anything so far
+    uInt8P bufP = NULL;
+    bool last = false;
+    bool first = fFetchedSize==0; // first if we haven't fetched anything so far
     TDB_Api_Blk blobData;
     memSize neededBytes = aNeededSize-fFetchedSize; // how much we need to read more
     memSize totalsize = 0; // not known
-    memSize offs= 0;
 
-    if (!fBlobBuffer && neededBytes==0) neededBytes=200; // just read a bit to possibly obtain the total size
+		if (fIsStringBLOB)
+    	aNeedsAllData = true; // strings must be fetched entirely, as they need to be converted before we can measure size or get data
+    if (!fBlobBuffer && aNeededSize==0 && (aNeedsTotalSize || aNeedsAllData))
+    	neededBytes=200; // just read a bit to possibly obtain the total size
     do {
       // read a block
       dberr = fApiDsP->fDBApi_Data.ReadBlob(
@@ -2463,63 +2466,76 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize)
         last
       );
       if (dberr!=LOCERR_OK)
-        SYSYNC_THROW(TSyncException("DB_Api::ReadBlob fatal error",dberr));
-      // obtain a buffer
-      size_t newBufSiz = (neededBytes ? neededBytes : fFetchedSize+=blobData.fSize) + 1; // +1 for eventual string terminator
+        SYSYNC_THROW(TSyncException("ReadBlob fatal error",dberr));
+      // sanity check
+      if (blobData.fSize>neededBytes)
+        SYSYNC_THROW(TSyncException("ReadBlob returned more data than requested"));
+      // check if we know the total size reliably now
+      if (totalsize) {
+      	// non-zero return means we know the total size now
+        fBlobSize = totalsize;
+        fBlobSizeKnown = true;
+      }
+      else {
+      	// could be unknown size OR zero blob
+        if (neededBytes>0 && blobData.fSize==0) {
+        	// we tried to read, but got nothing, and total size is zero -> this means explicit zero size
+          fBlobSize = 0;
+          fBlobSizeKnown = true;
+        }
+      }
+      // calculate how large the buffer needs to be
+      size_t newBufSiz = (aNeededSize ? aNeededSize : fFetchedSize+blobData.fSize) + 1; // +1 for string terminator possibly needed
       if (fBufferSize<newBufSiz) {
         // we need a larger buffer
-        bufP = new unsigned char[newBufSiz];
+        bufP = new uInt8[newBufSiz];
         fBufferSize=newBufSiz; // save new buffer size
         // if there's something in the old buffer, we need to copy it and delete it
         if (fBlobBuffer) {
           if (fFetchedSize)
             memcpy(bufP,fBlobBuffer,fFetchedSize); // copy fetched portion from old buffer
-          delete (unsigned char *)fBlobBuffer; // dispose old buffer
-        //fBlobBuffer=bufP; // save new one
+          delete (uInt8P)fBlobBuffer; // dispose old buffer
         } // if
-
-        fBlobBuffer= bufP; // save new one, in EVERY CASE
-      }
-      else {
-        // enough room in current buffer, just use it
-        bufP=fBlobBuffer;
+        fBlobBuffer = bufP; // save new one, in EVERY CASE
       }
       // get pointer where to copy data to
-    //bufP=(char *)fBlobBuffer+fFetchedSize; // don't use the fFetchedSize here !! (this is out of the buffer)
-      bufP=(char *)fBlobBuffer+offs;
+      bufP = fBlobBuffer+fFetchedSize; // append to what is already in the buffer
       // actually copy data from DBApi block to buffer
       memcpy(bufP,blobData.fPtr,blobData.fSize);
-
-      offs        += blobData.fSize;
-      fFetchedSize+= blobData.fSize;
+      // calculate how much we want to read next time
+      // if neededBytes now gets zero, this will request as much as possible for the next call to ReadBlob
+      fFetchedSize += blobData.fSize;
       neededBytes -= blobData.fSize; // see what's remaining until what we originally requested
       blobData.DisposeBlk();         // <blobData.fSize> will be set back to 0 here !!
-
-      if (neededBytes<=0) {          // for the moment we have what we want !!
-        fBlobSize= fFetchedSize;     // that's what we have already
+      // check end of data from API
+      if (last) {
+ 				if (!fBlobSizeKnown) {
+ 	        fBlobSize = fFetchedSize;
+        	fBlobSizeKnown = true;
+        }
+        // end of BLOB: done fetching ANYWAY
         break;
-      } // if
-
-      // now decide what to do
-      if (totalsize || last) {
-        // we know the total size now
-        fBlobSize=totalsize;
-        if (last) fBlobSize= fFetchedSize; // we know it anyway
-        // - we can stop if we have fetched enough to satisfy aNeededSize
-        if (last || (!fIsStringBLOB && fFetchedSize>=aNeededSize)) break;
+      }
+      // the BLOB is bigger than what we have fetched so far
+      // - check if we are done even if not at end of blob
+      if (!aNeedsAllData && fFetchedSize>=aNeededSize && (!aNeedsTotalSize || fBlobSizeKnown))
+      	break; // we have what was requested
+			// - we need to load more data
+      if (aNeedsAllData) {
+      	if (fBlobSizeKnown)
+        	neededBytes = fBlobSize-fFetchedSize; // try to get rest in one chunk
+      	else
+	        neededBytes = 4096; // we don't know how much is coming, continue reading in 4k chunks
       }
       // we need to continue until we get the total size or last
       first=false;
-      // calculate how much we want to read next time
-    //neededBytes-=blobData.fSize; // it's too late for blobData.fSize here: fSize is 0 after DisposeBlk
-      // if neededBytes now gets zero, this will request as much as possible for the next call to ReadBlob
     } while(true);
 
     // for strings, we need to convert the data and re-adjust the size
     if (fIsStringBLOB) {
-      // we KNOW that we have the entire BLOB text here
+      // we KNOW that we have the entire BLOB text here (because we set aNeedsAllData above when this is a string BLOB)
       // - set a terminator
-      *((char *)fBlobBuffer+fFetchedSize)=0; // set terminator
+      *((char *)fBlobBuffer+fFetchedSize) = 0; // set terminator
       // - convert to UTF8 and internal linefeeds
       string strUtf8;
       appendStringAsUTF8((const char *)fBlobBuffer, strUtf8, fApiDsP->fPluginDSConfigP->fDataCharSet, lem_cstr);
@@ -2548,7 +2564,7 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize)
 // returns size of entire blob
 size_t TApiBlobProxy::getBlobSize(TStringField *aFieldP)
 {
-  fetchBlob(0);
+  fetchBlob(0,true,false); // only needs the size, but no data 
   return fBlobSize;
 } // TApiBlobProxy::getBlobSize
 
@@ -2556,98 +2572,25 @@ size_t TApiBlobProxy::getBlobSize(TStringField *aFieldP)
 // read from Blob from specified stream position and update stream pos
 size_t TApiBlobProxy::readBlobStream(TStringField *aFieldP, size_t &aPos, void *aBuffer, size_t aMaxBytes)
 {
-  if (fBlobSize<=aPos || !fBlobBuffer) { // <=aPos instead of <
-    // we need to read the body
-    fetchBlob(aPos+aMaxBytes);
+  if (fFetchedSize<aPos+aMaxBytes || !fBlobBuffer) {
+    // we need to read (more of) the body
+    if (!fBlobSizeKnown || fFetchedSize<fBlobSize) {
+      // we know that we need to fetch more, or we are not sure that we have fetched everything already -> fetch more
+      fetchBlob(aPos+aMaxBytes,false,false); // fetch at least up to the given size (unless blob is actually smaller)
+    }
   }
   // now copy from our buffer
-  if (aPos>fBlobSize) return 0;
-  if (aPos+aMaxBytes>fBlobSize) aMaxBytes=fBlobSize-aPos;
-  if (aMaxBytes==0) return 0;
-  // copy data from api answer buffer to caller's buffer
-  memcpy(aBuffer,(char *)fBlobBuffer+aPos,aMaxBytes); // not with an additional offset (out of buffer)
-  aPos+= aMaxBytes;
+  if (aPos>fFetchedSize) return 0; // position obviously out of range
+  if (aPos+aMaxBytes>fFetchedSize) aMaxBytes=fFetchedSize-aPos; // reduce to what we have
+  if (aMaxBytes==0) return 0; // safety
+  // copy data from fBlobBuffer (which contains beginning or all of the BLOB) to caller's buffer
+  memcpy(aBuffer,(char *)fBlobBuffer+aPos,aMaxBytes);
+  aPos += aMaxBytes;
   return aMaxBytes; // return number of bytes actually read
 } // TApiBlobProxy::readBlobStream
 
+
 #endif // STREAMFIELD_SUPPORT
-
-
-/*
-#if defined(DBAPI_ASKEYITEMS) && defined(ENGINEINTERFACE_SUPPORT)
-
-// TDBItemKey
-// ==========
-
-
-// get FID for specified name
-sInt16 TDBItemKey::getFidFor(cAppCharP aName, stringSize aNameSz)
-{
-	if (!fItemP) return VARIDX_UNDEFINED; // no item, no field is accessible
-
-  TFieldMapList *fmlP = &(fPluginApiDS->fPluginDSConfigP->fFieldMappings.fFieldMapList);
-
-  // check for iterator commands first
-  if (strucmp(aName,VALNAME_FIRST)==0) {
-    fIterator=fmlP->begin();
-    if (fIterator!=fmlP->end())
-      return static_cast<TApiFieldMapItem *>(*fIterator)->fid;
-  }
-  else if (strucmp(aName,VALNAME_NEXT)==0) {
-    if (fIterator!=fmlP->end())
-      fIterator++;
-    if (fIterator!=fmlP->end())
-      return static_cast<TApiFieldMapItem *>(*fIterator)->fid;
-  }
-  else {
-    TFieldMapList::iterator pos;
-    for (pos=fmlP->begin(); pos!=fmlP->end(); pos++) {
-      // check for name
-      TApiFieldMapItem *fmiP = static_cast<TApiFieldMapItem *>(*pos);
-      if (strucmp(aName,fmiP->getName(),aNameSz)==0) {
-        // return field ID (negative = local script var, positive = item field)
-        return fmiP->fid;
-      }
-    }
-  }
-  // none found
-  return VARIDX_UNDEFINED;
-} // TDBItemKey::getFidFor
-
-
-
-TItemField *TDBItemKey::getBaseFieldFromFid(sInt16 aFid)
-{
-	if (!fItemP) return false; // no item, no field is accessible
-  return fPluginApiDS->getMappedBaseFieldOrVar(*fItemP, aFid);
-} // TDBItemKey::getBaseFieldFromFid
-
-
-bool TDBItemKey::getFieldNameFromFid(sInt16 aFid, string &aFieldName)
-{
-	if (!fItemP) return false; // no item, no field is accessible
-  // name is map name (NOT field name!)
-  TFieldMapList *fmlP = &(fPluginApiDS->fPluginDSConfigP->fFieldMappings.fFieldMapList);
-  TFieldMapList::iterator pos;
-  TApiFieldMapItem *fmiP;
-
-  // search field map item by fid, return name
-  for (pos=fmlP->begin(); pos!=fmlP->end(); pos++) {
-    fmiP = static_cast<TApiFieldMapItem *>(*pos);
-    // check for fid
-    if (fmiP->fid == aFid) {
-      // return name
-      aFieldName = fmiP->getName();
-      return true;
-    }
-  }
-  // none found
-  return false;
-} // TDBItemKey::getFieldNameFromFid
-
-
-#endif // DBAPI_ASKEYITEMS + ENGINEINTERFACE_SUPPORT
-*/
 
 
 

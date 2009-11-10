@@ -670,7 +670,7 @@ public:
   virtual void setParentLocalID(const char *aParentLocalID) { fMasterKey=aParentLocalID; };
 private:
   // fetch BLOB from DPAPI
-  void fetchBlob(size_t aNeededSize);
+  void fetchBlob(void);
   // Vars
   TODBCApiDS *fODBCdsP; // datastore which can be asked to retrieve data
   TODBCFieldMapItem *fFieldMapP; // field map item config (contains SQL needed to fetch BLOB field)

@@ -596,7 +596,7 @@ void TStringField::setBlobProxy(TBlobProxy *aBlobProxyP)
 void TStringField::pullFromProxy(void)
 {
   if (fBlobProxyP) {
-    const size_t bufsiz=2048;
+    const size_t bufsiz=4096;
     cAppCharP bufP = new char[bufsiz];
     resetStream();
     size_t by;
