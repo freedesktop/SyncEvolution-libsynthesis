@@ -353,8 +353,8 @@ private:
   // - can be called to check if performStartSync() should be terminated
   bool shouldExitStartSync(void);
   #ifdef MULTI_THREAD_DATASTORE
-    bool threadedStartSync(void);
-    TThreadObject fStartSyncThread; // the wrapper object for the startSync thread
+  bool threadedStartSync(void);
+  TThreadObject fStartSyncThread; // the wrapper object for the startSync thread
   #endif
 }; // TStdLogicDS
 

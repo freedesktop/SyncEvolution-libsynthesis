@@ -404,7 +404,7 @@ localstatus TStdLogicDS::performStartSync(void)
 #ifdef MULTI_THREAD_DATASTORE
 
 // function executed by thread
-static uInt32 StartSyncThreadFunc(TThreadObject *aThreadObject, uInt32 aParam)
+static uInt32 StartSyncThreadFunc(TThreadObject *aThreadObject, uIntArch aParam)
 {
   // parameter passed is pointer to datastore
   TStdLogicDS *datastoreP = static_cast<TStdLogicDS *>((void *)aParam);
