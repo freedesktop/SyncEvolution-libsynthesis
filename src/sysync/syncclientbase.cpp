@@ -150,7 +150,7 @@ TSyError TClientEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
     fSessionStatus = clientBaseP->CreateSession();
     // Pass profile ID
     if (fSessionStatus==LOCERR_OK) {
-      clientBaseP->fClientSessionP->SetProfileSelector(aSelector & ~SESSIONSEL_PROFILEID_MASK);
+      clientBaseP->fClientSessionP->SetProfileSelector(aSelector & SESSIONSEL_PROFILEID_MASK);
       // return the session pointer as handle
       aNewSessionH=(SessionH)clientBaseP->fClientSessionP;
     }
