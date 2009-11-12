@@ -281,6 +281,7 @@ public:
   // for array support, but is always there to simplify implementations
   TItemField *getArrayField(const char *aFieldName, sInt16 aIndex, bool aExistingOnly=false);
   TItemField *getArrayField(sInt16 aFid, sInt16 aIndex, bool aExistingOnly=false);
+	TItemField *getArrayFieldAdjusted(sInt16 aFid, sInt16 aIndex, bool aExistingOnly=false);
   // find index of field (returns FID_NOT_SUPPORTED if field is not a field of this item)
   sInt16 getIndexOfField(const TItemField *aFieldP);
   // adjust fid and repeat offset to access array element if

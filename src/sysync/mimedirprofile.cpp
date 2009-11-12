@@ -2659,7 +2659,7 @@ sInt16 TMimeDirProfileHandler::generateProperty(
   // - first set group if there is one
   if (aPropP->groupFieldID!=FID_NOT_SUPPORTED) {
     // get group name
-    TItemField *g_fldP = aItem.getArrayField(aPropP->groupFieldID+aBaseOffset, aRepeatOffset, true);
+    TItemField *g_fldP = aItem.getArrayFieldAdjusted(aPropP->groupFieldID+aBaseOffset, aRepeatOffset, true);
     if (g_fldP && !g_fldP->isEmpty()) {
 			g_fldP->appendToString(proptext);
       proptext += '.'; // group separator
@@ -3829,18 +3829,16 @@ bool TMimeDirProfileHandler::parseProperty(
           // check if a group ID determines the repoffset (not possible for valuelists)
           if (aPropP->groupFieldID!=FID_NOT_SUPPORTED && !valuelist) {
             // search in group field
-            sInt16 g_fid = aPropP->groupFieldID+baseoffset;
             string s;
             bool someGroups = false;
             for (sInt16 n=0; n<maxrep || maxrep==REP_ARRAY; n++) {
-            	sInt16 g_rep = n*propnameextP->repeatInc;            
-              aItem.adjustFidAndIndex(g_fid,g_rep);
-              TItemField *g_fldP =  aItem.getArrayField(g_fid,g_rep,true); // get leaf field, if it exists
+              sInt16 g_repoffset = n*propnameextP->repeatInc; // original repeatoffset (not adjusted yet)            
+              TItemField *g_fldP =  aItem.getArrayFieldAdjusted(aPropP->groupFieldID+baseoffset,g_repoffset,true); // get leaf field, if it exists
               if (!g_fldP) break; // group field for that repetition does not (yet) exist, array exhausted
               // compare group name
               if (g_fldP->isAssigned()) {
                 someGroups = someGroups || !g_fldP->isEmpty(); // when we find a non-empty group field, we have at least one group detected
-              	if (someGroups) {
+                if (someGroups) {
                   // don't use repetitions already used by SOME of the fields in the group
                   // for auto-assigning new groups (or ungrouped occurrences)
                   if (aRepArray[repid]<n+1) aRepArray[repid] = n+1;
@@ -3848,11 +3846,11 @@ bool TMimeDirProfileHandler::parseProperty(
                 // check if group matches (only if there is a group at all)
                 g_fldP->getAsString(s);
                 if (aGroupName && strucmp(aGroupName,s.c_str(),aGroupNameLen)==0) {
-                	repoffsByGroup = true;
+                  repoffsByGroup = true;
                   dostore = true;
-                  repoffset = g_rep;
-			            DEBUGPRINTFX(DBG_PARSE,("parseProperty: found repoffset=%d (repcount=%d)",repoffset,n));
-                	break;
+                  repoffset = g_repoffset;
+                  PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,("parseProperty: found group '%s' at repoffset=%d (repcount=%d)",s.c_str(),repoffset,n));
+                  break;
                 }
               }
             } // for all possible repetitions
@@ -3866,16 +3864,16 @@ bool TMimeDirProfileHandler::parseProperty(
               // note: repArray will be updated below (if property not empty or !overwriteempty)
               dostore=true; // we can store
               do {
-                repoffset=aRepArray[repid] * repinc;
+                repoffset = aRepArray[repid]*repinc;
                 // - set flag if repeat offset should be incremented after storing an empty property or not
-                overwriteempty=propnameextP->overwriteEmpty;
+                overwriteempty = propnameextP->overwriteEmpty;
                 // - check if target property main value is empty (must be, or we will skip that repetition)
-                dostore=false; // if no field exists, we do not store
+                dostore = false; // if no field exists, we do not store
                 for (sInt16 e=0; e<aPropP->numValues; e++) {
                   if (aPropP->convdefs[e].fieldid==FID_NOT_SUPPORTED)
                     continue; // no field, no need to check it
-                  sInt16 e_fid=aPropP->convdefs[e].fieldid+baseoffset;
-                  sInt16 e_rep=repoffset;
+                  sInt16 e_fid = aPropP->convdefs[e].fieldid+baseoffset;
+                  sInt16 e_rep = repoffset;
                   aItem.adjustFidAndIndex(e_fid,e_rep);
                   // - get base field
                   TItemField *e_basefldP = aItem.getField(e_fid);
@@ -3885,11 +3883,11 @@ bool TMimeDirProfileHandler::parseProperty(
                   if (!e_basefldP || (e_fldP && e_fldP->isAssigned())) {
                     // base field of one of the main fields does not exist or leaf field is already assigned
                     // -> skip that repetition
-                    dostore=false;
+                    dostore = false;
                     break;
                   }
                   else
-                    dostore=true; // at least one field exists, we might store
+                    dostore = true; // at least one field exists, we might store
                 }
                 // check if we can test more repetitions
                 if (!dostore) {
@@ -3919,7 +3917,7 @@ bool TMimeDirProfileHandler::parseProperty(
   // parameters are all processed by now, decision made to store data (if !dostore, routine exits above)
   // - store the group tag value if we have one
   if (aPropP->groupFieldID!=FID_NOT_SUPPORTED) {
-		TItemField *g_fldP =  aItem.getArrayField(aPropP->groupFieldID+baseoffset,repoffset,false);
+		TItemField *g_fldP =  aItem.getArrayFieldAdjusted(aPropP->groupFieldID+baseoffset,repoffset,false);
     if (g_fldP)
     	g_fldP->setAsString(aGroupName,aGroupNameLen); // store the group name (aGroupName might be NULL, that's ok)
   }
@@ -3992,10 +3990,8 @@ bool TMimeDirProfileHandler::parseProperty(
 	  for (sInt16 j=0; j<aPropP->numValues; j++) {
       sInt16 fid=aPropP->convdefs[j].fieldid;
       if (fid>=0) {
-        fid += baseoffset;
-        aItem.adjustFidAndIndex(fid,repoffset);
         // requesting the pointer creates the field if it does not already exist
-        aItem.getArrayField(fid,repoffset,false);
+        aItem.getArrayFieldAdjusted(fid+baseoffset,repoffset,false);
       }
     }    
   }
@@ -4347,7 +4343,7 @@ bool TMimeDirProfileHandler::parseLevels(
     } // else: neither BEGIN nor END
     if (!propparsed) {
       // unknown property
-      PDEBUGPRINTFX(DBG_PARSE,("parseMimeDir: property unknown: %" FMT_LENGTH(".30") "s",FMT_LENGTH_LIMITED(30,aText)));
+      PDEBUGPRINTFX(DBG_PARSE,("parseMimeDir: property not parsed (unknown or not storable): %" FMT_LENGTH(".30") "s",FMT_LENGTH_LIMITED(30,aText)));
       // skip parsed part (the name)
       p=propname+n;
     }

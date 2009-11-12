@@ -546,6 +546,17 @@ bool TMultiFieldItem::adjustFidAndIndex(sInt16 &aFid, sInt16 &aIndex)
 } // adjustFidAndIndex
 
 
+
+// return specified leaf field of array field or regular field
+// depending if aFid addresses an array or not.
+// (This is a shortcut method to access fields specified by a base fid and a repeat)
+TItemField *TMultiFieldItem::getArrayFieldAdjusted(sInt16 aFid, sInt16 aIndex, bool aExistingOnly)
+{
+	adjustFidAndIndex(aFid,aIndex);
+	return getArrayField(aFid, aIndex, aExistingOnly);
+} // TMultiFieldItem::getArrayFieldAdjusted
+
+
 // return specified leaf field of array field
 TItemField *TMultiFieldItem::getArrayField(sInt16 aFid, sInt16 aIndex, bool aExistingOnly)
 {
