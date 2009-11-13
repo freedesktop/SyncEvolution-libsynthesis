@@ -117,6 +117,8 @@ protected:
 extern const TFuncTable ClientDBFuncTable;
 #endif
 
+typedef list<string> TStringList;
+
 // local datastore config
 class TLocalDSConfig: public TConfigElement
 {
@@ -143,6 +145,7 @@ public:
   #ifdef SYSYNC_SERVER
   bool fTryUpdateDeleted;  // if set, in a client update with server delete conflict, server tries to update the already deleted item (in case it is just invisible)
   bool fAlwaysSendLocalID; // always send localID to clients (which gives them opportunity to remap IDs on Replace)
+  TStringList fAliasNames; // list of aliases for this datastore
   #endif // SYSYNC_SERVER
   uInt32 fMaxItemsPerMessage; // if >0, limits the number of items sent per SyncML message (useful in case of slow datastores where collecting data might exceed client timeout)
   #ifdef OBJECT_FILTERING
@@ -200,6 +203,8 @@ public:
   virtual void addTypeLimits(TLocalEngineDS *aLocalDatastoreP, TSyncSession *aSessionP);
   // - reset config to defaults
   virtual void clear();
+  // - check for alias names
+	uInt16 isDatastoreAlias(cAppCharP aDatastoreURI);
 protected:
   // check config elements
   #ifndef HARDCODED_CONFIG
@@ -496,6 +501,7 @@ private:
   bool fRemoteFilterInclusive;      ///< client, inclusive filter flag
   #endif // SYSYNC_CLIENT
   string fRemoteDBPath;             ///< server and client, path of remote DB, for documentary purposes
+  string fIdentifyingDBName;        ///< server and client, name with which the to-be-synced DB is identified (important in case of aliases in server)
   /// remote datastore involved, valid after processSyncCmdAsServer()
   TRemoteDataStore *fRemoteDatastoreP;
   /// Remote view if local URI
@@ -535,6 +541,8 @@ public:
   bool dbgTestState(TLocalEngineDSState aMinState, bool aNeedExactMatch=false)
     { return aNeedExactMatch ? fLocalDSState==aMinState : fLocalDSState>=aMinState; };
   #endif
+  // get name with which this datastore was identified by the remote
+  cAppCharP getIdentifyingName(void) { return fIdentifyingDBName.c_str(); }
   /// calculate Sync mode and flags from given alert code
   /// @note does not affect DS state in any way, nor checks if DS can handle this code.
   ///   (this will be done only when calling setSyncMode())

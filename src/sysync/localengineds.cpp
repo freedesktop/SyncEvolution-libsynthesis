@@ -297,16 +297,6 @@ public:
   #endif // SYSYNC_TARGET_OPTIONS
 
 
-  // string DBNAME()
-  // returns name of DB
-  static void func_DBName(TItemField *&aTermP, TScriptContext *aFuncContextP)
-  {
-    aTermP->setAsString(
-      static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext())->getName()
-    );
-  }; // func_DBName
-
-
   // integer SLOWSYNC()
   // returns true if we are in slow sync
   static void func_SlowSync(TItemField *&aTermP, TScriptContext *aFuncContextP)
@@ -413,6 +403,26 @@ public:
   }; // func_SetConflictStrategy
 
 
+  // string DBNAME()
+  // returns name of DB
+  static void func_DBName(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    aTermP->setAsString(
+      static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext())->getName()
+    );
+  }; // func_DBName
+
+
+  // string LOCALDBNAME()
+  // returns name of local DB with which it was identified for the sync
+  static void func_LocalDBName(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    aTermP->setAsString(
+      static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext())->getIdentifyingName()
+    );
+  }; // func_LocalDBName
+
+
   // string REMOTEDBNAME()
   // returns remote datastore's full name (as used by the remote in <sync> command, may contain subpath and CGI)
   static void func_RemoteDBName(TItemField *&aTermP, TScriptContext *aFuncContextP)
@@ -420,7 +430,7 @@ public:
     TLocalEngineDS *dsP = static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext());
     aTermP->setAsString(dsP->getRemoteDatastore()->getFullName());
   }; // func_RemoteDBName
-
+  
 
   #ifdef SYSYNC_CLIENT
 
@@ -540,7 +550,6 @@ const TBuiltInFuncDef DBFuncDefs[] = {
   { "SETDEFAULTSIZELIMIT", TLDSfuncs::func_SetDefaultLimit, fty_none, 1, param_IntArg },
   { "DBHANDLESOPTS", TLDSfuncs::func_DBHandlesOpts, fty_integer, 0, NULL },
   #endif
-  { "DBNAME", TLDSfuncs::func_DBName, fty_string, 0, NULL },
   { "ALERTCODE", TLDSfuncs::func_AlertCode, fty_integer, 0, NULL },
   { "SETALERTCODE", TLDSfuncs::func_SetAlertCode, fty_none, 1, param_IntArg },
   { "SLOWSYNC", TLDSfuncs::func_SlowSync, fty_integer, 0, NULL },
@@ -551,6 +560,8 @@ const TBuiltInFuncDef DBFuncDefs[] = {
   { "SETREADONLY", TLDSfuncs::func_SetReadOnly, fty_none, 1, param_IntArg },
   { "FIRSTTIMESYNC", TLDSfuncs::func_FirstTimeSync, fty_integer, 0, NULL },
   { "SETCONFLICTSTRATEGY", TLDSfuncs::func_SetConflictStrategy, fty_none, 1, param_StrArg },
+  { "DBNAME", TLDSfuncs::func_DBName, fty_string, 0, NULL },
+  { "LOCALDBNAME", TLDSfuncs::func_LocalDBName, fty_string, 0, NULL },
   { "REMOTEDBNAME", TLDSfuncs::func_RemoteDBName, fty_string, 0, NULL },
 };
 
@@ -926,6 +937,14 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
     expectBool(fTryUpdateDeleted);
   else if (strucmp(aElementName,"alwayssendlocalid")==0)
     expectBool(fAlwaysSendLocalID);
+  else if (strucmp(aElementName,"alias")==0) {
+   	// get a name
+    string name;
+		if (!getAttrExpanded(aAttributes, "name", name, true))
+      return fail("Missing 'name' attribute in 'alias'");
+    fAliasNames.push_back(name);
+    expectEmpty();
+	}    
   #endif
   else if (strucmp(aElementName,"maxitemspermessage")==0)
     expectUInt32(fMaxItemsPerMessage);
@@ -1081,6 +1100,20 @@ void TLocalDSConfig::addTypeLimits(TLocalEngineDS *aLocalDatastoreP, TSyncSessio
     typesP = &(aLocalDatastoreP->fTxItemTypes);
   }
 } // TLocalDSConfig::addTypeLimits
+
+
+// Check for alias names
+uInt16 TLocalDSConfig::isDatastoreAlias(cAppCharP aDatastoreURI)
+{
+	// only servers have (and may need) aliases
+	#ifdef SYSYNC_SERVER
+  for (TStringList::iterator pos = fAliasNames.begin(); pos!=fAliasNames.end(); pos++) {
+  	if (*pos == aDatastoreURI)
+    	return (*pos).size(); // return size of match
+  }
+  #endif
+  return 0;
+} // TLocalDSConfig::isDatastoreAlias
 
 
 
@@ -1326,7 +1359,13 @@ uInt16 TLocalEngineDS::isDatastore(const char *aDatastoreURI)
   string basename;
   analyzeName(aDatastoreURI,&basename);
   // compare only base name
-  return TSyncDataStore::isDatastore(basename.c_str());
+  // - compare with main name
+  int res = inherited::isDatastore(basename.c_str());
+  if (res==0) {
+		// Not main name: compare with aliases
+	  res = fDSConfigP->isDatastoreAlias(basename.c_str());
+  }
+  return res;
 } // TLocalEngineDS::isDatastore
 
 
@@ -1857,7 +1896,7 @@ void TLocalEngineDS::analyzeName(
   string *aCGIP
 )
 {
-  const char *p,*q=NULL, *r; // BCPPB needed const, gcc3.2.2 needed NULL
+  const char *p,*q=NULL, *r;
   r=strchr(aDatastoreURI,'?');
   p=strchr(aDatastoreURI,'/');
   if (r && p>r) p=NULL; // if slash is in CGI, ignore it
@@ -2210,6 +2249,10 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
   localstatus sta=LOCERR_OK;
 
   SYSYNC_TRY {
+    if (IS_SERVER) {
+      // save the identifying URI
+      fIdentifyingDBName = aIdentifyingTargetURI;
+    }
     // determine status of read-only option
     fReadOnly=
       fSessionP->getReadOnly() || // session level read-only flag (probably set by login)
@@ -3246,6 +3289,8 @@ localstatus TLocalEngineDS::engPrepareClientSyncAlert(TSuperDataStore *aAsSubDat
     this // datastore pointer needed for context
   );
   #endif
+  // - save the identifying name of the DB
+  fIdentifyingDBName = fLocalDBPath;
   // - get information about last session out of database
   sta=engInitSyncAnchors(
     relativeURI(fLocalDBPath.c_str()),
@@ -3328,7 +3373,7 @@ localstatus TLocalEngineDS::engGenerateClientSyncAlert(
     );
   }
   // - URIs
-  itemP->source=newLocation(fLocalDBPath.c_str());
+  itemP->source=newLocation(fLocalDBPath.c_str()); // local DB ID
   itemP->target=newLocation(fRemoteDBPath.c_str()); // use remote path as configured in client settings
   // - add DS 1.2 filters
   if (!fRemoteRecordFilterQuery.empty() || false /* %%% field level filter */) {
