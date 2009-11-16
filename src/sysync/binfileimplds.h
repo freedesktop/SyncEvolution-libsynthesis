@@ -774,7 +774,7 @@ public:
 protected:
   /// called for SyncML 1.1 if remote wants number of changes.
   /// Must return -1 no NOC value can be returned
-  virtual sInt32 getNumberOfChanges(void) { return fNumberOfLocalChanges; };
+  virtual sInt32 getNumberOfChanges(void);
   // Simple custom DB access interface methods
   /// sync login (into this database)
   /// @note might be called several times (auth retries at beginning of session)

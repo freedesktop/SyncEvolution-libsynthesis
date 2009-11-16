@@ -288,12 +288,6 @@ private:
     bool aDoCommit,                // if not set, entire map operation must be undone
     TStatusCommand &aStatusCommand // status, must be set on error or non-200-status
   );
-  // - called for SyncML 1.1 if remote wants number of changes.
-  //   Must return -1 no NOC value can be returned
-  //   NOTE: we implement it here only for server, as it is not really needed
-  //   for clients normally - if it is needed, client's agent must provide
-  //   it as CustDBDatastore has no own list it can use to count in client case.
-  virtual sInt32 getNumberOfChanges(void);
   /// called to generate sync sub-commands as client for remote server
   /// @return true if now finished for this datastore
   virtual bool logicGenerateSyncCommandsAsServer(
@@ -318,6 +312,14 @@ private:
   
   // - determine if this is a first time sync situation
   virtual bool isFirstTimeSync(void) { return fFirstTimeSync; };
+
+protected:
+  // - called for SyncML 1.1 if remote wants number of changes.
+  //   Must return -1 no NOC value can be returned
+  //   NOTE: we implement it here only for server, as it is not really needed
+  //   for clients normally - if it is needed, client's agent must provide
+  //   it as CustDBDatastore has no own list it can use to count in client case.
+  virtual sInt32 getNumberOfChanges(void);
 
 public:
   // Simple custom DB access interface methods

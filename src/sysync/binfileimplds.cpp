@@ -1070,6 +1070,26 @@ localstatus TBinfileImplDS::loadTarget(bool aCreateIfMissing, cAppCharP aRemoteD
 
 
 
+// - called for SyncML 1.1 if remote wants number of changes.
+//   Must return -1 if no NOC value can be returned
+//   NOTE: we implement it here only for server, as it is not really needed
+//   for clients normally - if it is needed, client's agent must provide
+//   it in derived class as StdLogicDS has no own list it can use to count
+//   in client case.
+sInt32 TBinfileImplDS::getNumberOfChanges(void)
+{
+	if (binfileDSActive() && IS_CLIENT) {
+  	// for client case with active binfile, we return the locally computed count
+    // (for server, the entire list of changes is loaded by the baseclass
+    // before NOC is needed, so the baseclass has the more accurate count
+    // which takes filtering etc. into account).
+		return fNumberOfLocalChanges;
+  }
+  // otherwise, let base class handle it (server and client w/o binfile)
+  return inherited::getNumberOfChanges();
+}
+ 
+
 /// sync login (into this database)
 /// @note might be called several times (auth retries at beginning of session)
 /// @note must update the following saved AND current state variables
