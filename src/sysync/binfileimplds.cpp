@@ -1276,9 +1276,7 @@ localstatus TBinfileImplDS::implStartDataRead()
 	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // init reading of all records
-  /// @todo: check if there are other cases where we need all records even if not slow sync - probably with filters only
-  fAllRecords=fSlowSync;
-  // start at beginning of log
+  // - start at beginning of log
   fLogEntryIndex=0;
   return LOCERR_OK;
 } // TBinfileImplDS::implStartDataRead
@@ -1345,14 +1343,14 @@ void TBinfileImplDS::implMarkOnlyUngeneratedForResume(void)
     if (markforresume) {
       // this item would have been reported in THIS session
       // now check if this should be marked for resume for NEXT session
-      if (fAllRecords) {
+      if (fSlowSync) {
         // slow sync mode
         if (chglogP->flags & chgl_deleted) {
           // skip deleted in slow sync
           markforresume=false; // not to be included in resume
         }
       }
-      else if (!fAllRecords) {
+      else if (!fSlowSync) {
         // prevent ANY reporting of items marked as receiveOnly in normal sync (but send them in slow sync!)
         if (chglogP->flags & chgl_receive_only) {
           // skip receive-only items in normal sync. So deleting or changing them locally will not send them
@@ -1466,7 +1464,7 @@ void TBinfileImplDS::implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemote
 // Get next item from database
 localstatus TBinfileImplDS::implGetItem(
   bool &aEof,
-  bool &aChanged,
+  bool &aChanged, // if set on entry, only changed ones will be reported, otherwise all will be returned and aChanged contains flag if entry has changed or not
   TSyncItem* &aSyncItemP
 )
 {
@@ -1560,19 +1558,19 @@ localstatus TBinfileImplDS::implGetItem(
         // (as the marks are all invalid)
         chglogP->flags &= ~chgl_markedforresume;
         // for a non-resumed slow sync, also clear all resend flags
-        if (fAllRecords) chglogP->flags &= ~chgl_resend;
+        if (fSlowSync) chglogP->flags &= ~chgl_resend;
       }
       // At this point, the current entry is a candidate for being reported
       // (not excplicitly excluded)
       // - now check if and how to report it
-      if (fAllRecords) {
+      if (fSlowSync) {
         // slow sync mode
-        // - skip deleted in slow sync
+        // - skip deleted in slow sync, but report all others
         if (chglogP->flags & chgl_deleted) {
           continue; // check next
         }
       }
-      if (!fAllRecords) {
+      if (!fSlowSync) {
         // prevent ANY reporting of items marked as receiveOnly in normal sync (but send them in slow sync!)
         if (chglogP->flags & chgl_receive_only) {
           // skip receive-only items in normal sync. So deleting or changing them locally will not send them

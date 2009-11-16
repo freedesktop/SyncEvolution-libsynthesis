@@ -970,8 +970,6 @@ private:
   // number of local changes
   sInt32 fNumberOfLocalChanges;
   // GetItem vars
-  bool fAllRecords; /// @todo: for now, this is copied from TLocalEnginDS::fSlowSync
-  //bool fRefreshing;
   uInt32 fLogEntryIndex;
   // config (typed pointer for convenience)
   TBinfileDSConfig *fConfigP;
