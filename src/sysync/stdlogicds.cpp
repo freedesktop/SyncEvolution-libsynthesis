@@ -317,7 +317,8 @@ localstatus TStdLogicDS::performStartSync(void)
                 sop=sop_delete;
                 myitemP->cleardata(); // also get rid of unneeded data
               }
-              else sop=sop_none; // ignore all others (especially adds or slowsync replaces)
+              else
+              	sop=sop_none; // ignore all others (especially adds or slowsync replaces)
             }
             else {
               // item passes = belongs to sync set
@@ -935,32 +936,43 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
       return false; // not complete
     }
     // read successful, test for EoC (end of changes)
-    if (fEoC)
-      break; // reading done
+    if (fEoC) break; // reading done
+    if (fSlowSync) changed=true; // all have changed (just in case GetItem does not return clean result here)
     // get sync op to perform
     TSyncOperation syncop=syncitemP->getSyncOp();
-    #ifdef OBJECT_FILTERING
-    // Filtering
-    // - call this anyway (makes sure item is made conformant to remoteAccept filter, even if
-    //   fFilteringNeeded is not set)
     if (syncop!=sop_delete && syncop!=sop_soft_delete && syncop!=sop_archive_delete) {
+	    #ifdef OBJECT_FILTERING
+      // Filtering
+      // - call this anyway (makes sure item is made conformant to remoteAccept filter, even if
+      //   fFilteringNeeded is not set)
       bool passes=postFetchFiltering(syncitemP);
-      if (fFilteringNeeded) {
-      	if (!passes) {
-        	// item does not pass (current) filter: don't send it.
-          // Note that we DO NOT DELETE items falling out of the sync set by filtering,
-          // as for that we'd need to be able to differentiate adds from replaces.
-          // The use case for client-side filtering is also normally not the "moving-subset-window"
-          // case as for server side filtering, but more static exclusion of certain types of
-          // local entries (e.g. to prevent private stuff going to the server).
-          // - we don't need that sync item
-          delete syncitemP;
-          // - try next
-          continue;
+      if (fFilteringNeeded && !passes) {
+        // item does not pass = does not belong to sync set per now
+        if (!fSlowSync && (syncop==sop_replace || syncop==sop_wants_replace)) {
+					// item already exists on remote but falls out of syncset now: delete
+          syncop = sop_delete;
+          syncitemP->cleardata(); // also get rid of unneeded data
+        }
+        else
+        	syncop = sop_none; // ignore all others (especially adds or slowsync replaces)
+      }
+      else
+      #endif
+      {
+      	// item passes (or no filters anyway) -> belongs to sync set
+        if (syncop==(syncop==sop_replace || syncop==sop_wants_replace) && !changed && !fSlowSync) {
+          // exists but has not changed since last sync
+          syncop=sop_none; // ignore for now
         }
       }
     }
-    #endif
+    // check if we should use that item
+    if (syncop==sop_none) {
+      delete syncitemP;
+      continue; // try next from DB
+    }
+    // set final syncop now
+    syncitemP->setSyncOp(syncop);
     // add local ID prefix, if any
     if (aLocalIDPrefix && *aLocalIDPrefix && syncitemP->hasLocalID())
       syncitemP->fLocalID.insert(0,aLocalIDPrefix);
