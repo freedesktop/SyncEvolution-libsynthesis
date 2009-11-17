@@ -308,12 +308,16 @@ localstatus TStdLogicDS::performStartSync(void)
             // we need to post-fetch filter the item first
             bool passes=postFetchFiltering(myitemP);
             if (!passes) {
-              // item does not pass = does not belong to sync set per now
-              if (!fSlowSync && (sop==sop_wants_replace)) {
+              // item was changed and does not pass now -> might be fallen out of the sync set now.
+              // Only when the DB is capable of tracking items fallen out of the sync set (i.e. bring them up as adds
+              // later should they match the filter criteria again), we can implement removing based
+              // on filter criteria. Otherwise, these are simply ignored.
+              if (implTracksSyncopChanges() && !fSlowSync && (sop==sop_wants_replace)) {
                 // item already exists on remote but falls out of syncset now: delete
                 // NOTE: This works only if reviewReadItem() is correctly implemented
                 //       and checks for items that are deleted after being reported
-                //       something else to delete their local map entry
+                //       as replace to delete their local map entry (which makes
+                //       them add candidates again)
                 sop=sop_delete;
                 myitemP->cleardata(); // also get rid of unneeded data
               }
@@ -947,9 +951,16 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
       //   fFilteringNeeded is not set)
       bool passes=postFetchFiltering(syncitemP);
       if (fFilteringNeeded && !passes) {
-        // item does not pass = does not belong to sync set per now
-        if (!fSlowSync && (syncop==sop_replace || syncop==sop_wants_replace)) {
+        // item was changed and does not pass now -> might be fallen out of the sync set now.
+        // Only when the DB is capable of tracking items fallen out of the sync set (i.e. bring them up as adds
+        // later should they match the filter criteria again), we can implement removing based
+        // on filter criteria. Otherwise, these are simply ignored.
+        if (implTracksSyncopChanges() && !fSlowSync && changed && (syncop==sop_replace || syncop==sop_wants_replace)) {
 					// item already exists on remote but falls out of syncset now: delete
+          // NOTE: This works only if reviewReadItem() is correctly implemented
+          //       and checks for items that are deleted after being reported
+          //       as replace to delete their local map entry (which makes
+          //       them add candidates again)
           syncop = sop_delete;
           syncitemP->cleardata(); // also get rid of unneeded data
         }
@@ -960,7 +971,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
       #endif
       {
       	// item passes (or no filters anyway) -> belongs to sync set
-        if (syncop==(syncop==sop_replace || syncop==sop_wants_replace) && !changed && !fSlowSync) {
+        if ((syncop==sop_replace || syncop==sop_wants_replace) && !changed && !fSlowSync) {
           // exists but has not changed since last sync
           syncop=sop_none; // ignore for now
         }

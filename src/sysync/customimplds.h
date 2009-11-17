@@ -645,8 +645,12 @@ protected:
   #ifdef BASED_ON_BINFILE_CLIENT
   /// when based on binfile client, we need the syncset loaded when binfile is active
   bool implNeedSyncSetToRetrieve(void) { return binfileDSActive(); };
+  /// when based on binfile client, we can't track syncop changes (like having the DB report
+  /// items as added again when stdlogic filters have decided they fell out of the syncset)
+  virtual bool implTracksSyncopChanges(void) { return !binfileDSActive(); };
   #else
-  bool implNeedSyncSetToRetrieve(void) { return false; };
+  bool implNeedSyncSetToRetrieve(void) { return false; }; // non-binfiles don't need the syncset to retrieve
+  virtual bool implTracksSyncopChanges(void) { return true; }; // non-binfile custimpls are capable of this
   #endif
   
 

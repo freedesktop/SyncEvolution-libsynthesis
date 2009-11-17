@@ -180,7 +180,7 @@ protected:
 
 
   /// @name implXXXX methods defining the interface to TStdLogicDS.
-  ///   Only these will be called by TLocalEnginDS
+  ///   Only these will be called by TLocalEngineDS
   /// @Note some of these are virtuals ONLY for being derived by superdatastore, NEVER by locic or other derivates
   ///   We use the SUPERDS_VIRTUAL macro for these, which is empty in case we don't have superdatastores, then
   ///   these can be non-virtual.
@@ -219,19 +219,23 @@ protected:
   virtual localstatus implStartDataRead() = 0;
   /// get item from DB
   virtual localstatus implGetItem(
-    bool &aEof,
-    bool &aChanged,
-    TSyncItem* &aSyncItemP
+    bool &aEof, ///< set if no more items
+    bool &aChanged, ///< if set on entry, only changed items will be reported, otherwise all will be returned and aChanged denotes if items has changed or not
+    TSyncItem* &aSyncItemP ///< will receive the item
   ) = 0;
   /// end of read
   virtual localstatus implEndDataRead(void) = 0;
   /// start of write
   virtual localstatus implStartDataWrite(void) = 0;
+  /// Returns true when DB can track syncop changes (i.e. having the DB report
+  /// items as added again when stdlogic filters have decided they fell out of the syncset,
+  /// and has announced this to the DB using implReviewReadItem(). 
+  virtual bool implTracksSyncopChanges(void) { return false; }; // derived DB class needs to confirm true if   
 	/// review reported entry (allows post-processing such as map deleting)
 	/// MUST be called after implStartDataWrite, before any actual writing,
 	/// for each item obtained in implGetItem
 	virtual localstatus implReviewReadItem(
-	  TSyncItem &aItem         // the item
+	  TSyncItem &aItem         ///< the item
 	) = 0;
 	#ifdef SYSYNC_SERVER
   /// called to set maps.
