@@ -250,6 +250,25 @@ void TStdLogicDS::logicMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID
 } // TStdLogicDS::logicMarkItemForResend
 
 
+// - called for SyncML 1.1 if remote wants number of changes.
+//   Must return -1 if no NOC value can be returned
+sInt32 TStdLogicDS::getNumberOfChanges(void)
+{
+	if (IS_SERVER) {
+    #ifdef SYSYNC_SERVER
+    // for server, number of changes is the number of items in the item list
+    // minus those that are for reference only (in a slow sync resume)
+    return fItems.size()-fNumRefOnlyItems;
+    #endif
+  }
+  else {
+  	// for client, derived class must provide it, or we'll return the default here (=no NOC)
+    // Note: for client-only builds, this methods does not exist in StdLogicDS and thus
+    //       inherited is always used
+  	return inherited::getNumberOfChanges();
+  }
+} // TStdLogicDS::getNumberOfChanges
+
 
 #ifdef SYSYNC_SERVER
 
@@ -699,29 +718,6 @@ bool TStdLogicDS::MapFinishAsServer(
   }
   return true;
 } // TStdLogicDS::MapFinishAsServer
-
-
-// - called for SyncML 1.1 if remote wants number of changes.
-//   Must return -1 if no NOC value can be returned
-//   NOTE: we implement it here only for server, as it is not really needed
-//   for clients normally - if it is needed, client's agent must provide
-//   it in derived class as StdLogicDS has no own list it can use to count
-//   in client case.
-sInt32 TStdLogicDS::getNumberOfChanges(void)
-{
-	if (IS_SERVER) {
-    // for server, number of changes is the number of items in the item list
-    // minus those that are for reference only (in a slow sync resume)
-    return fItems.size()-fNumRefOnlyItems;
-  }
-  else {
-  	// for client, derived class must provide it, or we'll return the default here (=no NOC)
-    // Note: for client-only builds, this methods does not exist in StdLogicDS and thus
-    //       inherited is always used
-  	return inherited::getNumberOfChanges();
-  }
-} // TStdLogicDS::getNumberOfChanges
-
 
 
 // - called to let server generate sync commands for client

@@ -571,7 +571,7 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
       if (!nam || *nam==0)
         return fail("'property' must have 'name' attribute");
       // - check grouping
-      if (!fLastProperty || strucmp(fLastProperty->TCFG_CSTR(propname),nam)!=0) {
+      if (!fLastProperty || strucmp(TCFG_CSTR(fLastProperty->propname),nam)!=0) {
         // first property in group
         fPropertyGroupID++; // new group ID
       }
@@ -688,7 +688,7 @@ static void resolveRemoteRuleDeps(TProfileDefinition *aProfileP, TAgentConfig *a
       // check for rule-dependent props
       if (propP->dependsOnRemoterule) {
         propP->ruleDependency=NULL; // assume the "other" rule entry
-        if (!propP->TCFG_ISEMPTY(dependencyRuleName)) {
+        if (!TCFG_ISEMPTY(propP->dependencyRuleName)) {
           // find remote rule
           TRemoteRulesList::iterator pos;
           for(pos=aSessionConfigP->fRemoteRulesList.begin();pos!=aSessionConfigP->fRemoteRulesList.end();pos++) {
@@ -804,7 +804,7 @@ const
     // check plain match
     if (
       (enumP->enummode==enm_translate || enumP->enummode==enm_ignore) &&
-      strucmp(aName,enumP->TCFG_CSTR(enumtext),n)==0
+      strucmp(aName,TCFG_CSTR(enumP->enumtext),n)==0
     ) break; // found full match
     // check prefix match
     else if (
@@ -816,7 +816,7 @@ const
     	// default value entry
     	defaultenumP=enumP; // anyway: remember default value entry
       // allow searching default value by name (for "has","hasnot" parsing via getExtIDbit())
-      if (!(enumP->TCFG_ISEMPTY(enumtext)) && strucmp(aName,enumP->TCFG_CSTR(enumtext),n)==0)
+      if (!(TCFG_ISEMPTY(enumP->enumtext)) && strucmp(aName,TCFG_CSTR(enumP->enumtext),n)==0)
       	break; // found named default value
     }
     // check next
@@ -1034,7 +1034,7 @@ TParameterDefinition *TPropertyDefinition::findParameter(const char *aNam, sInt1
 {
   TParameterDefinition *paramP = parameterDefs;
   while (paramP) {
-    if (strucmp(aNam,paramP->TCFG_CSTR(paramname),aLen)==0)
+    if (strucmp(aNam,TCFG_CSTR(paramP->paramname),aLen)==0)
       return paramP; // found
     paramP=paramP->next; // next
   }
@@ -2949,7 +2949,7 @@ void TMimeDirProfileHandler::generateLevels(
       aItem.getField(fid)->getAsString(val);
       if (enumP) {
         // if enumdefs, content must match first enumdef's enumval (NOT enumtext!!)
-        dolevel = strucmp(val.c_str(),enumP->TCFG_CSTR(enumval))==0;
+        dolevel = strucmp(val.c_str(),TCFG_CSTR(enumP->enumval))==0;
       }
       else {
         // just being not empty enables level
@@ -3049,7 +3049,7 @@ void TMimeDirProfileHandler::generateLevels(
           expandProperty(
             aItem,
             aString,
-            expandPropP->TCFG_CSTR(propname), // the prefix consists of the property name
+            TCFG_CSTR(expandPropP->propname), // the prefix consists of the property name
             expandPropP, // the property definition
             fMimeDirMode // MIME-DIR mode
           );
@@ -3726,7 +3726,7 @@ bool TMimeDirProfileHandler::parseProperty(
         // check for match
         if (
           mimeModeMatch(paramP->modeDependency) &&
-          ((defaultparam && paramP->defaultparam) || strucmp(pname.c_str(),paramP->TCFG_CSTR(paramname))==0)
+          ((defaultparam && paramP->defaultparam) || strucmp(pname.c_str(),TCFG_CSTR(paramP->paramname))==0)
         ) {
           // param name found
           // - process value (list)
@@ -3737,8 +3737,8 @@ bool TMimeDirProfileHandler::parseProperty(
               if (!paramP->convdef.enumdefs) {
                 DEBUGPRINTFX(DBG_PARSE,(
                   "parseProperty: extendsname param w/o enum : %s;%s",
-                  aPropP->TCFG_CSTR(propname),
-                  paramP->TCFG_CSTR(paramname)
+                  TCFG_CSTR(aPropP->propname),
+                  TCFG_CSTR(paramP->paramname)
                 ));
                 return false;
               }
@@ -3930,7 +3930,7 @@ bool TMimeDirProfileHandler::parseProperty(
       // Note: for valuelists, this is the normal loop exit case as we are not limited by numValues
       if (!valuelist) {
         // New behaviour: omitting values is ok (needed e.g. for T39m)
-        DEBUGPRINTFX(DBG_PARSE,("TMimeDirProfileHandler::parseProperty: %s does not specify all values",aPropP->TCFG_CSTR(propname)));
+        DEBUGPRINTFX(DBG_PARSE,("TMimeDirProfileHandler::parseProperty: %s does not specify all values",TCFG_CSTR(aPropP->propname)));
       }
       #endif
       break; // all available values read
@@ -3961,7 +3961,7 @@ bool TMimeDirProfileHandler::parseProperty(
       )) {
         PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,(
           "TMimeDirProfileHandler::parseProperty: %s: value not parsed: %s",
-          aPropP->TCFG_CSTR(propname),
+          TCFG_CSTR(aPropP->propname),
           val.c_str()
         ));
         return false;
@@ -3977,7 +3977,7 @@ bool TMimeDirProfileHandler::parseProperty(
       // value cannot be stored
       PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,(
         "TMimeDirProfileHandler::parseProperty: %s: value not stored because repeat exhausted: %s",
-        aPropP->TCFG_CSTR(propname),
+        TCFG_CSTR(aPropP->propname),
         val.c_str()
       ));
     }
@@ -4063,7 +4063,7 @@ bool TMimeDirProfileHandler::parseLevels(
     const TEnumerationDef *enumP = aProfileP->levelConvdef.enumdefs;
     if (enumP) {
       // if enumdefs, content is set to first enumdef's enumval (NOT enumtext!!)
-      aItem.getField(fid)->setAsString(enumP->TCFG_CSTR(enumval));
+      aItem.getField(fid)->setAsString(TCFG_CSTR(enumP->enumval));
     }
   }
   // skip eventual leading extra LF and CR and whitespace here
@@ -4119,7 +4119,7 @@ bool TMimeDirProfileHandler::parseLevels(
       n=0; // prevent false advancing at end of prop loop
       if (atStart) {
         // value must be level name, else this is a bad profile
-        if (strucmp(lnam,aProfileP->TCFG_CSTR(levelName),l)!=0) {
+        if (strucmp(lnam,TCFG_CSTR(aProfileP->levelName),l)!=0) {
           POBJDEBUGPRINTFX(getSession(),DBG_ERROR,("parseMimeDir: root level BEGIN has bad value: %s",aText));
           return false;
         }
@@ -4135,7 +4135,7 @@ bool TMimeDirProfileHandler::parseLevels(
             // check
             if (
               mimeModeMatch(subprofileP->modeDependency) &&
-              strucmp(lnam,subprofileP->TCFG_CSTR(levelName),l)==0
+              strucmp(lnam,TCFG_CSTR(subprofileP->levelName),l)==0
             ) {
               // sublevel found, process
               while ((uInt8)(*p)<0x20) p++; // advance scanning pointer to beginning of next property
@@ -4207,7 +4207,7 @@ bool TMimeDirProfileHandler::parseLevels(
       }
       else {
         // should be end of active level, check name
-        if (strucmp(lnam,aProfileP->TCFG_CSTR(levelName),l)!=0) {
+        if (strucmp(lnam,TCFG_CSTR(aProfileP->levelName),l)!=0) {
           POBJDEBUGPRINTFX(getSession(),DBG_ERROR,("parseMimeDir: unexpected END value: %s",aText));
           return false;
         }
@@ -4234,7 +4234,7 @@ bool TMimeDirProfileHandler::parseLevels(
         // compare
         if (
           mimeModeMatch(propP->modeDependency) && // none or matching mode dependency
-          strucmp(propname,propP->TCFG_CSTR(propname),n)==0
+          strucmp(propname,TCFG_CSTR(propP->propname),n)==0
         ) {
           // found property def with matching name (and MIME mode)
           // check all in group (=all subsequent with same name)
@@ -4285,7 +4285,7 @@ bool TMimeDirProfileHandler::parseLevels(
             if (parsePropP) {
               if (parsePropP->delayedProcessing) {
                 // buffer parameters needed to parse later
-                PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,("parseMimeDir: property %s parsing delayed, rank=%hd",parsePropP->TCFG_CSTR(propname),parsePropP->delayedProcessing));
+                PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,("parseMimeDir: property %s parsing delayed, rank=%hd",TCFG_CSTR(parsePropP->propname),parsePropP->delayedProcessing));
                 TDelayedPropParseParams dppp;
                 dppp.delaylevel = parsePropP->delayedProcessing;
                 dppp.start = p;
@@ -4741,7 +4741,7 @@ void TMimeDirProfileHandler::enumerateProperties(const TProfileDefinition *aProf
               dataType = propDataTypeNames[dt];
           }
           // - add property data descriptor
-          propdataP->prop = newDevInfCTData(propP->TCFG_CSTR(propname),sz,noTruncate,maxOccur,dataType);
+          propdataP->prop = newDevInfCTData(TCFG_CSTR(propP->propname),sz,noTruncate,maxOccur,dataType);
           if (propP->convdefs && propP->convdefs->convmode==CONVMODE_VERSION) {
             // special case: add version valenum
             addPCDataStringToList(aItemTypeP->getTypeVers(),&(propdataP->prop->valenum));
@@ -4970,7 +4970,7 @@ void TMimeDirProfileHandler::setfieldoptions(
     // compare
     if (
       (propname==NULL && propdefP->mandatory) ||
-      (propname && (strucmp(propname,propdefP->TCFG_CSTR(propname))==0))
+      (propname && (strucmp(propname,TCFG_CSTR(propdefP->propname))==0))
     ) {
       // match (or enabling mandatory) -> enable all fields that are related to this property
       // - values

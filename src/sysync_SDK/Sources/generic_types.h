@@ -134,8 +134,8 @@ typedef const uInt8 *cUInt8P;
 typedef struct ContextType *CContext;
 typedef unsigned long CVersion;
 
-/* - ssize_t is not predefined for Windows CW */
-#if defined _WIN32 && !defined _MSC_VER
+/* - ssize_t is not predefined for Windows CW or EVC */
+#if defined _WIN32 && (!defined _MSC_VER || defined WINCE)
 typedef sInt32 ssize_t;
 #endif
 

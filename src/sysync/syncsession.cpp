@@ -4012,11 +4012,13 @@ bool TSyncSession::checkCredentials(const char *aUserName, const SmlCredPtr_t aC
     SYSYNC_BUILDNUMBER
   ));
   if (IS_SERVER) {
+    #ifdef SYSYNC_SERVER
     PDEBUGPRINTFX(DBG_HOT,(
       "==== SyncML URL used = '%s', username as sent by remote = '%s'",
       fInitialLocalURI.c_str(),
       fSyncUserName.c_str()
     ));
+    #endif
   } // server
   // return result
   return authok;
@@ -4405,9 +4407,11 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
     	// no devinf -> blind sync attempt: apply best-guess workaround settings
       // Note that a blind sync attempt means that the remote party is at least partly non-compliant, as we always request a devInf!
 		  PDEBUGPRINTFX(DBG_ERROR,("No remote information available -> applying best-guess workaround behaviour options"));
+      #ifndef MINIMAL_CODE
       // set device description
       fRemoteDescName = fRemoteName.empty() ? "[unknown remote]" : fRemoteName.c_str();
       fRemoteDescName += " (no devInf)";
+      #endif // MINIMAL_CODE
       // switch on legacy behaviour (conservative preferred types)
       fLegacyMode = true;
       if (IS_CLIENT) {
@@ -4423,7 +4427,9 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
   }
   // show summary
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("Summary of all behaviour options (possibly set by remote rule)"));
+  #ifndef MINIMAL_CODE
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Remote Description        : %s",fRemoteDescName.c_str()));
+  #endif
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Legacy mode               : %s",boolString(fLegacyMode)));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Lenient mode              : %s",boolString(fLenientMode)));
   PDEBUGPRINTFX(DBG_HOT+DBG_REMOTEINFO,("- Limited Field Lengths     : %s",boolString(fLimitedRemoteFieldLengths)));

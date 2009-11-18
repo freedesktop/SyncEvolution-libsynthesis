@@ -544,7 +544,8 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
     if ((aOldVersion==2 || aOldVersion==3) && aOldSize!=offsetof(TChangeLogEntry,modcount_created)) {
     	// this means that the records were compiled without CHANGEDETECTION_AVAILABLE and had a
       // dataCRC field between modcount and flags
-      #if defined(WINCE) || defined(__PALM_OS__)
+      //#if defined(WINCE) ||
+      #if defined(__PALM_OS__)
       #error "This code must be verified to check if upgrade works as intended with targets that did not have CHANGEDETECTION_AVAILABLE"
       #endif
       // - offset of the CRC field we already have
@@ -620,8 +621,11 @@ bool TBinfileImplDS::openChangeLog(void)
       // the target info to the new header now. This gives perfect results only for single
       // profile use, but existing products before update to v3 were single profile so we can
       // safely assume this will give a smooth transition (without re-send-everything effects).
-      // - dummyIdentifier1 is the former lastSyncIdentifier and contains the token from the last change check towards the DB
+      #if TARGETS_DB_VERSION>5
+      // - dummyIdentifier1 is the former lastSyncIdentifier and contains the token from the
+      //   last change check towards the DB (in case sync identifiers are available at all)
 	  	AssignCString(fChgLogHeader.lastChangeCheckIdentifier,fTarget.dummyIdentifier1,changeIndentifierMaxLen);
+      #endif
       // - lastChangeCheck is the former lastTwoWaySync and contains the timestamp of the last change check towards the DB
   		fChgLogHeader.lastChangeCheck = fTarget.lastChangeCheck;
       // - make sure it gets written back

@@ -139,9 +139,9 @@ void TItemField::setAsInteger(fieldinteger_t aInteger)
 {
   string s;
   #ifndef NO64BITINT
-  LONGLONGTOSTR(s,(long long)aInteger);
+  LONGLONGTOSTR(s,(sInt64)aInteger);
   #else
-  StringObjPrintf(s,"%ld",(long)aInteger);
+  StringObjPrintf(s,"%ld",(sInt32)aInteger);
   #endif
   // set as string
   setAsString(s);
@@ -1769,9 +1769,9 @@ void TIntegerField::getAsString(string &aString)
     aString.erase();
   else {
     #ifndef NO64BITINT
-    LONGLONGTOSTR(aString,(long long)fInteger);
+    LONGLONGTOSTR(aString,(sInt64)fInteger);
     #else
-    StringObjPrintf(aString,"%ld",(long)fInteger);
+    StringObjPrintf(aString,"%ld",(sInt32)fInteger);
     #endif
   }
 } // TIntegerField::getAsString

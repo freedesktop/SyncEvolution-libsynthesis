@@ -424,7 +424,7 @@ localstatus TSyncClientBase::CreateSession(void)
   // create a new client session of appropriate type
   // - use current time as session ID (only for logging purposes)
   string s;
-  LONGLONGTOSTR(s,(long long)(getSystemNowAs(TCTX_UTC)));
+  LONGLONGTOSTR(s,(sInt64)(getSystemNowAs(TCTX_UTC)));
   fClientSessionP = static_cast<TAgentConfig *>(fConfigP->fAgentConfigP)->CreateClientSession(s.c_str());
   if (!fClientSessionP) return LOCERR_UNDEFINED;
   // check expiry here
