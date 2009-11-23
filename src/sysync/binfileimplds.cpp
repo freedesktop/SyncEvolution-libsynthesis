@@ -1584,12 +1584,7 @@ localstatus TBinfileImplDS::implGetItem(
           }
         }
         // detect wheter the item is new added or changed
-        if(chglogP->modcount_created > fPreviousToRemoteModCount) {
-          myitemP->setSyncOp(sop_add);
-        }
-        else {
-          myitemP->setSyncOp(sop_replace);
-        }
+        myitemP->setSyncOp(sop_replace);
         // make sure item has the localid which was used to retrieve it
         ASSIGN_LOCALID_TO_ITEM(*myitemP,chglogP->dbrecordid);
       }
