@@ -882,6 +882,7 @@ void TLocalDSConfig::clear(void)
   #ifdef OBJECT_FILTERING
   // - filters
   fRemoteAcceptFilter.erase();
+  fSilentlyDiscardUnaccepted=false;
   fLocalDBFilterConf.erase();
   fMakePassFilter.erase();
   fInvisibleFilter.erase();
@@ -952,6 +953,8 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
   // filtering
   else if (strucmp(aElementName,"acceptfilter")==0)
     expectString(fRemoteAcceptFilter);
+  else if (strucmp(aElementName,"silentdiscard")==0)
+    expectBool(fSilentlyDiscardUnaccepted);
   else if (strucmp(aElementName,"localdbfilter")==0)
     expectString(fLocalDBFilterConf);
   else if (strucmp(aElementName,"makepassfilter")==0)
@@ -4649,7 +4652,8 @@ bool TLocalEngineDS::isAcceptable(TSyncItem *aSyncItemP, TStatusCommand &aStatus
   // test acceptance
   if (aSyncItemP->testFilter(fDSConfigP->fRemoteAcceptFilter.c_str())) return true; // ok
   // not accepted, set 415 error
-  aStatusCommand.setStatusCode(415);
+  if (!fDSConfigP->fSilentlyDiscardUnaccepted)
+  	aStatusCommand.setStatusCode(415);
   ADDDEBUGITEM(aStatusCommand,"Received item does not pass acceptance filter");
   PDEBUGPRINTFX(DBG_ERROR,(
     "Received item does not pass acceptance filter: %s",

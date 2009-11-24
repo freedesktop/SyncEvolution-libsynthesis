@@ -152,8 +152,10 @@ public:
   // filtering
   // - filter applied to items coming from remote party, non-matching
   //   items will be rejected with 415 (unknown format) status
+  //   unless fSilentlyDiscardUnaccepted is set to true (then we accept and discard silently)
   //   (outgoing items will be made pass this filter with makePassFilter)
   string fRemoteAcceptFilter;
+  bool fSilentlyDiscardUnaccepted;
   // - filter will be applied to items read from the local database,
   //   IN ADDITION to possibly specified target address filtering
   string fLocalDBFilterConf;
