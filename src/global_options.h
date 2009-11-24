@@ -71,8 +71,8 @@
 #endif
 
 #ifndef SYSYNC_BUILDNUMBER
-#define SYSYNC_BUILDNUMBER          3
-#define SYSYNC_BUILDNUMBER_TXT     "3"
+#define SYSYNC_BUILDNUMBER          4
+#define SYSYNC_BUILDNUMBER_TXT     "4"
 #endif
 
 

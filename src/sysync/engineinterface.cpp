@@ -1264,6 +1264,7 @@ TSyError TEngineInterface::SessionStep (SessionH aSessionH, uInt16 &aStepCmd, TE
 TSyError TEngineInterface::GetSyncMLBuffer(SessionH aSessionH, bool aForSend, appPointer &aBuffer, memSize &aBufSize)
 {
   Ret_t rc;
+  MemSize_t bufSz; // Note: this is SML_TK definition of memsize!
   // get SML instance for this session (note that "session" could be a SAN checker as well)
   InstanceID_t myInstance = getSmlInstanceOfSession(aSessionH);
   if (myInstance==0)
@@ -1274,16 +1275,18 @@ TSyError TEngineInterface::GetSyncMLBuffer(SessionH aSessionH, bool aForSend, ap
     rc=smlLockReadBuffer(
       myInstance,
       (unsigned char **)&aBuffer, // receives address of buffer containing SyncML to send
-      (long *)&aBufSize // receives size of SyncML to send
+      &bufSz // receives size of SyncML to send
     );
+    aBufSize = bufSz;
   }
   else {
     // we want to write the SyncML buffer
     rc=smlLockWriteBuffer(
       myInstance,
       (unsigned char **)&aBuffer, // receives address of buffer where received SyncML can be put
-      (long *)&aBufSize // capacity of the buffer
+      &bufSz // capacity of the buffer
     );
+    aBufSize = bufSz;
   }
   // check error
   if (rc!=SML_ERR_OK)
