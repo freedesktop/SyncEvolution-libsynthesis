@@ -6449,7 +6449,7 @@ localstatus TLocalEngineDS::engSaveSuspendState(bool aAnyway)
   if (aAnyway || !isAborted()) {
     // only save if DS 1.2 and supported by DB
     if ((fSessionP->getSyncMLVersion()>=syncml_vers_1_2) && dsResumeSupportedInDB()) {
-      PDEBUGBLOCKDESC("SaveSuspendState","Saving state for suspend/resume");
+		  PDEBUGBLOCKFMT(("SaveSuspendState","Saving state for suspend/resume","datastore=%s",getName()));
       // save alert state (if not explicitly prevented)
       fResumeAlertCode=fPreventResuming ? 0 : fAlertCode;
       if (fResumeAlertCode) {

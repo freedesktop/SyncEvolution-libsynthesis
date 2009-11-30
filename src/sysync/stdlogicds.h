@@ -56,7 +56,7 @@ private:
   bool fWriteStarted; ///< set if write has started
   #ifdef SYSYNC_CLIENT
   bool fEoC; ///< end of changes
-  #ifdef CLIENT_USES_SERVER_DB
+  #if defined(CLIENT_USES_SERVER_DB) && !defined(SYSYNC_SERVER)
   TSyncItemPContainer fItems; ///< list of data items, used to simulate maps in server DB
   #endif
   #endif
@@ -159,7 +159,7 @@ protected:
   /// markOnlyUngeneratedForResume(), markItemForResume() and markItemForResend())
   /// (or, in case the session is really complete, make sure that no resume state is left)
   /// @note Must also save tempGUIDs (for server) and pending/unconfirmed maps (for client)
-  virtual localstatus logicSaveResumeMarks(void) { return implSaveResumeMarks(); };
+  virtual localstatus logicSaveResumeMarks(void);
 
   /// called to process incoming item operation
   /// @note Method must take ownership of syncitemP in all cases

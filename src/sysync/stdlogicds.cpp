@@ -250,6 +250,22 @@ void TStdLogicDS::logicMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID
 } // TStdLogicDS::logicMarkItemForResend
 
 
+/// save status information required to possibly perform a resume (as passed to datastore with
+/// markOnlyUngeneratedForResume(), markItemForResume() and markItemForResend())
+/// (or, in case the session is really complete, make sure that no resume state is left)
+/// @note Must also save tempGUIDs (for server) and pending/unconfirmed maps (for client)
+localstatus TStdLogicDS::logicSaveResumeMarks(void)
+{
+  PDEBUGBLOCKFMTCOLL(("SaveResumeMarks","let implementation save resume info","datastore=%s",getName()));
+	localstatus sta = implSaveResumeMarks();
+  PDEBUGENDBLOCK("SaveResumeMarks");
+  return sta;
+} // TStdLogicDS::logicSaveResumeMarks
+
+
+
+
+
 // - called for SyncML 1.1 if remote wants number of changes.
 //   Must return -1 if no NOC value can be returned
 sInt32 TStdLogicDS::getNumberOfChanges(void)
@@ -1035,7 +1051,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
 #endif // SYSYNC_CLIENT
 
 
-/// @brief called to have all non-yet-generated sync commands as "to-be-resumed"
+/// @brief called to have all not-yet-generated sync commands as "to-be-resumed"
 void TStdLogicDS::logicMarkOnlyUngeneratedForResume(void)
 {
 	if (IS_SERVER) {

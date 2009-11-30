@@ -989,15 +989,15 @@ void TCustomImplDS::InternalResetDataStore(void)
   for (pos=fFinalisationQueue.begin();pos!=fFinalisationQueue.end();pos++)
   	delete (*pos); // delete the item
   fFinalisationQueue.clear();
-  #ifndef SCRIPT_SUPPORT
+  #ifndef BINFILE_ALWAYS_ACTIVE
   fGetPhase=gph_done; // must be initialized first by startDataRead
   fGetPhasePrepared=false;
   // Clear map table and sync set lists
   fMapTable.clear();
-  #endif // not SCRIPT_SUPPORT
+  #endif // BINFILE_ALWAYS_ACTIVE
   #ifdef BASED_ON_BINFILE_CLIENT
   fSyncSetLoaded=false;
-  #endif // SCRIPT_SUPPORT
+  #endif // BASED_ON_BINFILE_CLIENT
   fNoSingleItemRead=false; // assume we can read single items
   if (fAgentP) {
     // forget script context
@@ -1419,6 +1419,34 @@ bool TCustomImplDS::dsReplaceWritesAllDBFields(void)
   // return true if we should read record from DB before replacing.
   return fConfigP->fUpdateAllFields;
 } // TCustomImplDS::dsReplaceWritesAllDBFields
+
+
+#ifndef BINFILE_ALWAYS_ACTIVE
+
+// returns true if DB implementation supports resume (saving of resume marks, alert code, pending maps, tempGUIDs)
+bool TCustomImplDS::dsResumeSupportedInDB(void)
+{
+	#ifdef BASED_ON_BINFILE_CLIENT
+	if (binfileDSActive())
+  	return inherited::dsResumeSupportedInDB();
+  else
+  #endif
+		return fConfigP && fConfigP->fResumeSupport;
+} // TCustomImplDS::dsResumeSupportedInDB
+
+
+// returns true if DB implementation supports resuming in midst of a chunked item (can save fPIxxx.. and related admin data)
+bool TCustomImplDS::dsResumeChunkedSupportedInDB(void)
+{
+	#ifdef BASED_ON_BINFILE_CLIENT
+	if (binfileDSActive())
+  	return inherited::dsResumeChunkedSupportedInDB();
+  else
+  #endif
+		return fConfigP && fConfigP->fResumeItemSupport;
+} // TCustomImplDS::dsResumeChunkedSupportedInDB
+
+#endif // BINFILE_ALWAYS_ACTIVE
 
 
 #ifdef OBJECT_FILTERING
@@ -3114,7 +3142,6 @@ localstatus TCustomImplDS::implSaveResumeMarks(void)
   }
   #endif // BASED_ON_BINFILE_CLIENT
 
-  PDEBUGBLOCKCOLL("SaveResumeMarks");
   // update anchoring info for resume
   if (fConfigP->fSyncTimeStampAtEnd) {
     // if datastore cannot explicitly set modification timestamps, best time to save is current time
@@ -3127,9 +3154,7 @@ localstatus TCustomImplDS::implSaveResumeMarks(void)
   // also update opaque reference string possibly needed in DS API implementations
   fPreviousSuspendIdentifier = fCurrentSyncIdentifier;
   // save admin data now
-  localstatus sta=SaveAdminData(false,false); // not end of session, not successful end either
-  PDEBUGENDBLOCK("SaveResumeMarks");
-  return sta;
+  return SaveAdminData(false,false); // not end of session, not successful end either
 } // TCustomImplDS::implSaveResumeMarks
 
 

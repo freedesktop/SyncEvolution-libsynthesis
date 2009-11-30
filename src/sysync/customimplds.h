@@ -590,13 +590,12 @@ protected:
   // Simple custom DB access interface methods
   // - returns true if database implementation can only update all fields of a record at once
   virtual bool dsReplaceWritesAllDBFields(void);
-  #ifndef BASED_ON_BINFILE_CLIENT
-  // Note: these are identically in binfile client, so we need them only if there is no binfile layer
+  #ifndef BINFILE_ALWAYS_ACTIVE
   // - returns true if DB implementation supports resume (saving of resume marks, alert code, pending maps, tempGUIDs)
-  virtual bool dsResumeSupportedInDB(void) { return fConfigP && fConfigP->fResumeSupport; };
-  /// returns true if DB implementation supports resuming in midst of a chunked item (can save fPIxxx.. and related admin data)
-  virtual bool dsResumeChunkedSupportedInDB(void) { return fConfigP && fConfigP->fResumeItemSupport; };
-  #endif // not BASED_ON_BINFILE_CLIENT
+  virtual bool dsResumeSupportedInDB(void);
+  // - returns true if DB implementation supports resuming in midst of a chunked item (can save fPIxxx.. and related admin data)
+  virtual bool dsResumeChunkedSupportedInDB(void);
+  #endif // not BINFILE_ALWAYS_ACTIVE
   #ifdef OBJECT_FILTERING
   // - returns true if DB implementation can also apply special filters like CGI-options
   //   /dr(x,y) etc. during fetching
