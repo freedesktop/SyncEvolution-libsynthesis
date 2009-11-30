@@ -632,7 +632,7 @@ bool TPluginApiDS::postReadProcessItem(TMultiFieldItem &aItem, uInt16 aSetNo)
         // ignore all that can't have a blob proxy (non-strings)
         if (!basefieldP->isBasedOn(fty_string)) continue;
         // unlike with textItems that get the BLOBID from the DB,
-        // in asKey mode, BLOBID is just map name plus an eventual array index.
+        // in asKey mode, BLOBID is just map name plus a possible array index.
         // Plugin must be able to identify the BLOB using this plus the item ID.
         // Plugin must also make sure an array element exists (value does not matter, can be empty)
         // for each element that should be proxied here.

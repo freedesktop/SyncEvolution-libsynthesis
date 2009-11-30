@@ -474,7 +474,7 @@ bool TRootConfig::localStartElement(const char *aElementName, const char **aAttr
 void TRootConfig::localResolve(bool aLastPass)
 {
   // make sure static debug element is resolved so
-  // eventual debug information created by resolving other
+  // possible debug information created by resolving other
   // elements go to the correct locations/files
   // Note: in XML configs, the debug element is resolved immediately
   //       after parsing (has fResolveImmediately set) and will

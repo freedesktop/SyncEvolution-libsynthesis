@@ -854,7 +854,7 @@ TSyError TDBItem::LoadDB( bool withKey, cAppCharP aPrefix, void* aCB )
       if (s.empty() && feof( f )) break; // .. until end of file
 
       q= (char*)s.c_str();
-      // remove eventual UTF-8 lead-in
+      // remove possible UTF-8 lead-in
       if ((q[0] & 0xFF) == 0xEF &&
           (q[1] & 0xFF) == 0xBB &&
           (q[2] & 0xFF) == 0xBF) {

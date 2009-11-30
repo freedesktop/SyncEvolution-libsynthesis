@@ -2366,7 +2366,7 @@ bool TSyncOpCommand::execute(void)
           uInt32 dataPos=0;
           if (processitem) {
             // save sizes confirmed/unconfirmed data in this command object
-            // (for eventual reassembly adjustment when command is complete)
+            // (for possible reassembly adjustment when command is complete)
             fUnconfirmedSize=fDataStoreP->fPIUnconfirmedSize;
             fStoredSize=fDataStoreP->fPIStoredSize;
             // Determine Data position
@@ -2504,7 +2504,7 @@ bool TSyncOpCommand::execute(void)
             sta=fSessionP->fIncompleteDataCommandP->AddNextChunk(thisitemnode->item,this);
             if (sta) statusCmdP->setStatusCode(sta); // set error if any
           }
-          PDEBUGPRINTFX(DBG_PROTO+DBG_HOT,("<Moredata/> set: Chunk (%ld bytes) received (plus eventual carry over from suspend) and buffered",(long)fLastChunkSize));
+          PDEBUGPRINTFX(DBG_PROTO+DBG_HOT,("<Moredata/> set: Chunk (%ld bytes) received (plus possible carry over from suspend) and buffered",(long)fLastChunkSize));
         }
         else {
           // Complete item or end of chunked item
@@ -2590,7 +2590,7 @@ bool TSyncOpCommand::execute(void)
         } // if complete item
       } // if processitem
       // now generate status or queue for later
-      // - remember as last item for eventual suspend and resume
+      // - remember as last item for possible suspend and resume
       fDataStoreP->fLastSourceURI = smlSrcTargLocURIToCharP(thisitemnode->item->source);
       fDataStoreP->fLastTargetURI = smlSrcTargLocURIToCharP(thisitemnode->item->target);
       if (queueforlater) {
@@ -2622,10 +2622,10 @@ bool TSyncOpCommand::execute(void)
           fDataStoreP->fIncomingDataBytes+=thisitemnode->item->data->length;
         }
         // item processed
-        // - remember status (final only) for eventual suspend and resume
+        // - remember status (final only) for possible suspend and resume
         sta= statusCmdP ? statusCmdP->getStatusCode() : 0;
         if (sta!=213) {
-          // final status received, save it for eventual resend
+          // final status received, save it for possible resend
           fDataStoreP->fLastItemStatus = sta;
           // but forget data stored at DS level
           fDataStoreP->fPIStoredSize=0;
@@ -2769,7 +2769,7 @@ bool TSyncOpCommand::issue(
       // we don't need the data any more, but we should keep the source and target IDs until we have the status
       // - get rid of data
       if (fSyncOpElementP->itemList) {
-        // - free eventual extra items (shouldn't be any - we always send single item per command)
+        // - free possible extra items (shouldn't be any - we always send single item per command)
         smlFreeItemList(fSyncOpElementP->itemList->next);
         fSyncOpElementP->itemList->next=NULL;
         // - free data and meta part of this item, but not target and source info

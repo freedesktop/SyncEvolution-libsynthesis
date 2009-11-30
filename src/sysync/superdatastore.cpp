@@ -285,7 +285,7 @@ TAlertCommand *TSuperDataStore::engProcessSyncAlert(
         aLastRemoteAnchor,      // last anchor of client
         aNextRemoteAnchor,      // next anchor of client
         aTargetURI,             // target URI as sent by remote, no processing at all
-        aIdentifyingTargetURI,  // target URI (without eventual CGI)
+        aIdentifyingTargetURI,  // target URI (without possible CGI)
         aTargetURIOptions,      // filtering CGI (NULL or empty if none)
         aTargetFilter,          // DS 1.2 filter, NULL if none
         aSourceURI,             // source URI
@@ -314,7 +314,7 @@ TAlertCommand *TSuperDataStore::engProcessSyncAlert(
       aLastRemoteAnchor,      // last anchor of client
       aNextRemoteAnchor,      // next anchor of client
       aTargetURI,             // target URI as sent by remote, no processing at all
-      aIdentifyingTargetURI,  // target URI (without eventual CGI)
+      aIdentifyingTargetURI,  // target URI (without possible CGI)
       aTargetURIOptions,      // filtering CGI (NULL or empty if none)
       aTargetFilter,          // DS 1.2 filter, NULL if none
       aSourceURI,             // source URI

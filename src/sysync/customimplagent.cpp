@@ -730,7 +730,7 @@ bool TCustomImplAgent::SessionLogin(const char *aUserName, const char *aAuthStri
   #ifdef SYSYNC_CLIENT
   if (IS_CLIENT) {
     #ifndef NO_LOCAL_DBLOGIN
-    // check for eventual client without need for local DB login
+    // check for possible client without need for local DB login
     if (fNoLocalDBLogin) {
       // just use local DB login name as user key (userkey is probably not needed anyway)
       fUserKey=fLocalDBUser;

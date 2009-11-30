@@ -889,7 +889,7 @@ bool endDateFromCount(
     {
       case 'W':
         LOGDEBUGPRINTFX(aLogP,DBG_PARSE+DBG_EXOTIC,("RRULE2toInternal() simple weekly calc"));
-        // v1 end date calc, we need to take into account eventual masks, so result must be end of interval, not just start date+interval
+        // v1 end date calc, we need to take into account possible masks, so result must be end of interval, not just start date+interval
         // weekly: end date is last day of target week
         until=dtstart+((ivrep*DaysOfWeek-startwday+6)*linearDateToTimeFactor);
         return true;

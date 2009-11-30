@@ -1676,7 +1676,7 @@ void TSyncAgent::retryClientSessionStart(bool aOldMessageInBuffer)
   // - make sure subsequent commands (most probably statuses for Alerts)
   //   don't get processed
   AbortCommandProcessing(0); // silently discard all further commands
-  // - make sure eventual processing errors do not abort the session
+  // - make sure possible processing errors do not abort the session
   fIgnoreMsgErrs = true;
 } // TSyncAgent::retryClientSessionStart
 
@@ -2578,7 +2578,7 @@ bool TSyncAgent::handleHeaderStatus(TStatusCommand *aStatusCmdP)
     SmlMetInfMetInfPtr_t chalmetaP=NULL;
     SmlChalPtr_t chalP;
 
-    // first evaluate eventual challenge in header status
+    // first evaluate possible challenge in header status
     chalP = aStatusCmdP->getStatusElement()->chal;
     if (chalP) {
       chalmetaP = smlPCDataToMetInfP(chalP->meta);

@@ -349,7 +349,7 @@ void TCustomDSConfig::ResolveDSScripts(void)
 {
   // resolve
   if (!fDSScriptsResolved) {
-    // resolve eventual API level scripts first
+    // resolve possible API level scripts first
     apiResolveScripts();
     // resolve start and end scripts first
     TScriptContext::resolveScript(getSyncAppBase(),fAdminReadyScript,fResolveContextP,NULL);
@@ -1513,7 +1513,7 @@ localstatus TCustomImplDS::implMakeAdminReady(
     //       so this will build the entire context at once.
     if (!fScriptContextP) {
       // Rebuild order MUST be same as resolving order (see ResolveDSScripts())
-      // - scripts in eventual derivates
+      // - scripts in possible derivates
       apiRebuildScriptContexts();
       // - adminready and end scripts outside the fieldmappings
       TScriptContext::rebuildContext(fSessionP->getSyncAppBase(),fConfigP->fAdminReadyScript,fScriptContextP,fSessionP);
@@ -2545,7 +2545,7 @@ localstatus TCustomImplDS::implReviewReadItem(
   // get the operation
   TSyncOperation sop = aItem.getSyncOp();
   // NOTE: Don't touch map if this is a for-reference-only (meaning that the map is
-  //   already ok, and it is included here ONLY to find eventual slowsync matches)!
+  //   already ok, and it is included here ONLY to find possible slowsync matches)!
   if (sop!=sop_reference_only) {
     // Adjust map flags or create map if needed
     if (fSlowSync || sop==sop_add || sop==sop_wants_add) {

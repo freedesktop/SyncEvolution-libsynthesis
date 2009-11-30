@@ -2062,7 +2062,7 @@ void TODBCApiDS::DoDataSubstitutions(
                 else if (inStr[j]=='a') asci=true;
               } while(true);
             }
-            // extract name (without eventual array index or dbfieldtype)
+            // extract name (without possible array index or dbfieldtype)
             s.assign(inStr,j,m-j);
             // find field
             if (!aItemP) { i=k+1; n=0; break; } // no item, no action
@@ -3003,7 +3003,7 @@ localstatus TODBCApiDS::updateSyncTarget(SQLHSTMT aStatement, bool aSessionFinis
   // now substitute standard: %f=folderkey, %u=userkey, %d=devicekey, %t=targetkey
   // - Note: it is important that %t,%d is checked here, after %dL, %dS, %tL and %tS above!!
   DoSQLSubstitutions(sql);
-  // - bind eventual params
+  // - bind possible params
   bindSQLParameters(aStatement,false);
   // - issue
   execSQLStatement(aStatement,sql,false,"updating anchor/lastsync",false);

@@ -3560,7 +3560,7 @@ bool TScriptContext::getVarField(TItemField *&aItemFieldP)
     varidx=(sInt8)(*(p+2));
     if (varidx==VARIDX_UNDEFINED)
       SYSYNC_THROW(TScriptErrorException("Undefined identifier",line));
-    // check eventual array index
+    // check possible array index
     arridx=-1; // default to non-array
     if (*np==TK_OPEN_ARRAY) {
       tk=gettoken(); // consume open bracket

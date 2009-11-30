@@ -1017,7 +1017,7 @@ bool TMultiFieldItem::processFilter(bool aMakePass, const char *&aPos, const cha
     }
   }
   // term is now evaluated, show what follows
-  // - check for boolean op chain, aPos points now to eventual logical operator
+  // - check for boolean op chain, aPos points now to possible logical operator
   do {
     // - skip spaces
     c=*aPos;
@@ -1373,7 +1373,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
   for (sInt16 i=0; i<fFieldDefinitionsP->numFields(); i++) {
     // get merge mode
     char sep=fFieldDefinitionsP->fFields[i].mergeMode;
-    // eventual merging is only relevant (=to be reported) for fields that are not eqm_none
+    // possible merging is only relevant (=to be reported) for fields that are not eqm_none
     bool mergerelevant = fFieldDefinitionsP->fFields[i].eqRelevant!=eqm_none;
     // check if available in both items at all
     if (

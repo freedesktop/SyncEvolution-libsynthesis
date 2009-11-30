@@ -1258,7 +1258,7 @@ bool TzResolveMetaContext( timecontext_t &aContext, GZones* g )
 bool TzResolveContext( timecontext_t &aContext, lineartime_t aRefTime, bool aRefTimeUTC, GZones* g )
 {
   sInt32 offs;
-  // resolve eventual meta context (TCTX_SYSTEM at this time)
+  // resolve possible meta context (TCTX_SYSTEM at this time)
   if (!TzResolveMetaContext(aContext,g)) return false;
   // check if already an offset (non-symbolic)
   if (!TCTX_IS_TZ(aContext))

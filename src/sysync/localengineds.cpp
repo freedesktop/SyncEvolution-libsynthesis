@@ -1963,7 +1963,7 @@ const char *TLocalEngineDS::parseOption(
     // make temporary filter (or TAF) expression
     aArguments=parseFilterCGI(aArguments,fLocalSendToRemoteTypeP,fTargetAddressFilter); // if type being used for sending to remote is known here, use it
     // Note: TAF filters are always evaluated internally as we need all SyncSet records
-    //       regardless of eventual TAF suppression (for slowsync matching etc.)
+    //       regardless of possible TAF suppression (for slowsync matching etc.)
     return aArguments; // end of filter pattern
   }
   #endif
@@ -2682,7 +2682,7 @@ bool TLocalEngineDS::engHandleAlertStatus(TSyError aStatusCode)
   // now check status code
   if (aStatusCode==508) {
     // remote party needs slow sync
-    PDEBUGPRINTFX(DBG_HOT,("engHandleAlertStatus: Remote party needs SlowSync, switching to slowsync (AFTER alert, cancelling eventual Resume)"));
+    PDEBUGPRINTFX(DBG_HOT,("engHandleAlertStatus: Remote party needs SlowSync, switching to slowsync (AFTER alert, cancelling possible Resume)"));
     // Note: in server and client cases, this mode change may happen AFTER alert command exchange
     // - switch to slow sync
     fSlowSync=true;
@@ -3014,7 +3014,7 @@ bool TLocalEngineDS::engHandleSyncOpStatus(TStatusCommand *aStatusCmdP,TSyncOpCo
   #endif
   if (localID) {
     #ifdef SUPERDATASTORES
-    // remove eventual prefix if this item was sent in the <sync> command context of a superdatastore
+    // remove possible prefix if this item was sent in the <sync> command context of a superdatastore
     if (fAsSubDatastoreOf) {
       // let superdatastore remove the prefix for me
       localID = fAsSubDatastoreOf->removeSubDSPrefix(localID,this);
@@ -5087,7 +5087,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
     echoItemP->setRemoteID(aSyncItemP->getRemoteID());
     // - set sop
     echoItemP->setSyncOp(fEchoItemOp);
-    // - now check for eventual conflict
+    // - now check for possible conflict
     if (!fSlowSync) {
       conflictingItemP = getConflictingItemByRemoteID(aSyncItemP);
       // remove item if there is one that would conflict with the echo
@@ -5352,7 +5352,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
                 }
                 else {
                   PDEBUGPRINTFX(DBG_PROTO+DBG_HOT,("Conflict of Client Replace with Server delete -> try to update already deleted item (as it might still exist in syncset)"));
-                  // apply replace (and in case of !fDeleteWins, eventual implicit add)
+                  // apply replace (and in case of !fDeleteWins, possible implicit add)
                   fPreventAdd=fDeleteWins; // we want implicit add only if delete cannot win
                   remainsvisible=!fDeleteWins; // we want to see the item in the sync set if delete does not win!
                   ok=logicProcessRemoteItem(aSyncItemP,aStatusCommand,remainsvisible);
@@ -5720,7 +5720,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
             }
           } // if not ignoreUpdate
           // Update server map now if required
-          // - NOTE THAT THIS IS VERY IMPORTANT TO DO BEFORE any eventual
+          // - NOTE THAT THIS IS VERY IMPORTANT TO DO BEFORE any possible
           //   replaces, because replacing the matchingItem can only be
           //   done via its remoteID, which is, at this moment, probably not
           //   valid. After Mapping, it is ensured that the mapped remoteID

@@ -207,7 +207,7 @@ public:
   //     %WF = filter conditions preceeded by WHERE (can be empty)
   //     %k = data key (local ID)
   //     %N = data field name list
-  //     %aN = data field name list with all field, regardless of eventual unassigned state of fields in update statements
+  //     %aN = data field name list with all field, regardless of possible unassigned state of fields in update statements
   //     %V = data field=value list
   //     %aV = data field=value list with all field
   //     %v = data value list

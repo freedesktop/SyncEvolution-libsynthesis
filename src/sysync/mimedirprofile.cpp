@@ -1433,7 +1433,7 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
     case CONVMODE_TZ:
     case CONVMODE_TZID:
     case CONVMODE_DAYLIGHT:
-      // use now as default point in time for eventual offset calculations
+      // use now as default point in time for possible offset calculations
       ts = getSession()->getSystemNowAs(TCTX_SYSTEM);
       // if no field is specified, the item context is used (which defaults to
       // the session's user context)
@@ -1982,7 +1982,7 @@ static void encodeValues(
     aEncoding, // desired encoding
     aDoNotFoldContent ?
     0                     // disable insertion of soft line breaks
-    : MIME_MAXLINESIZE-1, // limit to standard MIME-linesize, leave one free for eventual extra folding space
+    : MIME_MAXLINESIZE-1, // limit to standard MIME-linesize, leave one free for possible extra folding space
     aPropertytext.size() % MIME_MAXLINESIZE, // current line size
     true // insert CRs only for softbreaks (for post-processing by folding)
   );
@@ -4066,7 +4066,7 @@ bool TMimeDirProfileHandler::parseLevels(
       aItem.getField(fid)->setAsString(TCFG_CSTR(enumP->enumval));
     }
   }
-  // skip eventual leading extra LF and CR and whitespace here
+  // skip possible leading extra LF and CR and whitespace here
   // NOTE: Magically server sends XML CDATA with 0x0D 0x0D 0x0A for example
   while (isspace(*aText)) aText++;
   // parse input text property by property
@@ -4110,7 +4110,7 @@ bool TMimeDirProfileHandler::parseLevels(
     if (strucmp(propname,"BEGIN",n)==0) {
       // BEGIN encountered
       p = propname+n;
-      // - skip eventual parameters for broken implementations like Intellisync/Synchrologic
+      // - skip possible parameters for broken implementations like Intellisync/Synchrologic
       if (*p==';') while (*p && *p!=':') p++;
       // - isolate value
       size_t l=0; const char *lnam=p+1;
@@ -4193,7 +4193,7 @@ bool TMimeDirProfileHandler::parseLevels(
     else if (strucmp(propname,"END",n)==0) {
       // END encountered
       p = propname+n;
-      // - skip eventual parameters for broken implementations like Intellisync/Synchrologic
+      // - skip possible parameters for broken implementations like Intellisync/Synchrologic
       if (*p==';') while (*p && *p!=':') p++;
       // - isolate value
       size_t l=0; const char *lnam=p+1;
@@ -4927,7 +4927,7 @@ void TMimeDirProfileHandler::setfieldoptions(
   if (aPropP) {
     // get name of CTCap property
     propname = smlPCDataToCharP(aPropP->name);
-    // get eventual maxSize
+    // get possible maxSize
     if (aPropP->maxsize) {
       if (getSession()->fIgnoreDevInfMaxSize) {
         // remote rule flags maxsize as invalid (like in E90), flag it as unknown (but possibly limited)
@@ -4938,11 +4938,11 @@ void TMimeDirProfileHandler::setfieldoptions(
         StrToLong(smlPCDataToCharP(aPropP->maxsize),propsize);
       }
     }
-    // get eventual maxOccur
+    // get possible maxOccur
     if (aPropP->maxoccur) {
       StrToLong(smlPCDataToCharP(aPropP->maxoccur),maxOccur);
     }
-    // get eventual noTruncate
+    // get possible noTruncate
     if (aPropP->flags & SmlDevInfNoTruncate_f)
       noTruncate=true;
     // check for BEGIN to check for enabled sublevels

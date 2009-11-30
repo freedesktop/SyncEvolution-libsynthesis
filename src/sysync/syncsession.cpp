@@ -1210,7 +1210,7 @@ void TSyncSession::announceDestruction()
   // terminate sync with all datastores
   TLocalDataStorePContainer::iterator pos;
   for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-    // now let datastores cancel eventual direct links to derived TSession
+    // now let datastores cancel possible direct links to derived TSession
     (*pos)->announceAgentDestruction();
   }
 } // TSyncSession::announceDestruction
@@ -3549,7 +3549,7 @@ localstatus TSyncSession::initSync(
 
   // search for local datastore first
   string cgiOptions;
-  // - search for datastore and obtain eventual CGI
+  // - search for datastore and obtain possible CGI
   fLocalSyncDatastoreP = findLocalDataStoreByURI(SessionRelativeURI(aLocalDatastoreURI),&cgiOptions);
   if (!fLocalSyncDatastoreP) {
     // no such local datastore

@@ -794,7 +794,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
           ));
           ignoreitem=true;
         }
-        // - check if item passes eventual TAF
+        // - check if item passes possible TAF
         /// %%% (do not filter replaces, as these would not get reported again in the next session)
         /// @todo: the above is no longer true as we can now have them re-sent in next session,
         ///        so this must be changed later!!!
