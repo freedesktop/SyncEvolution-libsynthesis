@@ -754,7 +754,9 @@ void TDebugConfig::localResolve(bool aLastPass)
     if (!getSyncAppBase()->fAppLogger.outputEstablished()) {
       getSyncAppBase()->fAppLogger.installOutput(getSyncAppBase()->newDbgOutputter(true)); // install the output object (and pass ownership!)
       getSyncAppBase()->fAppLogger.setDebugPath(fDebugInfoPath.c_str()); // global log all in one file
-      getSyncAppBase()->fAppLogger.appendToDebugPath(TARGETID);
+      getSyncAppBase()->fAppLogger.appendToDebugPath(fGlobalDbgLoggerOptions.fBasename.empty() ?
+                                                     TARGETID :
+                                                     fGlobalDbgLoggerOptions.fBasename.c_str());
       if (fSingleGlobLog) {
         // One single log - in this case, we MUST append to current log
         fGlobalDbgLoggerOptions.fAppend=true;
@@ -924,6 +926,8 @@ bool TDebugConfig::localStartElement(const char *aElementName, const char **aAtt
     expectRawString(fSessionDbgLoggerOptions.fCustomPrefix);
   else if (strucmp(aElementName,"filesuffix")==0)
     expectRawString(fSessionDbgLoggerOptions.fCustomSuffix);
+  else if (strucmp(aElementName,"filename")==0)
+    expectRawString(fSessionDbgLoggerOptions.fBasename);
   else if (strucmp(aElementName,"logflushmode")==0)
     expectEnum(sizeof(fSessionDbgLoggerOptions.fFlushMode),&fSessionDbgLoggerOptions.fFlushMode,DbgFlushModeNames,numDbgFlushModes);
   else if (strucmp(aElementName,"appendtoexisting")==0)
