@@ -57,7 +57,9 @@ TSyError TEngineModuleBase::Connect( string   aEngineName,
                                      CVersion aPrgVersion,
                                      uInt16   aDebugFlags)
 {
-  TSyError err= LOCERR_OK;
+  TSyError     err= LOCERR_OK;
+  uInt16 cbVersion= DB_Callback_Version; // use current by default
+
   fEngineName = aEngineName;
   fPrgVersion = aPrgVersion;
   fDebugFlags = aDebugFlags;
@@ -67,7 +69,11 @@ TSyError TEngineModuleBase::Connect( string   aEngineName,
       fCI = &fCIBuffer;
       fCIisStatic = true;
     }
-    InitCallback_Exotic( fCI,      DB_Callback_Version );
+    else {
+      cbVersion= fCI->callbackVersion; // the cbVersion from outside (ConnectEngineS)
+    } // if
+
+    InitCallback_Exotic( fCI, cbVersion ); // be aware that it could be an older version
                          fCI->thisBase= this; // get <this> later for callback calls
     CB_Connect         ( fCI );
   #endif
