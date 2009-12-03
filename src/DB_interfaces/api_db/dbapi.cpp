@@ -816,13 +816,14 @@ TSyError TDB_Api_Config::Connect( cAppCharP aModName, CContext &globContext,
   // !Supported( VP_EngineVersionParam ): only JNI signature changes
   // !Supported( VP_MD5_Nonce_IN       ): only JNI signature changes
 
-    cAppCharP                           vda= Plugin_DS_Admin;
-    if (!Supported( VP_InsertMapItem )) vda= Plugin_DS_Admin_OLD;
-    cAppCharP                           vdd= Plugin_DS_Data;
-    if (!Supported( VP_FLI_DSS       )) vdd= Plugin_DS_Data_OLD2;
-    if (!Supported( VP_ResumeToken   )) vdd= Plugin_DS_Data_OLD1;
-    cAppCharP                           vdb= Plugin_DS_Blob;
-    if (!Supported( VP_DeleteBlob    )) vdb= Plugin_DS_Blob_OLD;
+    cAppCharP                             vda= Plugin_DS_Admin;
+    if (!Supported( VP_InsertMapItem   )) vda= Plugin_DS_Admin_OLD;
+    cAppCharP                             vdd= Plugin_DS_Data;
+    if (!Supported( VP_FLI_DSS         )) vdd= Plugin_DS_Data_OLD2;
+    if (!Supported( VP_ResumeToken     )) vdd= Plugin_DS_Data_OLD1;
+    cAppCharP                             vdb= Plugin_DS_Blob;
+    if (!Supported( VP_BLOB_JSignature )) vdb= Plugin_DS_Blob_OLD2; // new BLOB signature
+    if (!Supported( VP_DeleteBlob      )) vdb= Plugin_DS_Blob_OLD1;
 
   //---- module ---------------------------------
     if (!err) err=     DBApi_Assign( "", &m.param,        sizeof(m.param),        Plugin_Param );

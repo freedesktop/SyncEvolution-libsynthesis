@@ -155,8 +155,10 @@ enum Version {
   VP_Tunnel              = 0x01060000,
   /** V1.6.1.X : Correct SetValue support                        */
   VP_SetValue            = 0x01060100,
-  /** V1.6.1.X : Current version, use 'Plugin_Version()'         */
-  VP_CurrentVersion      = 0x01060100,
+  /** V1.6.2.X : 64 bit Java BLOB signature                      */
+  VP_BLOB_JSignature     = 0x01060200,
+  /** V1.6.2.X : Current version, use 'Plugin_Version()'         */
+  VP_CurrentVersion      = 0x01060200,
 
   /** -------- : Bad/undefined version                           */
   VP_BadVersion          = 0xffffffff,
@@ -289,7 +291,8 @@ enum Version {
 #define Plugin_DS_Data_OLD1  "plugin_datastore_OLD1"
 #define Plugin_DS_Data_OLD2  "plugin_datastore_OLD2"
 #define Plugin_DS_Admin_OLD  "plugin_datastoreadmin_OLD"
-#define Plugin_DS_Blob_OLD   "plugin_datablob_OLD"
+#define Plugin_DS_Blob_OLD1  "plugin_datablob_OLD1"
+#define Plugin_DS_Blob_OLD2  "plugin_datablob_OLD2"
 
 
 

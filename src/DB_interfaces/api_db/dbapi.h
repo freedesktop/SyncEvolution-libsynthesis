@@ -220,6 +220,7 @@ class TDB_Api_Config
 
     cAppCharP ModName()    { return fModName.c_str(); } // the <moduleName>
     cAppCharP ModOptions() { return fOptions.c_str(); } // the module's parameters
+    cAppCharP ModSubName() { return fModSub.c_str();  } // the sub module's name (with params)
 
     void DisposeStr( TDB_Api_Str &s );
   private:

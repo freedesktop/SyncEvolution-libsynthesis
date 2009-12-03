@@ -209,9 +209,10 @@ static TSyError AssignMethods( appPointer aMod, appPointer aField, memSize aFiel
     #endif
   #endif
 
-  #if !defined DISABLE_PLUGIN_DATASTOREADMIN || !defined DISABLE_PLUGIN_DATASTOREDATA
-    if (strcmp( aKey,Plugin_DS_Blob     )==0 || // new AND old
-        strcmp( aKey,Plugin_DS_Blob_OLD )==0) {
+  #if !defined DISABLE_PLUGIN_DATASTOREADMIN  || !defined DISABLE_PLUGIN_DATASTOREDATA
+    if (strcmp( aKey,Plugin_DS_Blob      )==0 || // new AND old
+        strcmp( aKey,Plugin_DS_Blob_OLD1 )==0 ||
+        strcmp( aKey,Plugin_DS_Blob_OLD2 )==0) {
       return ConnectFunctions( aMod, aField,aFieldSize, false,
               // ---- BLOBs ----
                       ReadBlob,

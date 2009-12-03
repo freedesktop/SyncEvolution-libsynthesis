@@ -935,7 +935,6 @@ bool GlobContextFound( string dbName, GlobContext* &g )
     g= g->next;
   } // while
 
-//printf( "ContextFound: %08X '%s'\n", g, dbName.c_str() );
   return g!=NULL && g->ref!=NULL;
 } // GlobContextFound
 
