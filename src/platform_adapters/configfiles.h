@@ -28,7 +28,7 @@
   #endif
 #else
   #define PRINTF_LLD "%lld"
-  #define PRINTF_LLD_ARG(x) static_cast<sInt64>(x)
+  #define PRINTF_LLD_ARG(x) static_cast<long long>(x)
   #define FMT_LENGTH(n) n
   #define FMT_LENGTH_LIMITED(n,p) p
   #define LONGLONGTOSTR(s,ll) StringObjPrintf(s,"%lld",ll)
