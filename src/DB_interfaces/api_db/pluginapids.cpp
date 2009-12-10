@@ -1725,7 +1725,7 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
 
   // save the entire map list differentially
   pos=fMapTable.begin();
-  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("apiSaveAdminData: internal map table has %ld entries (normal and others)",fMapTable.size()));
+  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("apiSaveAdminData: internal map table has %ld entries (normal and others)",(long)fMapTable.size()));
   while (pos!=fMapTable.end()) {
     DEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
       "apiSaveAdminData: entryType=%s, localid='%s', remoteID='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
@@ -1867,7 +1867,7 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
       // - fPIUnconfirmedSize= uInt32, unconfirmed part of item size
       adminData+="\r\nunconfirmedsize:"; StringObjAppendPrintf( adminData,"%ld", (long)fPIUnconfirmedSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, store it as well to make ReadBlob easier (mallloc)
-      adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%ld", blSize );
+      adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%ld", (long)blSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, 0=none
       // - fPIStoredDataP    = void *, BLOB data, NULL if none
       adminData+="\r\nstored;BLOBID="; adminData+= PIStored;

@@ -1524,7 +1524,7 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
     if (aLocalID.length()+prefixsize>(uInt32)maxguidsize) { //BCPPB needed unsigned cast
       // real GUID is too long, we need to create a temp
       string tempguid;
-      StringObjPrintf(tempguid,"#%ld",fTempGUIDMap.size()+1); // as list only grows, we have unique tempuids for sure
+      StringObjPrintf(tempguid,"#%ld",(long)fTempGUIDMap.size()+1); // as list only grows, we have unique tempuids for sure
       fTempGUIDMap[tempguid]=aLocalID;
       PDEBUGPRINTFX(DBG_DATA,(
         "translated realLocalID='%s' to tempLocalID='%s'",

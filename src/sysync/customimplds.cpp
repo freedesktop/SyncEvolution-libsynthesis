@@ -1131,7 +1131,7 @@ bool TCustomImplDS::deleteAllMaps(void)
   for (pos=fMapTable.begin();pos!=fMapTable.end();pos++) {
     (*pos).deleted=true; // deleted
   }
-  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("deleteAllMaps: all existing map entries (%ld) now marked deleted=1",fMapTable.size()));
+  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("deleteAllMaps: all existing map entries (%ld) now marked deleted=1",(long)fMapTable.size()));
   return allok;
 } // TCustomImplDS::deleteAllMaps
 
@@ -2988,14 +2988,14 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
     if (IS_CLIENT) {
     	#ifdef SYSYNC_CLIENT
       // - now pending maps (unsent ones)
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMap as mapentry_pendingmap",fPendingAddMaps.size()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMap as mapentry_pendingmap",(long)fPendingAddMaps.size()));
       for (spos=fPendingAddMaps.begin();spos!=fPendingAddMaps.end();spos++) {
         string locID = (*spos).first;
         dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
         modifyMap(mapentry_pendingmap, locID.c_str(), (*spos).second.c_str(), 0, false);
       }
       // - now pending maps (sent, but not seen status yet)
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fUnconfirmedMaps as mapentry_pendingmap/mapflag_pendingMapStatus",fUnconfirmedMaps.size()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fUnconfirmedMaps as mapentry_pendingmap/mapflag_pendingMapStatus",(long)fUnconfirmedMaps.size()));
       for (spos=fUnconfirmedMaps.begin();spos!=fUnconfirmedMaps.end();spos++) {
         modifyMap(mapentry_pendingmap, (*spos).first.c_str(), (*spos).second.c_str(), mapflag_pendingMapStatus, false);
       }
@@ -3004,7 +3004,7 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
     else {
     	#ifdef SYSYNC_SERVER
       // - the tempguid maps
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fTempGUIDMap as mapentry_tempidmap",fTempGUIDMap.size()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fTempGUIDMap as mapentry_tempidmap",(long)fTempGUIDMap.size()));
       for (spos=fTempGUIDMap.begin();spos!=fTempGUIDMap.end();spos++) {
         modifyMap(mapentry_tempidmap, (*spos).second.c_str(), (*spos).first.c_str(), 0, false);
       }

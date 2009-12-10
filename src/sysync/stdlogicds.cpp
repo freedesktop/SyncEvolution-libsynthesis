@@ -401,7 +401,7 @@ localstatus TStdLogicDS::performStartSync(void)
     // end reading
     sta=implEndDataRead();
     // show items
-    PDEBUGPRINTFX(DBG_HOT,("%s: number of local items involved in %ssync = %ld",getName(), fSlowSync ? "slow " : "",fItems.size()));
+    PDEBUGPRINTFX(DBG_HOT,("%s: number of local items involved in %ssync = %ld",getName(), fSlowSync ? "slow " : "",(long)fItems.size()));
     CONSOLEPRINTF(("  %ld local items are new/changed/deleted for this sync",fItems.size()));
     if (PDEBUGTEST(DBG_DATA+DBG_DETAILS)) {
       PDEBUGBLOCKFMTCOLL(("SyncSet","Items involved in Sync","datastore=%s",getName()));
@@ -515,7 +515,7 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
     // - start initialisation now
     fWriteStarted=false;
     // - read all records from DB right now if server data is used at all
-    DEBUGPRINTFX(DBG_DATA,("- number of items in list before StartDataRead = %ld",fItems.size()));
+    DEBUGPRINTFX(DBG_DATA,("- number of items in list before StartDataRead = %ld",(long)fItems.size()));
     // now we can initialize the conflict resolution mode for this session
     /// @todo move this to localengineds, at point where we get dssta_syncmodestable
     fSessionConflictStrategy=getConflictStrategy(fSlowSync,fFirstTimeSync);
