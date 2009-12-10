@@ -2236,7 +2236,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
     mapEntry.remoteid=mapid.remoteID.c_str();
     mapEntry.mapflags=mapid.flags;
     // check for old API which did not support entry types
-    if (fPluginDSConfigP->fDBApiConfig_Admin.Version()<VE_InsertMapItem) {
+    if (fPluginDSConfigP->fDBApiConfig_Admin.Version()<sInt32(VE_InsertMapItem)) {
       mapEntry.entrytype = mapentry_normal; // DB has no entry types, treat all as normal entries
     }
     else {
