@@ -3,6 +3,15 @@
  *
  */
 
+// Many of the options below can also be configured via config.h.
+// If ONOFF_<feature> is defined, then the feature is on if
+// ONOFF_<feature> is != 0, otherwise it is off. If that
+// define is not set, then the default setting in this file applies.
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+
 // SYNCML SERVER ENGINE LIBRARY OPENSOURCE LINUX
 // #############################################
 
@@ -126,6 +135,13 @@
 // - script with regex support
 #define SCRIPT_SUPPORT 1
 #define REGEX_SUPPORT 1
+#if defined(ONOFF_REGEX_SUPPORT)
+# if ONOFF_REGEX_SUPPORT
+#  define REGEX_SUPPORT 1
+# else
+#  undef REGEX_SUPPORT
+# endif
+#endif
 
 // - server does support target options
 #define SYSYNC_TARGET_OPTIONS 1
