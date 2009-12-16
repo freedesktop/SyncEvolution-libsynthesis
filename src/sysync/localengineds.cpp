@@ -412,6 +412,11 @@ public:
     );
   }; // func_DBName
 
+  // void ABORTDATASTORE(integer statuscode)
+  static void func_AbortDatastore(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext())->engAbortDataStoreSync(aFuncContextP->getLocalVar(0)->getAsInteger(),true); // we cause the abort locally
+  } // func_AbortDatastore
 
   // string LOCALDBNAME()
   // returns name of local DB with which it was identified for the sync
@@ -522,6 +527,7 @@ const uInt8 param_FilterArg[] = { VAL(fty_string) };
 const uInt8 param_DateArg[] = { VAL(fty_timestamp) };
 const uInt8 param_IntArg[] = { VAL(fty_integer) };
 const uInt8 param_StrArg[] = { VAL(fty_string) };
+const uInt8 param_OneInteger[] = { VAL(fty_integer) };
 
 const TBuiltInFuncDef DBFuncDefs[] = {
   #ifdef OBJECT_FILTERING
@@ -563,6 +569,7 @@ const TBuiltInFuncDef DBFuncDefs[] = {
   { "DBNAME", TLDSfuncs::func_DBName, fty_string, 0, NULL },
   { "LOCALDBNAME", TLDSfuncs::func_LocalDBName, fty_string, 0, NULL },
   { "REMOTEDBNAME", TLDSfuncs::func_RemoteDBName, fty_string, 0, NULL },
+  { "ABORTDATASTORE", TLDSfuncs::func_AbortDatastore, fty_none, 1, param_OneInteger },
 };
 
 // functions for all datastores
