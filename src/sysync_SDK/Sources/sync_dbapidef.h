@@ -93,9 +93,8 @@ enum Version {
 /*VP_Init                  0x01000000   * V1.0.N.0 : Initial version */
 /*VP_1st                   0x01000002   * V1.0.N.2 : 1st delivered version */
 /*VP_Session_Login         0x01000003   * V1.0.N.3 : VAR_String for Session_Login: this version only */
+/*VP_EngineVersionParam    0x01000004   * V1.0.N.4 : <engineVersion> param for "Module_PluginParams" */
 
-  /** V1.0.N.4 : <engineVersion> param for "Module_PluginParams" */
-  VP_EngineVersionParam  = 0x01000004,
   /** V1.0.N.5 : Callback version >= 2 supported                 */
   VP_CB_Version2         = 0x01000005,
   /** V1.0.N.6 : With new function "DeleteBlob"                  */
@@ -285,8 +284,8 @@ enum Version {
 
 #define Plugin_UI            "plugin_ui"
 
+
 /* Compatibility to older versions */
-#define Plugin_Param_OLD     "plugin_param_OLD"
 #define Plugin_SE_Auth_OLD   "plugin_sessionauth_OLD"
 #define Plugin_DS_Data_OLD1  "plugin_datastore_OLD1"
 #define Plugin_DS_Data_OLD2  "plugin_datastore_OLD2"

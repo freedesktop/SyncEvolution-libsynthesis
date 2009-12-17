@@ -105,7 +105,7 @@ TSyError DBApi_DLLAssign( appPointer aMod, appPointer aField, memSize aFieldSize
              NULL );
   } // if
 
-
+  /*
   // compatibility to older version ( w/o <engineVersion> )
   keyOld= strcmp( aKey.c_str(),Plugin_Param_OLD )==0;
   keyCur= strcmp( aKey.c_str(),Plugin_Param     )==0;
@@ -114,6 +114,11 @@ TSyError DBApi_DLLAssign( appPointer aMod, appPointer aField, memSize aFieldSize
     // additional param for newer version
     if (keyCur) js1= j.SgnS_X( jt + "I" ); // "(ILjava/lang/String;I)S"
     else        js1=           jsT;        // "(ILjava/lang/String;)S"
+  */
+
+  if (strcmp( aKey.c_str(),Plugin_Param )==0) {
+    // additional param for newer version
+    js1= j.SgnS_X( jt + "I" ); // "(ILjava/lang/String;I)S"
 
     return ConnectFunctions( aMod, aField,aFieldSize, true,
           // ---- start of plugin connection

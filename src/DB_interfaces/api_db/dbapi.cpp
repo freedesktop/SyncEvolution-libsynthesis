@@ -949,12 +949,13 @@ TSyError TDB_Api_Config::PluginParams( cAppCharP mConfigParams )
 {
   typedef TSyError     (*PlugProc)( CContext mContext,
                                    cAppCharP mConfigParams,  CVersion engineVersion );
-  typedef TSyError (*OLD_PlugProc)( CContext mContext,
-                                   cAppCharP mConfigParams ); // w/o <engineVersion>
+//typedef TSyError (*OLD_PlugProc)( CContext mContext,
+//                                 cAppCharP mConfigParams ); // w/o <engineVersion>
 
   TSyError err;
   if (!fConnected) return DB_Error;
 
+  /*
   // new param supported for Plugin Version >= 1.0.X.4
   if (Supported( VP_EngineVersionParam )) {
     PlugProc     p=     (PlugProc)m.param.Module_PluginParams;
@@ -964,7 +965,10 @@ TSyError TDB_Api_Config::PluginParams( cAppCharP mConfigParams )
     OLD_PlugProc p= (OLD_PlugProc)m.param.Module_PluginParams; // w/o the SDK version parameter
     err=         p( mContext, mConfigParams );
   } // if
+  */
 
+  PlugProc    p= (PlugProc)m.param.Module_PluginParams;
+         err= p( mContext, mConfigParams, EngineSDKVersion() );
   if    (err==LOCERR_ALREADY) err= LOCERR_OK;
   return err;
 } // PluginParams

@@ -42,8 +42,7 @@ static TSyError AssignMethods( appPointer aMod, appPointer aField, memSize aFiel
                       NULL );
   } // if
 
-  if (strcmp( aKey,Plugin_Param     )==0 || // new AND old
-      strcmp( aKey,Plugin_Param_OLD )==0) {
+  if (strcmp( aKey,Plugin_Param )==0) {
     return ConnectFunctions( aMod, aField,aFieldSize, false,
               // ---- plugin params
                       Module_PluginParams,
