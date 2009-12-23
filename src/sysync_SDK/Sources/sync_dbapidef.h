@@ -94,9 +94,8 @@ enum Version {
 /*VP_1st                   0x01000002   * V1.0.N.2 : 1st delivered version */
 /*VP_Session_Login         0x01000003   * V1.0.N.3 : VAR_String for Session_Login: this version only */
 /*VP_EngineVersionParam    0x01000004   * V1.0.N.4 : <engineVersion> param for "Module_PluginParams" */
+/*VP_CB_Version2         = 0x01000005   * V1.0.N.5 : Callback version >= 2 supported */
 
-  /** V1.0.N.5 : Callback version >= 2 supported                 */
-  VP_CB_Version2         = 0x01000005,
   /** V1.0.N.6 : With new function "DeleteBlob"                  */
   VP_DeleteBlob          = 0x01000006,
   /** V1.0.N.7 : With new "scripting" function "AdaptItemData"   */
@@ -156,8 +155,9 @@ enum Version {
   VP_SetValue            = 0x01060100,
   /** V1.6.2.X : 64 bit Java BLOB signature                      */
   VP_BLOB_JSignature     = 0x01060200,
+/*VP_091221                0x01060200   * V1.6.2.X : Released 21-Dec-09 */
   /** V1.6.2.X : Current version, use 'Plugin_Version()'         */
-  VP_CurrentVersion      = 0x01060200,
+  VP_CurrentVersion      = 0x01070000,
 
   /** -------- : Bad/undefined version                           */
   VP_BadVersion          = 0xffffffff,
