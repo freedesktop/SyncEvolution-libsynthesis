@@ -251,6 +251,7 @@ enum Version {
 #define CA_JNI               "JNI"          /* Indicates, if plugin is based on JNI */
 #define CA_CSHARP            "C#"           /* Indicates, if plugin is based on C#  */
 #define CA_GUID              "GUID"         /* GUID */
+#define CA_Plugin            "PLUGIN"       /* Built-In plugin name */
 #define CA_GlobContext       "GlobContext"  /* The global context, if available */
 #define CA_ADMIN_Info        "ADMIN_Info"   /* Get ADMIN info as <name><SP>"ADMIN" with 'CreateContext' */
                                             /*   (supported for V1.3.7 and higher) */
