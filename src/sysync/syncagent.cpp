@@ -2559,7 +2559,7 @@ bool TSyncAgent::syncHdrFailure(bool aTryAgain)
       // special special case: header failed to execute the second time
       DEBUGPRINTFX(DBG_ERROR,("Fatal internal problem, SyncHdr execution failed twice"));
       aTryAgain=false; // just to make sure
-      SYSYNC_THROW((TSyncException("SyncHdr fatal execution problem")));
+      SYSYNC_THROW(TSyncException("SyncHdr fatal execution problem"));
     }
     return aTryAgain;    
     #endif
