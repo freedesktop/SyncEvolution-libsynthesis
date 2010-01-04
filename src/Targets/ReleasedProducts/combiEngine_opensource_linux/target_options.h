@@ -188,9 +188,22 @@
 
 
 // - if defined, SQL support is included
-#define SQL_SUPPORT           1
 #undef ODBCAPI_SUPPORT
 #define SQLITE_SUPPORT        1
+#if defined(ONOFF_SQLITE_SUPPORT)
+# if ONOFF_SQLITE_SUPPORT
+#  define SQLITE_SUPPORT 1
+# else
+#  undef SQLITE_SUPPORT
+# endif
+#endif
+
+#if defined(SQLITE_SUPPORT) || defined(ODBCAPI_SUPPORT)
+# define SQL_SUPPORT 1
+#else
+# undef SQL_SUPPORT
+#endif
+
 // - if defined, ODBC DB mapping of arrays to aux tables is supported
 #define ARRAYDBTABLES_SUPPORT 1
 
