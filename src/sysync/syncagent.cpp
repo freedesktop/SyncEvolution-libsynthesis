@@ -2334,13 +2334,19 @@ void TSyncAgent::getBufferedAnswer(MemPtr_t &aAnswer, MemSize_t &aAnswerSize)
 // returns remaining time for request processing [seconds]
 sInt32 TSyncAgent::RemainingRequestTime(void)
 {
-  // if no request timeout specified, use session timeout
-  sInt32 t = fRequestMaxTime ? fRequestMaxTime : getSessionConfig()->fSessionTimeout;
-  // calculate number of remaining seconds
-  return
-    t==0 ?
-      0x7FFFFFFF : // "infinite"
-      t - (sInt32)((getSystemNowAs(TCTX_UTC)-getLastRequestStarted()) / (lineartime_t)secondToLinearTimeFactor);
+	if (IS_CLIENT) {
+  	// clients don't process requests, so there's no limit
+  	return 0x7FFFFFFF; // "infinite"
+  }
+  else {
+    // if no request timeout specified, use session timeout
+    sInt32 t = fRequestMaxTime ? fRequestMaxTime : getSessionConfig()->fSessionTimeout;
+    // calculate number of remaining seconds
+    return
+      t==0 ?
+        0x7FFFFFFF : // "infinite"
+        t - (sInt32)((getSystemNowAs(TCTX_UTC)-getLastRequestStarted()) / (lineartime_t)secondToLinearTimeFactor);
+  }
 } // TSyncAgent::RemainingRequestTime
 
 

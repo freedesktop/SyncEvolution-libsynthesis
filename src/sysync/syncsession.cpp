@@ -3654,6 +3654,7 @@ bool TSyncSession::processSyncOpItem(
   // check for aborted datastore
   if (fLocalSyncDatastoreP->CheckAborted(aStatusCommand)) return false;
   // check if we can process it now
+  // Note: request time limit is active in server only.
   if (!fLocalSyncDatastoreP->engIsStarted(false) || RemainingRequestTime()<0) {
     aQueueForLater=true; // re-execute later...
     return true; // ...but otherwise ok
