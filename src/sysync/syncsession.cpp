@@ -948,7 +948,10 @@ TSyncSession::TSyncSession(
   	// use separate output for session logs  
     fSessionLogger.installOutput(getSyncAppBase()->newDbgOutputter(false)); // install the output object (and pass ownership!)
     fSessionLogger.setDebugPath(getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()); // base path
-    fSessionLogger.appendToDebugPath(TARGETID);
+    const string &name = getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions.fBasename;
+    fSessionLogger.appendToDebugPath(name.empty() ?
+                                     TARGETID :
+                                     name.c_str());
     if (getRootConfig()->fDebugConfig.fSingleSessionLog) {
       getRootConfig()->fDebugConfig.fSessionDbgLoggerOptions.fAppend=true; // One single log - in this case, we MUST append to current log
       fSessionLogger.appendToDebugPath("_session"); // only single session log, always with the same name
@@ -3570,7 +3573,7 @@ localstatus TSyncSession::initSync(
   #ifdef OBJECT_FILTERING
   if (sta==LOCERR_OK) {
     // %%% check for DS 1.2 <filter> in <Sync> command as well (we do parse <filter> in <Alert> already)
-    #if !defined _MSC_VER || defined WINCE
+    #if (!defined _MSC_VER || defined WINCE) && !defined(__GNUC__)
     #warning "tbd %%%: check for DS 1.2 <filter> in <Sync> command as well (we do parse <filter> in <Alert> already)"
     #endif
   }

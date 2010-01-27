@@ -139,7 +139,7 @@ void TItemField::setAsInteger(fieldinteger_t aInteger)
 {
   string s;
   #ifndef NO64BITINT
-  LONGLONGTOSTR(s,(sInt64)aInteger);
+  LONGLONGTOSTR(s,PRINTF_LLD_ARG(aInteger));
   #else
   StringObjPrintf(s,"%ld",(sInt32)aInteger);
   #endif
@@ -1769,7 +1769,7 @@ void TIntegerField::getAsString(string &aString)
     aString.erase();
   else {
     #ifndef NO64BITINT
-    LONGLONGTOSTR(aString,(sInt64)fInteger);
+    LONGLONGTOSTR(aString,PRINTF_LLD_ARG(fInteger));
     #else
     StringObjPrintf(aString,"%ld",(sInt32)fInteger);
     #endif

@@ -1372,7 +1372,7 @@ void TMultiFieldItem::standardMergeWith(TMultiFieldItem &aItem, bool &aChangedTh
   // same type of multifield, try to merge
   for (sInt16 i=0; i<fFieldDefinitionsP->numFields(); i++) {
     // get merge mode
-    char sep=fFieldDefinitionsP->fFields[i].mergeMode;
+    sInt16 sep=fFieldDefinitionsP->fFields[i].mergeMode;
     // possible merging is only relevant (=to be reported) for fields that are not eqm_none
     bool mergerelevant = fFieldDefinitionsP->fFields[i].eqRelevant!=eqm_none;
     // check if available in both items at all

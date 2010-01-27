@@ -27,7 +27,7 @@
 #endif
 
 #ifdef ANDROID
-#include "log.h"
+#include "android/log.h"
 #endif
 
 #define MyDB "SDK"                /* local debug name */
@@ -568,12 +568,19 @@ static void CallbackVPrintf( DB_Callback aCB, cAppCharP format, va_list args, uI
     char               message[ maxmsglen ];
     char* ptr= (char*)&message;
 
+    #ifdef __GNUC__
+    // need a copy for vasprintf() call
+    va_list copy;
+    va_copy(copy, args);
+    #endif
+
                message[ 0 ]= '\0';                /* start with an empty <msg> */
     vsnprintf( message, maxmsglen, format,args ); /* assemble the message string */
 
     #ifdef __GNUC__
           isMax= strlen(message)==maxmsglen-1;
-      if (isMax) vasprintf( &ptr, format, args );
+      if (isMax) vasprintf( &ptr, format, copy );
+      va_end(copy);
     #endif
 
     switch (outputMode) {

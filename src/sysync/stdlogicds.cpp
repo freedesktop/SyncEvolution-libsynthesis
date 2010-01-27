@@ -401,7 +401,7 @@ localstatus TStdLogicDS::performStartSync(void)
     // end reading
     sta=implEndDataRead();
     // show items
-    PDEBUGPRINTFX(DBG_HOT,("%s: number of local items involved in %ssync = %ld",getName(), fSlowSync ? "slow " : "",fItems.size()));
+    PDEBUGPRINTFX(DBG_HOT,("%s: number of local items involved in %ssync = %ld",getName(), fSlowSync ? "slow " : "",(long)fItems.size()));
     CONSOLEPRINTF(("  %ld local items are new/changed/deleted for this sync",fItems.size()));
     if (PDEBUGTEST(DBG_DATA+DBG_DETAILS)) {
       PDEBUGBLOCKFMTCOLL(("SyncSet","Items involved in Sync","datastore=%s",getName()));
@@ -515,7 +515,7 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
     // - start initialisation now
     fWriteStarted=false;
     // - read all records from DB right now if server data is used at all
-    DEBUGPRINTFX(DBG_DATA,("- number of items in list before StartDataRead = %ld",fItems.size()));
+    DEBUGPRINTFX(DBG_DATA,("- number of items in list before StartDataRead = %ld",(long)fItems.size()));
     // now we can initialize the conflict resolution mode for this session
     /// @todo move this to localengineds, at point where we get dssta_syncmodestable
     fSessionConflictStrategy=getConflictStrategy(fSlowSync,fFirstTimeSync);
@@ -579,7 +579,7 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
     if (sta==LOCERR_OK) {
       // quick test: if number of items is > than allowed maxid of remote datatstore,
       // sync is unlikely to succeed
-      if (getRemoteDatastore()->getMaxID()<fItems.size()) {
+      if (getRemoteDatastore()->getMaxID()<(long)fItems.size()) {
         // this will not work, warn (but no longer abort session, as Siemens S55 guys don't like that)
         CONSOLEPRINTF((
           "Warning: Synchronisation involves more items (%ld) than client can possibly manage (%ld",
@@ -765,7 +765,7 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
   #endif
   while (
     !isAborted() && // not aborted
-    (getDSConfig()->fMaxItemsPerMessage==0 || itemcount<getDSConfig()->fMaxItemsPerMessage==0) && // max item count per message not reached or not active
+    (getDSConfig()->fMaxItemsPerMessage==0 || itemcount<getDSConfig()->fMaxItemsPerMessage) && // max item count per message not reached or not active
     !fSessionP->outgoingMessageFull() && // message not full
     aNextMessageCommands.size()==0 // no commands already queued for next message
   ) {

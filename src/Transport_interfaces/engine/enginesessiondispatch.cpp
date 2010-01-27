@@ -142,11 +142,11 @@ void TEngineSessionDispatch::generateRespURI(
   	// include session ID as CGI into RespURI
     aRespURI=aLocalURI;
     // see if there is already a sessionid in this localURI
-    sInt16 n=aRespURI.find(commCfgP->fSessionIDCGIPrefix);
+    string::size_type n=aRespURI.find(commCfgP->fSessionIDCGIPrefix);
     if (n!=string::npos) {
       n+=commCfgP->fSessionIDCGIPrefix.size(); // char after prefix
       // is already there, replace value with new value
-      sInt16 m=aRespURI.find_first_of("&?\n\r",n);
+      string::size_type m=aRespURI.find_first_of("&?\n\r",n);
       if (m==string::npos)
         aRespURI.replace(n,999,aSessionID);
       else
@@ -177,15 +177,15 @@ Ret_t TEngineSessionDispatch::HandleDecodingException(TSyncSession *aSessionP, c
   #ifdef SYDEBUG
   // determine session name
   const char *sname = "<unknown>";
-  try {
+  SYSYNC_TRY {
     if (aSessionP) {
       sname = aSessionP->getLocalSessionID();
     }
   }
-  catch (...) {
+  SYSYNC_CATCH (...)
     sname = "<BAD aSessionP, caused exception>";
     aSessionP=NULL; // prevent attempt to write to session's log
-  }
+  SYSYNC_ENDCATCH
   // determine routine name
   if (!aRoutine) aRoutine="<unspecified routine>";
   // show details
@@ -343,7 +343,7 @@ TSyError TServerEngineInterface::OpenSessionInternal(SessionH &aNewSessionH, uIn
           ((sid >> 16) & 0xFFFF) + ((sid << 47) & 0x7FFF000000000000LL) + // aaaa00000000dddd
           ((((uIntPtr)sessionHandleP)&0xFFFFFFFF) << 16); // 0000bbbbcccc0000
         // - make a string of it
-        StringObjPrintf(SessionIDString,"%lld",sid);
+        StringObjPrintf(SessionIDString,"%llu",(long long unsigned)sid);
       }
       // - create session object
       sessionP =
@@ -461,7 +461,6 @@ TSyError TServerEngineInterface::SessionStep(SessionH aSessionH, uInt16 &aStepCm
   }
   // let server session handle it
   sessionHandleP->fSessionStatus = serverSessionP->SessionStep(aStepCmd, aInfoP);
-done:
   // return step status
   return sessionHandleP->fSessionStatus;
 } // TServerEngineInterface::SessionStep

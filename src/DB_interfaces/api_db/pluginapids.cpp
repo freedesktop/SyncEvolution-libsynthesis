@@ -973,7 +973,7 @@ bool TPluginApiDS::dsOptionFilterFetchesFromDB(void)
   // %%% tbd:
   // - attachments inhibit
   // - size limit
-  #if !defined _MSC_VER || defined WINCE
+  #if (!defined _MSC_VER || defined WINCE) && !defined(__GNUC__)
   #warning "attachments and limit filters not yet supported"
   #endif
   // - let plugin know and check (we can filter at DBlevel if plugin understands both start/end)
@@ -1725,7 +1725,7 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
 
   // save the entire map list differentially
   pos=fMapTable.begin();
-  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("apiSaveAdminData: internal map table has %ld entries (normal and others)",fMapTable.size()));
+  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("apiSaveAdminData: internal map table has %ld entries (normal and others)",(long)fMapTable.size()));
   while (pos!=fMapTable.end()) {
     DEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
       "apiSaveAdminData: entryType=%s, localid='%s', remoteID='%s', mapflags=0x%lX, changed=%d, deleted=%d, added=%d, markforresume=%d, savedmark=%d",
@@ -1867,7 +1867,7 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
       // - fPIUnconfirmedSize= uInt32, unconfirmed part of item size
       adminData+="\r\nunconfirmedsize:"; StringObjAppendPrintf( adminData,"%ld", (long)fPIUnconfirmedSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, store it as well to make ReadBlob easier (mallloc)
-      adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%ld", blSize );
+      adminData+="\r\nstoredsize:"; StringObjAppendPrintf( adminData,"%ld", (long)blSize );
       // - fPIStoredSize     = uInt32, size of BLOB to store, 0=none
       // - fPIStoredDataP    = void *, BLOB data, NULL if none
       adminData+="\r\nstored;BLOBID="; adminData+= PIStored;
@@ -2236,7 +2236,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
     mapEntry.remoteid=mapid.remoteID.c_str();
     mapEntry.mapflags=mapid.flags;
     // check for old API which did not support entry types
-    if (fPluginDSConfigP->fDBApiConfig_Admin.Version()<VE_InsertMapItem) {
+    if (fPluginDSConfigP->fDBApiConfig_Admin.Version()<sInt32(VE_InsertMapItem)) {
       mapEntry.entrytype = mapentry_normal; // DB has no entry types, treat all as normal entries
     }
     else {
@@ -2279,6 +2279,11 @@ localstatus TPluginApiDS::apiLoadAdminData(
 	        fPendingAddMaps[mapEntry.localid]=mapEntry.remoteid;
         break;
       #endif
+    case mapentry_invalid:
+    case mapentry_normal:
+    case numMapEntryTypes:
+      // nothing to do or should not occur
+      break;
     }
     // next is not first entry any more
     firstEntry=false;

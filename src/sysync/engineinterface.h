@@ -766,6 +766,10 @@ public:
     EMBVIRTUAL TSyError InsertItemAsKey  ( SessionH aSessionH, KeyH aItemKey,  ItemID aID ) TUNNEL_IMPL;
     EMBVIRTUAL TSyError UpdateItemAsKey  ( SessionH aSessionH, KeyH aItemKey, cItemID aID, ItemID updID ) TUNNEL_IMPL;
     
+    EMBVIRTUAL TSyError debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunction,
+                                  int aDbgLevel, cAppCharP aLinePrefix,
+                                  cAppCharP aText);
+
     /// @}
 
     /// @brief returns the current application base object

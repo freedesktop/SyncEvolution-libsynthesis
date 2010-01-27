@@ -21,7 +21,7 @@
 #endif
 
 #ifdef ANDROID
-#include "log.h"
+#include "android/log.h"
 #endif
 
 /* SySync headers (not precompiled during SySync development) */

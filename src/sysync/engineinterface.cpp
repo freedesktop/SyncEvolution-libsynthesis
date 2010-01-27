@@ -1807,6 +1807,18 @@ TSyError TEngineInterface::UpdateItemAsKey(SessionH aSessionH, KeyH aItemKey, cI
 
 #endif // DBAPI_TUNNEL_SUPPORT
 
+TSyError TEngineInterface::debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunction,
+                                     int aDbgLevel, cAppCharP aPrefix,
+                                     cAppCharP aText)
+{
+  #if defined(SYDEBUG)
+  getSyncAppBase()->getDbgLogger()->DebugPuts(/* aFile, aLine, aFunction, aPrefix */
+                                              aDbgLevel, aText);
+  return 0;
+  #else
+  return LOCERR_NOTIMP;
+  #endif
+} // debugPuts
 
 #ifdef ENGINE_LIBRARY
 #ifndef SIMPLE_LINKING
