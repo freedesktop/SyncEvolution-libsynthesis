@@ -2713,12 +2713,12 @@ localstatus TSyncAppBase::appEnableStatus(void)
   #else
     #ifndef APP_CAN_EXPIRE
     localstatus regsta = LOCERR_OK; // not registerable, not exprining - just run forever
-    #ifdef RELEASE_VERSION
+    #ifndef NEVER_EXPIRES_IS_OK
     #error "WARNING: Completely unlimited operation w/o license or expiry - is this intended??"
-    #endif
+    #endif // not NEVER_EXPIRES_IS_OK
     #else
     localstatus regsta = LOCERR_BADREG; // not registerable, assume no license, must be eval which expires
-    #endif
+    #endif // APP_CAN_EXPIRE
   #endif
   localstatus sta = regsta;
   // check expiry (only if registration has not already defined one)
