@@ -1729,6 +1729,7 @@ const char *TLocalEngineDS::parseFilterCGI(cAppCharP aCGI, TSyncItemType *aItemT
       logop=0; // now consumed
       paraNest++;
       aFilter+='(';
+      p++;
     }
     else {
       // must be term: ident op val
@@ -1860,6 +1861,7 @@ const char *TLocalEngineDS::parseFilterCGI(cAppCharP aCGI, TSyncItemType *aItemT
           // this is not an error but only means end of filter expression
           goto endFilter;
         }
+        aFilter+=')';
         paraNest--;
         p++;
       } while (true);
