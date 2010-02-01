@@ -2886,14 +2886,13 @@
     </remoterule>
 
 
-    <remoterule name="SyncJe_Outlook">
-      <!-- Rule for NextHaus SyncJe Outlook Edition -->
-      <model>SyncJe Outlook Edition</model>
+    <remoterule name="SyncJe_Outlook">
+      <!-- Rule for NextHaus SyncJe Outlook Edition -->
+      <model>SyncJe Outlook Edition</model>
 
-      <ignorectcap>yes</ignorectcap> <!-- can do contact photo sync, but is missing in CTCap -->
+      <ignorectcap>yes</ignorectcap> <!-- can do contact photo sync, but is missing in CTCap -->
       <descriptivename>NextHaus SyncJe Outlook Client</descriptivename>
-    </remoterule>
-
+    </remoterule>
 
     <!-- End of remote rule list. -->
 
