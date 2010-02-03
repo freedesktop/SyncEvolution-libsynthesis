@@ -156,7 +156,7 @@ enum Version {
   /** V1.6.2.X : 64 bit Java BLOB signature                      */
   VP_BLOB_JSignature     = 0x01060200,
 /*VP_091221                0x01060200   * V1.6.2.X : Released 21-Dec-09 */
-  /** V1.6.2.X : Current version, use 'Plugin_Version()'         */
+  /** V1.7.0.X : Current version, use 'Plugin_Version()'         */
   VP_CurrentVersion      = 0x01070000,
 
   /** -------- : Bad/undefined version                           */
@@ -377,6 +377,8 @@ enum DebugFlags {
   DBG_PLUGIN_EXOT  = 0x0004,
   /** direct printf calls for test */ 
   DBG_PLUGIN_DIRECT= 0x0008,
+  /** GetValue/SetValue debugging */
+  DBG_GET_SET_VALUE= 0x0010,
   /** Default mask: all bits set */
   DBG_PLUGIN_ALL   = 0xffff,
 };
