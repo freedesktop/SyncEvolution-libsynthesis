@@ -30,9 +30,9 @@
 #include "android/log.h"
 #endif
 
-#define MyDB "SDK"                /* local debug name */
-#define SDKversionMask 0xffff00ff /* Old mask for version comparison: Omit OS identifier */
-#define maxmsglen      1024       /* Maximum string length for callback string */
+#define MyDB "SDK"                    /* local debug name */
+#define Old_SDKversionMask 0xffff00ff /* Old mask for version comparison: Omit OS identifier */
+#define maxmsglen 1024                /* Maximum string length for callback string */
 
 
 
@@ -75,7 +75,7 @@ CVersion Plugin_Version( short buildNumber )
 bool Feature_Supported  ( CVersion versionFeature, CVersion currentVersion )
 {
   CVersion v= currentVersion;
-  if      (v<VP_NewBuildNumber) v= v & SDKversionMask; /* avoid OS identifier comparison */
+  if      (v<VP_NewBuildNumber) v= v & Old_SDKversionMask; /* avoid OS identifier comparison */
   return   v>=versionFeature;
 } /* FeatureSupported */
 
@@ -85,7 +85,7 @@ bool Feature_Supported  ( CVersion versionFeature, CVersion currentVersion )
 bool Feature_SupportedEq( CVersion versionFeature, CVersion currentVersion )
 {
   CVersion v= currentVersion;
-  if      (v<VP_NewBuildNumber) v= v & SDKversionMask; /* avoid OS identifier comparison */
+  if      (v<VP_NewBuildNumber) v= v & Old_SDKversionMask; /* avoid OS identifier comparison */
   return   v==versionFeature;
 } /* FeatureSupportedEq */
 
