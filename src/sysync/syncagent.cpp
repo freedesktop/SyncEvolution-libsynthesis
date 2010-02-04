@@ -1164,12 +1164,14 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
           	// prepare engine for sync (%%% new routine in 3.2.0.3, summarizing engInitForSyncOps() and
             // switching to dssta_dataaccessstarted, i.e. loading sync set), but do in only once
             if (!((*pos)->testState(dssta_syncsetready))) {
-            	// not yet started
-	          	status = (*pos)->engInitForClientSync();
-	            if (status!=LOCERR_OK) {
+              // not yet started
+              status = (*pos)->engInitForClientSync();
+              if (status!=LOCERR_OK ) {
                 // failed
-                AbortSession(status,true);
-                return getAbortReasonStatus();
+                if (status!=LOCERR_DATASTORE_ABORT) {
+                  AbortSession(status,true);
+                  return getAbortReasonStatus();
+                } 
               }
             }
             // start or continue (which is largely nop, as continuing works via unfinished sync command)
