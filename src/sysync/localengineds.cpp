@@ -2840,7 +2840,7 @@ localstatus TLocalEngineDS::engInitForSyncOps(
   }
   #ifndef NO_REMOTE_RULES
   // check if rule match type will override what we found so far
-  if (fSessionP->fAppliedRemoteRuleP) {
+  if (!fSessionP->fActiveRemoteRules.empty()) {
     // have a look at our rulematch types
     TRuleMatchTypesContainer::iterator pos;
     TSyncItemType *ruleMatchTypeP = NULL;
@@ -2860,11 +2860,15 @@ localstatus TLocalEngineDS::engInitForSyncOps(
           n=strlen(p);
           e=p+n;
         }
-        // compare
-        if (strwildcmp(fSessionP->fAppliedRemoteRuleP->getName(), p, 0, n)==0) {
-          ruleMatchTypeP=(*pos).itemTypeP; // get the matching type
-          break;
+        // see if that matches with any of the active rules
+        TRemoteRulesList::iterator apos;
+        for(apos=fSessionP->fActiveRemoteRules.begin();apos!=fSessionP->fActiveRemoteRules.end();apos++) {
+          if (strwildcmp((*apos)->getName(), p, 0, n)==0) {
+            ruleMatchTypeP=(*pos).itemTypeP; // get the matching type
+            break;
+          }
         }
+        if (ruleMatchTypeP) break; // found a rule match type
         // test next match target
         p=e;
       }
@@ -2893,8 +2897,7 @@ localstatus TLocalEngineDS::engInitForSyncOps(
         RemoteSendToLocalTypeP=remCorrTypeP;
         // Show that we are using ruleMatch type
         PDEBUGPRINTFX(DBG_DATA+DBG_HOT,(
-          "Remote rule '%s' overrides default type usage - forcing type '%s' for send and receive",
-          fSessionP->fAppliedRemoteRuleP->getName(),
+          "An active remote rule overrides default type usage - forcing type '%s' for send and receive",
           ruleMatchTypeP->getTypeConfig()->getName()
         ));
         // done
