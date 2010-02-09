@@ -58,13 +58,13 @@ TSyError TEngineModuleBase::Connect( string   aEngineName,
                                      uInt16   aDebugFlags)
 {
   TSyError     err= LOCERR_OK;
-  uInt16 cbVersion= DB_Callback_Version; // use current by default
 
   fEngineName = aEngineName;
   fPrgVersion = aPrgVersion;
   fDebugFlags = aDebugFlags;
 
   #if defined SYSYNC_ENGINE || defined SYSYNC_ENGINE_TEST
+    uInt16 cbVersion= DB_Callback_Version; // use current by default
     if (fCI==NULL) {
       fCI = &fCIBuffer;
       fCIisStatic = true;
