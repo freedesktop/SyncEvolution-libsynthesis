@@ -1651,7 +1651,8 @@ sInt32 TBinfileClientConfig::newProfile(const char *aProfileName, bool aSetDefau
   // Note: create target also for not available datastores
   TLocalDSList::iterator pos;
   for (pos=fDatastores.begin();pos!=fDatastores.end();pos++) {
-    TBinfileDSConfig *cfgP = static_cast<TBinfileDSConfig *>(*pos);
+    TBinfileDSConfig *cfgP = (*pos)->castTBinfileDSConfig();
+    if (!cfgP) continue; // don't create targets for stores which don't need and support it
     cfgP->initTarget(target,profile.profileID,aSetDefaults ? NULL : "",aSetDefaults && DEFAULT_DATASTORES_ENABLED); // remote datastore names default to local ones, empty if not default
     // copy from template
     if (aTemplateProfile>=0) {
@@ -2148,8 +2149,9 @@ sInt32 TBinfileClientConfig::findOrCreateTargetIndexByDBInfo(
     // does not exist yet, create it now
     TLocalDSList::iterator pos;
     for (pos=fDatastores.begin();pos!=fDatastores.end();pos++) {
-      TBinfileDSConfig *cfgP = static_cast<TBinfileDSConfig *>(*pos);
+      TBinfileDSConfig *cfgP = (*pos)->castTBinfileDSConfig();
       if (
+        cfgP && // ignore datastores which do not need and support a target
         cfgP->fLocalDBTypeID==aLocalDBTypeID &&
         (aLocalDBName==NULL || cfgP->fLocalDBPath==aLocalDBName)
       ) {
@@ -2742,6 +2744,11 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
     ResetAndRemoveDatastores();
     // in case of tunnel, don't touch datastores
     if (tunnel) return LOCERR_OK;
+
+    // Create all superdatastores needed by any of the active targets.
+    // The superdatastores get added at the front of fLocalDataStores.
+    typedef map<string, TLocalEngineDS *> LookupDS_t;
+    LookupDS_t superstores;
     // Now iterate trough associated target records and create datastores
     maxidx=fConfigP->fTargetsBinFile.getNumRecords();
     TBinfileDBSyncTarget target;
@@ -2777,35 +2784,79 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
             #endif
             if (syncit)
             {
-              TBinfileImplDS *binfiledsP=NULL;
-              if (binfiledscfgP) {
-                // create datastore
-                binfiledsP = static_cast<TBinfileImplDS *>(binfiledscfgP->newLocalDataStore(this));
+              // determine sync mode / flags to use (same for sub- and superdatastores)
+              TSyncModes myMode;
+              bool mySlow;
+              #ifdef AUTOSYNC_SUPPORT
+              if (aAutoSyncSession && binfiledscfgP->fAutosyncAlertCode!=0) {
+                // syncmode provided from auto sync alert (e.g. SAN)
+                bool myIsSA;
+                TLocalEngineDS::getSyncModeFromAlertCode(binfiledscfgP->fAutosyncAlertCode,
+                                                         myMode,
+                                                         mySlow,
+                                                         myIsSA
+                                                         );
               }
-              if (binfiledsP) {
-                // copy target info to datastore for later access during sync
-                binfiledsP->fTargetIndex=recidx;
-                binfiledsP->fTarget=target;
-                // determine sync mode / flags to use
-                TSyncModes myMode;
-                bool mySlow;
-                #ifdef AUTOSYNC_SUPPORT
-                if (aAutoSyncSession && binfiledscfgP->fAutosyncAlertCode!=0) {
-                  // syncmode provided from auto sync alert (e.g. SAN)
-                  bool myIsSA;
-                  TLocalEngineDS::getSyncModeFromAlertCode(
-                    binfiledscfgP->fAutosyncAlertCode,
-                    myMode,
-                    mySlow,
-                    myIsSA
-                  );
+              else
+              #endif
+              {
+                // take it from config
+                myMode = target.syncmode;
+                mySlow = target.forceSlowSync;
+              }
+
+              TLocalEngineDS *localenginedsP=NULL;
+              string superdatastore = TLocalEngineDS::getSuperDatastore(target.remoteDBpath);
+              if (!superdatastore.empty()) {
+                if (superstores.find(superdatastore)==superstores.end()) {
+                  // create new superdatastore first
+                  TLocalDSConfig *localdscfgP = getSessionConfig()->getLocalDS(superdatastore.c_str());
+                  if (localdscfgP) {
+                    TLocalEngineDS *superdatastoreP=localdscfgP->newLocalDataStore(this);
+                    if (superdatastoreP) {
+                      superstores[superdatastore]=superdatastoreP;
+                      // store it so that we don't leak the pointer;
+                      // order must be fixed later
+                      fLocalDataStores.push_back(superdatastoreP);
+                      superdatastoreP->dsSetClientSyncParams(myMode,
+                                                             mySlow,
+                                                             TLocalEngineDS::getSuperDatastoreURI(target.remoteDBpath).c_str(),
+                                                             NULL, // DB user
+                                                             NULL, // DB password
+                                                             NULL, // local path extension
+                                                             // %%% add filters here later!!!
+                                                             NULL, // filter query
+                                                             false // filter inclusive
+                                                             );
+
+                    }
+                  }
                 }
-                else
-                #endif
-                {
-                  // take it from config
-                  myMode = target.syncmode;
-                  mySlow = target.forceSlowSync;
+                // *find* datastore created by TSuperDataStore constructor
+                localenginedsP=findLocalDataStore(target.dbname);
+              } else {
+                // create normal datastore and store it for sync
+                localenginedsP=binfiledscfgP->newLocalDataStore(this);
+                if (localenginedsP) {
+                  fLocalDataStores.push_back(localenginedsP);
+                }
+              }
+
+              // localenginedsP stored in fLocalDataStores, but not yet
+              // fully initialized - do that now
+              if (localenginedsP) {
+                // superdatastores are not derived from TBinfileImplDS and
+                // result in a NULL pointer here. However, we should never
+                // run into a superdatastore here because we are iterating
+                // over targets, which are always backed up by a config which
+                // produces TBinfileImplDS instances. Leaving the check in
+                // place just to be sure.
+                TBinfileImplDS *binfiledsP=localenginedsP->castTBinfileImplDS();
+
+                // copy target info to datastore for later access during sync
+                if (binfiledsP) {
+                  binfiledsP->fTargetIndex=recidx;
+                  binfiledsP->fTarget=target;
                 }
                 // clean change logs if...
                 // ...this is the only profile
@@ -2816,7 +2867,7 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
                 }
                 // set non-BinFile specific parameters (note that this call might
                 // be to a derivate which uses additional info from fTarget to set sync params)
-                binfiledsP->dsSetClientSyncParams(
+                localenginedsP->dsSetClientSyncParams(
                   myMode,
                   mySlow,
                   target.remoteDBpath,
@@ -2828,13 +2879,9 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
                   false // filter inclusive
                 );
                 // prepare local datastore (basic init can be done here) and check availability
-                if (binfiledsP->localDatastorePrep()) {
-                  // add to datastores for this sync
-                  fLocalDataStores.push_back(binfiledsP);
-                }
-                else {
+                if (!binfiledsP->localDatastorePrep()) {
                   // silently discard (do not sync it)
-                  PDEBUGPRINTFX(DBG_ERROR,("Local Database for datastore '%s' prepares not ok -> not synced",binfiledsP->getName()));
+                  PDEBUGPRINTFX(DBG_ERROR,("Local Database for datastore '%s' prepares not ok -> not synced",localenginedsP->getName()));
                   // show event (alerted for no database)
                   OBJ_PROGRESS_EVENT(
                     getSyncAppBase(),
@@ -2842,7 +2889,8 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
                     binfiledscfgP,
                     LOCERR_LOCDBNOTRDY,0,0
                   );
-                  delete binfiledsP;
+                  fLocalDataStores.remove(localenginedsP);
+                  delete localenginedsP;
                 }
               }
             } // if target DB enabled for sync
@@ -2850,6 +2898,18 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
         } // if target belongs to this profile
       } // if we can read the target record
     } // for all target records
+
+    // Superdatastores must come after their sub-datastores, because
+    // the sub-datastores' engPrepareClientSyncAlert() must have been
+    // called by the time that the superdatastore's engPrepareClientSyncAlert()
+    // is called, which depends on the anchors initialized earlier.
+    for (LookupDS_t::iterator pos=superstores.begin();
+         pos!=superstores.end();
+         ++pos) {
+      fLocalDataStores.remove(pos->second);
+      fLocalDataStores.push_back(pos->second);
+    }
+
     // ok if at least one datastore enabled
     return fLocalDataStores.size()>0 && fRemoteURI.size()>0 ? LOCERR_OK : LOCERR_NOCFG;
   } // active

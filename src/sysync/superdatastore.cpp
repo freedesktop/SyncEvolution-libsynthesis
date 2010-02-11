@@ -1200,7 +1200,7 @@ bool TSuperDataStore::engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP a
     if (pos==fSubDSLinks.end()) break; // done
     // create current prefix
     AssignString(prefix,aLocalIDPrefix);
-    prefix.append(fCurrentGenDSPos->fDSLinkConfigP->fGUIDPrefix);
+    prefix.append(pos->fDSLinkConfigP->fGUIDPrefix);
     // generate Map items
     ok=pos->fDatastoreLinkP->engGenerateMapItems(aMapCommandP,prefix.c_str());
     // exit if not yet finished with generating map items for this datastore

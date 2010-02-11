@@ -2270,8 +2270,10 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
       fSessionP->getReadOnly() || // session level read-only flag (probably set by login)
       fDSConfigP->fReadOnly; // or datastore config
     #ifdef SUPERDATASTORES
-    // check if not already alerted as subdatastore
-    if (fAsSubDatastoreOf) {
+    // check if not already alerted as subdatastore;
+    // on a client, fAsSubDatastoreOf was set earlier in engPrepareClientSyncAlert()
+    // without sending an Alert for it
+    if (fAsSubDatastoreOf && !aAsSubDatastoreOf) {
       // bad, cannot be alerted directly AND as subdatastore
       aStatusCommand.setStatusCode(400);
       ADDDEBUGITEM(aStatusCommand,"trying to alert already alerted subdatastore");
@@ -2651,6 +2653,11 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
       alertcmdP=NULL;
       aStatusCommand.setStatusCode(syncmlError(sta));
       PDEBUGPRINTFX(DBG_HOT,("engProcessSyncAlert failed with status=%hd",sta));
+    } else if (!alertcmdP) {
+      // Return NULL is treated as error, for example in
+      // TSuperDataStore::engProcessSyncAlert().  In the client case
+      // we get here without an alert; create a dummy one.
+      alertcmdP=new TAlertCommand(fSessionP,this,0);
     }
   }
   SYSYNC_CATCH (...)
@@ -2739,6 +2746,10 @@ localstatus TLocalEngineDS::engInitForSyncOps(
 )
 {
   localstatus sta = LOCERR_OK;
+
+  // Is this call directly from the client engine?
+  // Ignore it, our superdatastore will handle this for us.
+  if (!getSuperDatastorePlusURI(aRemoteDatastoreURI).empty()) return sta;
 
   // no default types
   TSyncItemType *LocalSendToRemoteTypeP=NULL;       // used by local to send to remote

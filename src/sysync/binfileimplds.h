@@ -653,6 +653,7 @@ class TBinfileDSConfig: public TLocalDSConfig
 public:
   TBinfileDSConfig(const char* aName, TConfigElement *aParentElement);
   virtual ~TBinfileDSConfig();
+  virtual TBinfileDSConfig *castTBinfileDSConfig() { return this; }
   // properties
   // - activtion switch (for making it inactive e.g. in server case)
   bool fBinfileDSActive;
@@ -750,6 +751,7 @@ public:
     const char *aName,
     uInt32 aCommonSyncCapMask=0);
   virtual ~TBinfileImplDS();
+  virtual TBinfileImplDS *castTBinfileImplDS() { return this; }
   virtual void announceAgentDestruction(void) { /** @todo nop for now */ };
   virtual void dsResetDataStore(void);
 

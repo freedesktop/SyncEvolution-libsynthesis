@@ -119,6 +119,8 @@ extern const TFuncTable ClientDBFuncTable;
 
 typedef list<string> TStringList;
 
+class TBinfileDSConfig;
+
 // local datastore config
 class TLocalDSConfig: public TConfigElement
 {
@@ -126,6 +128,10 @@ class TLocalDSConfig: public TConfigElement
 public:
   TLocalDSConfig(const char* aName, TConfigElement *aParentElement);
   virtual ~TLocalDSConfig();
+
+  /// dynamic cast into TBinfileDSConfig, NULL if not an instance of it
+  virtual TBinfileDSConfig *castTBinfileDSConfig() { return NULL; }
+
   // properties
   // - ID to identify datastore instance in callbacks and derived
   //   classes implementing multiple interface variants (such as PalmDbDatastore)
@@ -284,6 +290,8 @@ class TLDSfuncs;
   #define SUPERDS_VIRTUAL
   #define TSuperDataStore TLocalEngineDS // to allow parameter for engProcessSyncAlert()
 #endif
+
+class TBinfileImplDS;
 
 /// @brief Local datastore engine and abstraction of actual implementation
 /// - session and commands only call non-virtual engXXXX members of this class to
@@ -529,6 +537,9 @@ public:
   /// destructor
   virtual ~TLocalEngineDS();
 
+  /// dynamic cast, returns NULL if not of that type
+  virtual TBinfileImplDS *castTBinfileImplDS() { return NULL; }
+
   /// @name dsProperty property and state querying methods
   /// @{
   #ifndef MINIMAL_CODE
@@ -593,8 +604,34 @@ public:
   TSyncItemType *getLocalReceiveType(void) { return fLocalReceiveFromRemoteTypeP; };    ///< type used by local to receive from remote
   TSyncItemType *getRemoteSendType(void) { return fRemoteSendToLocalTypeP; };           ///< type used by remote to send to local
   TSyncItemType *getRemoteReceiveType(void) { return fRemoteReceiveFromLocalTypeP; };   ///< type used by remote to receive from local
-  /// get remote DB path
+  /// get remote DB path, <foo:uri> if this store is only synced via a superdatastore called foo and remote "uri"
   cAppCharP getRemoteDBPath(void) { return fRemoteDBPath.c_str(); };
+  /// extract name of parent superdatastore from remote DB path, empty if not of form <foo>
+  string getSuperDatastore() { return getSuperDatastore(fRemoteDBPath); }
+  static string getSuperDatastorePlusURI(const string &aRemoteDBPath) {
+    if (aRemoteDBPath.size() > 2 &&
+        aRemoteDBPath[0] == '<' &&
+        aRemoteDBPath[aRemoteDBPath.size()-1] == '>')
+      return aRemoteDBPath.substr(1, aRemoteDBPath.size()-2);
+    else
+      return "";    
+  }
+  static string getSuperDatastore(const string &aRemoteDBPath) {
+    string stripped = getSuperDatastorePlusURI(aRemoteDBPath);
+    string::size_type pos = stripped.find(':');
+    if (pos!= stripped.npos)
+      return stripped.substr(0,pos);
+    else
+      return "";
+  }
+  static string getSuperDatastoreURI(const string &aRemoteDBPath) {
+    string stripped = getSuperDatastorePlusURI(aRemoteDBPath);
+    string::size_type pos = stripped.find(':');
+    if (pos!= stripped.npos)
+      return stripped.substr(pos+1);
+    else
+      return "";
+  }
   #ifdef SYSYNC_CLIENT
   /// get local DB path
   cAppCharP getLocalDBPath(void) { return fLocalDBPath.c_str(); };

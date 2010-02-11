@@ -1089,8 +1089,12 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
     TLocalEngineDS *localDS;
     for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
       // prepare alert
-      localDS = *pos;
-      status=localDS->engPrepareClientSyncAlert(NULL); // not as superdatastore
+      localDS=*pos;
+      string superdatastore=localDS->getSuperDatastore();
+      TLocalEngineDS *parentDS=NULL; // not as superdatastore by default
+      if (!superdatastore.empty())
+        parentDS=findLocalDataStore(superdatastore.c_str());
+      status=localDS->engPrepareClientSyncAlert((TSuperDataStore *) /* static_cast<TSuperDataStore *> */(parentDS));
       if (status!=LOCERR_OK) {
         // local database error
         return localError(status); // not found
