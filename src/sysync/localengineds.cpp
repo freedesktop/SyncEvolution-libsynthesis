@@ -6331,6 +6331,7 @@ bool TLocalEngineDS::engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP aL
     if (pos==fPendingAddMaps.end()) break; // done
     // add item
     string locID = (*pos).first;
+    string baseLocID = locID;
     dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
     // add local ID prefix, if any
     if (aLocalIDPrefix && *aLocalIDPrefix)
@@ -6356,8 +6357,10 @@ bool TLocalEngineDS::engGenerateMapItems(TMapCommand *aMapCommandP, cAppCharP aL
         locID.c_str(),
         (*pos).second.c_str()
       ));
-      // move sent ones to unconfirmed list
-      fUnconfirmedMaps[locID]=(*pos).second;
+      // move sent ones to unconfirmed list,
+      // without prefix (matches how TLocalEngineDS::engMarkMapConfirmed()
+      // is called by TSuperDataStore::engMarkMapConfirmed())
+      fUnconfirmedMaps[baseLocID]=(*pos).second;
       // remove item from to-be-sent list
       TStringToStringMap::iterator temp_pos = pos++; // make copy and set iterator to next
       fPendingAddMaps.erase(temp_pos); // now entry can be deleted (N.M. Josuttis, pg204)
