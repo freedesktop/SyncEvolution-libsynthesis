@@ -1005,7 +1005,7 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
     else
     #endif
     {
-      if (!getLocalDeviceID(fLocalURI) || devidWithUserHash()) {
+      if (!getSyncAppBase()->getMyDeviceID(fLocalURI) || devidWithUserHash()) {
         // Device ID is not really unique, make a hash including user name to make it pseudo-unique
         // create MD5 hash from non-unique ID and user name
         // Note: when compiled with GUARANTEED_UNIQUE_DEVICID, devidWithUserHash() is always false.

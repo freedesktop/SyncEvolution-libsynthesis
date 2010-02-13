@@ -2576,7 +2576,8 @@ string TSyncAppBase::getManufacturer(void)
 
 
 // model (application name) of overall solution
-string TSyncAppBase::getModel(void) {
+string TSyncAppBase::getModel(void)
+{
 	#ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fMod.empty()))
   	return fConfigP->fMod;
@@ -2587,7 +2588,8 @@ string TSyncAppBase::getModel(void) {
 
 
 // hardware version
-string TSyncAppBase::getHardwareVersion(void) {
+string TSyncAppBase::getHardwareVersion(void)
+{
   #ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fHwV.empty())) {
     return fConfigP->fHwV;
@@ -2601,7 +2603,8 @@ string TSyncAppBase::getHardwareVersion(void) {
 
 
 // firmware version (depends a lot on the context - OS version?)
-string TSyncAppBase::getFirmwareVersion(void) {
+string TSyncAppBase::getFirmwareVersion(void)
+{
   #ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fFwV.empty())) {
     return fConfigP->fFwV;
@@ -2615,7 +2618,8 @@ string TSyncAppBase::getFirmwareVersion(void) {
 
 
 // hardware type (PDA, PC, ...)
-string TSyncAppBase::getDevTyp() {
+string TSyncAppBase::getDevTyp()
+{
   #ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fDevTyp.empty())) {
     return fConfigP->fDevTyp;
@@ -2627,6 +2631,19 @@ string TSyncAppBase::getDevTyp() {
   else
     return SYNCML_CLIENT_DEVTYP;
 } // TSyncAppBase::getDevTyp
+
+
+// device ID (can be customized using "customdeviceid" config variable)
+// Returns true if deviceID is guaranteed unique
+bool TSyncAppBase::getMyDeviceID(string &devid)
+{
+  if (getConfigVar("customdeviceid", devid)) {
+  	return true; // custom device ID is assumed to be guaranteed unique
+  }
+	// use device ID as determined by platform adapters  
+  return getLocalDeviceID(devid);
+} // TSyncAppBase::getMyDeviceID
+
 
 
 #ifdef APP_CAN_EXPIRE

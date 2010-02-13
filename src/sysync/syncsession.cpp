@@ -1026,11 +1026,11 @@ TSyncSession::TSyncSession(
       getSyncAppBase()->getModel().c_str(), getSyncAppBase()->getManufacturer().c_str()
     ));
     // show platform we're on
-    string uri;
-    getPlatformString(pfs_device_uri,uri);
+    string devid;
+    getSyncAppBase()->getMyDeviceID(devid);
     PDEBUGPRINTFX(DBG_HOT,(
       "---- Running on " SYSYNC_PLATFORM_NAME ", URI/deviceID='%s'",
-      uri.c_str()
+      devid.c_str()
     ));
     // show process and thread ID of the main session thread
     #ifdef MULTI_THREAD_SUPPORT
