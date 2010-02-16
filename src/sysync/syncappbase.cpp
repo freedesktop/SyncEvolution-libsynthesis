@@ -2569,6 +2569,10 @@ string TSyncAppBase::getManufacturer(void)
 	#ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fMan.empty()))
   	return fConfigP->fMan;
+  string s;
+  if (getConfigVar("custommanufacturer", s)) {
+  	return s;
+  }
   #endif
   // if no string configured, return default
 	return CUST_SYNC_MAN;
@@ -2581,6 +2585,10 @@ string TSyncAppBase::getModel(void)
 	#ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fMod.empty()))
   	return fConfigP->fMod;
+  string s;
+  if (getConfigVar("custommodel", s)) {
+  	return s;
+  }
   #endif
   // if no string configured, return default
 	return CUST_SYNC_MODEL;
@@ -2590,12 +2598,15 @@ string TSyncAppBase::getModel(void)
 // hardware version
 string TSyncAppBase::getHardwareVersion(void)
 {
+  string s;
   #ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fHwV.empty())) {
     return fConfigP->fHwV;
   }
+  if (getConfigVar("customhardwareversion", s)) {
+  	return s;
+  }
   #endif
-  string s;
   // if no string configured, return default
   getPlatformString(pfs_device_name, s);
   return s;
@@ -2605,12 +2616,15 @@ string TSyncAppBase::getHardwareVersion(void)
 // firmware version (depends a lot on the context - OS version?)
 string TSyncAppBase::getFirmwareVersion(void)
 {
+  string s;
   #ifdef ENGINEINTERFACE_SUPPORT
   if (fConfigP && !(fConfigP->fFwV.empty())) {
     return fConfigP->fFwV;
   }
+  if (getConfigVar("customfirmwareversion", s)) {
+  	return s;
+  }
   #endif
-  string s;
   // if no string configured, return default
   getPlatformString(pfs_platformvers, s);
   return s;
@@ -2621,8 +2635,12 @@ string TSyncAppBase::getFirmwareVersion(void)
 string TSyncAppBase::getDevTyp()
 {
   #ifdef ENGINEINTERFACE_SUPPORT
+  string s;
   if (fConfigP && !(fConfigP->fDevTyp.empty())) {
     return fConfigP->fDevTyp;
+  }
+  if (getConfigVar("customdevicetype", s)) {
+  	return s;
   }
   #endif
   // if no string configured, return default
@@ -2637,9 +2655,11 @@ string TSyncAppBase::getDevTyp()
 // Returns true if deviceID is guaranteed unique
 bool TSyncAppBase::getMyDeviceID(string &devid)
 {
+  #ifdef ENGINEINTERFACE_SUPPORT
   if (getConfigVar("customdeviceid", devid)) {
   	return true; // custom device ID is assumed to be guaranteed unique
   }
+  #endif
 	// use device ID as determined by platform adapters  
   return getLocalDeviceID(devid);
 } // TSyncAppBase::getMyDeviceID
