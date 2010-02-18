@@ -1088,9 +1088,9 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
     bool anyslowsyncs=false;
     TLocalEngineDS *localDS;
     for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-      // prepare alert
+      // prepare alert (Note: datastore may be run by a superdatastore)
       localDS = *pos;
-      status=localDS->engPrepareClientSyncAlert(NULL); // not as superdatastore
+      status=localDS->engPrepareClientSyncAlert();
       if (status!=LOCERR_OK) {
         // local database error
         return localError(status); // not found
@@ -1138,7 +1138,7 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
       localDS = *pos;
       if (!localDS->isSubDatastore()) {
         TAlertCommand *alertcmdP;
-        status=localDS->engGenerateClientSyncAlert(alertcmdP);
+        status = localDS->engGenerateClientSyncAlert(alertcmdP);
         if (status!=0) {
           // local database error
           return status; // not found
