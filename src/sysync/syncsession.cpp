@@ -1042,12 +1042,19 @@ TSyncSession::TSyncSession(
     #endif
     // show platform details
     string dname,vers;
+    // - as determined by engine itself
     getPlatformString(pfs_device_name,dname);
     getPlatformString(pfs_platformvers,vers);
     PDEBUGPRINTFX(DBG_HOT,(
       "---- Platform Hardware Name/Version = '%s', Firmware/OS Version = '%s'",
       dname.c_str(),
       vers.c_str()
+    ));
+    // - as configured
+    PDEBUGPRINTFX(DBG_HOT,(
+      "---- Configured Hardware Version = '%s', Firmware Version = '%s'",
+      getSyncAppBase()->getHardwareVersion().c_str(),
+      getSyncAppBase()->getFirmwareVersion().c_str()
     ));
     // show time zone infos
     lineartime_t tim;
