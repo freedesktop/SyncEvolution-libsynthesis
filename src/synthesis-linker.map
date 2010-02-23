@@ -6,6 +6,10 @@ VER_1.0 {
         extern "C++" {
                sysync::DataConversion*;
                sysync::SySyncDebugPuts*;
+               sysync::smlSrcTargLocURIToCharP*;
+               sysync::smlPCDataToLong*;
+               sysync::smlPCDataToCharP*;
+               sysync::StrToUShort*;
         };
     local:
         *;

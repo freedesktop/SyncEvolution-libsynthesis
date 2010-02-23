@@ -12,6 +12,7 @@
 
 #include "target_options.h"
 
+#ifdef WITHOUT_SAN_1_1
 
 #if defined __MACH__ && !defined __GNUC__ /* used for va_list support */
   #include <mw_stdarg.h>
@@ -244,5 +245,6 @@ sInt16 HexStrToUIntPtr( cAppCharP aStr, uIntPtr &aIntPtr, sInt16 aMaxDigits )
   } // namespace
 #endif
 
+#endif //WITHOUT_SAN_1_1
 /* eof */
 
