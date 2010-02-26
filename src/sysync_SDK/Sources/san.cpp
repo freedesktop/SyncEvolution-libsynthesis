@@ -689,6 +689,132 @@ void SanPackage::ReleasePackage() {
   if (fSan!=NULL) { free( fSan ); fSan= NULL; }
 } // ReleasePackage
 
+#ifndef WITHOUT_SAN_1_1
+
+const char * const SyncMLVerProtoNames[] = 
+{
+    "undefined",
+    "SyncML/1.0",
+    "SyncML/1.1",
+    "SyncML/1.2"
+};
+
+const char *const SyncMLVerDTDNames[] =
+{
+    "???",
+    "1.0",
+    "1.1",
+    "1.2"
+};
+
+const SmlVersion_t SmlVersionCodes[] =
+{
+    SML_VERS_UNDEF,
+    SML_VERS_1_0,
+    SML_VERS_1_1,
+    SML_VERS_1_1
+};
+
+TSyError SanPackage::GetPackageLegacy( void* &san,
+                                       size_t &sanSize,
+                                       const vector<pair <string, string> >& sources,
+                                       int alertCode,
+                                       bool wbxml)
+{
+  ReleasePackage(); // remove a previous one
+  TSyError err;
+  SmlCallbacks_t       scb= mySmlCallbacks;
+  SmlInstanceOptions_t sIOpts;
+  InstanceID_t         id;
+
+
+  // struct assignment / 1k buffer
+  sIOpts.encoding       = wbxml ? SML_WBXML : SML_XML;
+  sIOpts.workspaceSize  = 1024;      // should be always sufficient
+  sIOpts.maxOutgoingSize=    0;      // disabled for now
+
+  err=   smlInitInstance( &scb, &sIOpts, this, &id );  if (err) return err;
+
+  SmlSyncHdrPtr_t headerP = NULL;
+  SmlAlertPtr_t alertP = NULL;
+
+  do {
+    SYSYNC_TRY{
+      //create SyncHdr
+      headerP = SML_NEW (SmlSyncHdr_t);
+      headerP->elementType = SML_PE_HEADER;
+      if (fProtocolVersion != 10 && fProtocolVersion != 11){
+          //wrong version!
+          err = DB_Error;
+          break;
+      }
+      int version = fProtocolVersion - 10 + 1;
+      headerP->version = newPCDataString (SyncMLVerDTDNames[version]);
+      headerP->proto = newPCDataString (SyncMLVerProtoNames[version]);
+      headerP->sessionID = newPCDataLong (fSessionID);
+      headerP->msgID = newPCDataString ("1");
+      headerP->target = newLocation ("/", "");
+      headerP->source = newLocation (fServerID.c_str(), "");
+      headerP->respURI = NULL;
+      headerP->meta = NULL;
+      headerP->flags = 0;
+      //TODO generate the cred element for authentication
+      headerP->cred = NULL;
+
+      //create SyncMessage
+      err = smlStartMessageExt (id, headerP, SmlVersionCodes[version]); if (err) break;
+      //create Alert Commands
+      //internal Alert element 
+      alertP = SML_NEW (SmlAlert_t);
+      alertP->elementType = SML_PE_ALERT;
+      alertP->cmdID = newPCDataLong(1);
+      alertP->flags = 0;
+      alertP->data = newPCDataLong (alertCode);
+      alertP->cred = NULL;
+      alertP->itemList = NULL;
+      alertP->flags = 0;
+
+      //for each source, add a item
+      for (unsigned int num =0; num < sources.size(); num++) {
+          SmlItemPtr_t alertItemP = newItem();
+          alertItemP->source = newOptLocation (sources[num].second.c_str());
+          alertItemP->meta = newMetaType (sources[num].first.c_str());
+          addItemToList (alertItemP, &alertP->itemList);
+      }
+
+      err = smlAlertCmd (id, alertP); if (err) break;
+      err = smlEndMessage (id, true); if (err) break;
+
+      MemPtr_t buf = NULL;
+      err = smlLockReadBuffer (id, (MemPtr_t *) &buf, (MemSize_t *)&sanSize); if (err) break;
+      fSan          = malloc( sanSize ); if (!fSan) {err = DB_Full; break;}
+      san = fSan;
+      memcpy (san, buf, sanSize);
+      err = smlUnlockReadBuffer (id, sanSize); if (err) break;
+      } SYSYNC_CATCH (...)
+      if  (headerP) {
+          smlFreeProtoElement (headerP);
+          headerP = NULL;
+      }
+      if (alertP) {
+          smlFreeProtoElement (alertP);
+          alertP = NULL;
+      }
+      err = DB_Full;
+      SYSYNC_ENDCATCH
+  } while (false);
+  if  (headerP) {
+      smlFreeProtoElement (headerP);
+  }
+  if (alertP) {
+      smlFreeProtoElement (alertP);
+  }
+  if (err) return err;
+
+  err = smlTerminateInstance( id );
+  return err;
+}
+#endif
 
 } // namespace sysync
 

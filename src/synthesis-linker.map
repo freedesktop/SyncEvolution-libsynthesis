@@ -10,6 +10,15 @@ VER_1.0 {
                sysync::smlPCDataToLong*;
                sysync::smlPCDataToCharP*;
                sysync::StrToUShort*;
+               sysync::newItem*;
+               sysync::newMetaType*;
+               sysync::_smlMalloc*;
+               sysync::addItemToList*;
+               sysync::newOptLocation*;
+               sysync::newPCDataString*;
+               sysync::newPCDataLong*;
+               sysync::strucmp*;
+               sysync::newLocation*;
         };
     local:
         *;
