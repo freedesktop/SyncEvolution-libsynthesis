@@ -3113,6 +3113,17 @@ TSyError TSyncAgent::ServerGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
   }
   // request reset
   fRequestSize = 0;
+
+  // finished generating outgoing message
+  // - make sure read pointer is set (advanced in case incoming
+  //   message had trailing garbage) to beginning of generated
+  //   answer. With incoming message being clean SyncML without
+  //   garbage, this call is not needed, however with garbage
+  //   it is important because otherwise outgoing message
+  //   would have that garbage inserted before actual message
+  //   start.
+  smlReadOutgoingAgain(getSmlWorkspaceID());
+
   // return status
   return LOCERR_OK;
 } // TSyncAgent::ServerGeneratingStep
