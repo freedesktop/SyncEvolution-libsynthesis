@@ -201,8 +201,13 @@ class SanPackage {
 
     /*! Pass SAN message <san>,<sanSize> to object,
      *  a local copy will be kept then internally
+     *  (in)
+     *  @param  <san>          the pointer to the SAN message
+     *  @param  <sanSize>      the max. SAN message size (in bytes)
+     *  @param  <mode>         0|1|2, 0 tries both San 1.1 and 1.2, 1 tries only
+     *                         1.1 and 2 tries only 1.2
      */
-    TSyError PassSan( void* san, size_t sanSize );
+    TSyError PassSan( void* san, size_t sanSize , int mode = 0);
 
 
     /*! Get the effective size of an already created <san> message

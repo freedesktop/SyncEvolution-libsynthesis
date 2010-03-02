@@ -75,6 +75,8 @@ digest= H(B64(H(server-identifier:password)):nonce:B64(H(notification)))
 
 
 const uInt16 SyncML12 = 12;   // currently supported SyncML version
+const uInt16 SyncML11 = 11;   // currently supported SyncML version
+const uInt16 SyncML10 = 10;   // currently supported SyncML version
 
 #pragma options align= packed // allow direct mapping of the structure
 
@@ -490,7 +492,7 @@ TSyError SanPackage::Check_11( void* san, size_t sanSize )
 
   // struct assignment / 1k buffer
   sIOpts.encoding       = SML_WBXML; // it is always WBXML
-  sIOpts.workspaceSize  = 1024;      // should be always sufficient
+  sIOpts.workspaceSize  = 1024*30;      // should be always sufficient
   sIOpts.maxOutgoingSize=    0;      // disabled for now
 
   err=   smlInitInstance( &scb, &sIOpts, this, &id );  if (err) return err;
@@ -510,7 +512,7 @@ TSyError SanPackage::Check_11( void* san, size_t sanSize )
 #endif // WITHOUT_SAN_1_1
 
 
-TSyError SanPackage::PassSan( void* san, size_t sanSize )
+TSyError SanPackage::PassSan( void* san, size_t sanSize, int mode)
 {
   TSyError err;
   bool     use_as_12= true;
@@ -519,14 +521,16 @@ TSyError SanPackage::PassSan( void* san, size_t sanSize )
 //printf( "here we will have the potential 1.1 -> 1.2 conversion\n" );
 
   #ifndef WITHOUT_SAN_1_1
-               err= Check_11  ( san,sanSize );
-    if (!err)  err= GetPackage( san,sanSize );
-  //use_as_12= err==SML_ERR_XLT_INCOMP_WBXML_VERS;
-    use_as_12= err!=0;
-  //printf( "err=%d\n", err );
-  #endif
+  if (mode == 0 || mode == 1) {
+      err= Check_11  ( san,sanSize );
+      if (!err)  err= GetPackage( san,sanSize );
+      //use_as_12= err==SML_ERR_XLT_INCOMP_WBXML_VERS;
+      use_as_12= err!=0;
+      //printf( "err=%d\n", err );
+  }
+#endif
 
-  if (use_as_12) {
+  if (use_as_12 && mode !=1) {
     err= DB_Full;
 
         fSan=   malloc( sanSize );
@@ -597,8 +601,10 @@ TSyError SanPackage::GetNthSync( int    nth,
   fInitiator      = (Initiator)GetBits( tp->bitField, 12, 1 );
   fSessionID      =            GetBits( tp->bitField, 40,16 );
 
-  // that's the joke, it's no longer forbidden !
-//if (fProtocolVersion!=SyncML12) return DB_Forbidden;
+  /*If the version does not match, this should be an invalid SAN message*/
+  if (fProtocolVersion!=SyncML12 ||
+      fProtocolVersion!=SyncML11 ||
+      fProtocolVersion!=SyncML10) return DB_Forbidden;
 
   byte* b= (byte*)(tp+1);
   byte* v;
