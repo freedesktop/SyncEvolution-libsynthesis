@@ -2773,6 +2773,16 @@ bool TCustomImplDS::implProcessItem(
       /// @todo sop_copy is now implemented by read/add sequence
       ///       in localEngineDS, but will be moved here later possibly
       case sop_add :
+      	// check for duplicated add
+        // Note: server must check it here, because map lookup is needed. Contrarily, client
+        //       can check it on localengineds level against the pending maps list with isAddFromLastSession().
+        if (IS_SERVER && mappos!=fMapTable.end()) {
+        	// we already know this item
+          // - status "already exists"
+          aStatusCommand.setStatusCode(418);
+          ok = false;
+          break;
+        }
         // add item and retrieve new localID for it
         sta = apiAddItem(*myitemP,localID);
         if (IS_SERVER) {
@@ -2874,12 +2884,10 @@ bool TCustomImplDS::implProcessItem(
     if (ok) {
       // successful, save new localID in item
       myitemP->setLocalID(localID.c_str());
-      // make sure transaction is complete after processing the item
       TP_START(fSessionP->fTPInfo,li);
       return true;
     }
     else {
-      // make sure transaction is rolled back for this item
       TP_START(fSessionP->fTPInfo,li);
       return false;
     }
