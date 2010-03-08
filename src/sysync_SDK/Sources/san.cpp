@@ -514,7 +514,7 @@ TSyError SanPackage::Check_11( void* san, size_t sanSize )
 
 TSyError SanPackage::PassSan( void* san, size_t sanSize, int mode)
 {
-  TSyError err;
+  TSyError err = LOCERR_OK;
   bool     use_as_12= true;
 
   ReleasePackage();
