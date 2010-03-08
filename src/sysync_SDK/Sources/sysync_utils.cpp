@@ -13,7 +13,7 @@
  */
 
 #include "prefix_file.h"
-
+#include "sync_include.h"
 #include "sysync_utils.h"
 
 #include "libmem.h"
@@ -321,6 +321,7 @@ const char * const MIMECharSetNames[numCharSets] = {
 };
 
 
+#ifdef SYSYNC_ENGINE
 // generate RFC2822-style address specificiation
 // - Common Name will be quoted
 // - recipient will be put in angle brackets
@@ -1878,20 +1879,6 @@ treeval_t searchFlatBintree(const TConvFlatTree &aFlatTree, treeval_t aKey, tree
   return aUndefValue;
 } // searchFlatBintree
 
-
-// allocate memory via SyncML toolkit allocation function, but throw
-// exception if it fails. Used by SML
-void *_smlMalloc(MemSize_t size)
-{
-  void *p;
-
-  p=smlLibMalloc(size);
-  if (!p) SYSYNC_THROW(TMemException("smlLibMalloc() failed"));
-  return p;
-} // _smlMalloc
-
-
-
 // MD5 and B64 given string
 void MD5B64(const char *aString, sInt32 aLen, string &aMD5B64)
 {
@@ -1983,7 +1970,6 @@ void StringLower(string &aString)
 {
   for(uInt32 k=0; k<aString.size(); k++) aString[k]=tolower(aString[k]);
 } // StringLower
-
 
 
 // Substitute occurences of pattern with replacement in string
@@ -2081,6 +2067,22 @@ void smlPCDataToStringObj(const SmlPcdataPtr_t aPcdataP, string &aStringObj)
 } // smlPCDataToStringObj
 
 
+// returns item string or empty string (NEVER NULL)
+const char *smlItemDataToCharP(const SmlItemPtr_t aItemP)
+{
+  if (!aItemP) return "";
+  return smlPCDataToCharP(aItemP->data);
+} // smlItemDataToCharP
+
+
+// returns first item string or empty string (NEVER NULL)
+const char *smlFirstItemDataToCharP(const SmlItemListPtr_t aItemListP)
+{
+  if (!aItemListP) return "";
+  return smlItemDataToCharP(aItemListP->item);
+} // smlFirstItemDataToCharP
+#endif //SYSYNC_ENGINE
+
 // returns pointer to PCdata contents or null string. If aSizeP!=NULL, length will be stored in *aSize
 const char *smlPCDataToCharP(const SmlPcdataPtr_t aPcdataP, stringSize *aSizeP)
 {
@@ -2122,23 +2124,6 @@ const char *smlPCDataOptToCharP(const SmlPcdataPtr_t aPcdataP, stringSize *aSize
 } // smlPCDataOptToCharP
 
 
-// returns item string or empty string (NEVER NULL)
-const char *smlItemDataToCharP(const SmlItemPtr_t aItemP)
-{
-  if (!aItemP) return "";
-  return smlPCDataToCharP(aItemP->data);
-} // smlItemDataToCharP
-
-
-// returns first item string or empty string (NEVER NULL)
-const char *smlFirstItemDataToCharP(const SmlItemListPtr_t aItemListP)
-{
-  if (!aItemListP) return "";
-  return smlItemDataToCharP(aItemListP->item);
-} // smlFirstItemDataToCharP
-
-
-
 // returns pointer to source or target LocURI
 const char *smlSrcTargLocURIToCharP(const SmlTargetPtr_t aSrcTargP)
 {
@@ -2165,6 +2150,7 @@ const char *smlSrcTargLocNameToCharP(const SmlTargetPtr_t aSrcTargP)
 } // smlSrcTargLocNameToCharP
 
 
+#ifdef SYSYNC_ENGINE
 // returns error code made ready for SyncML sending (that is, remove offset
 // of 10000 if present, and make generic error 500 for non-SyncML errors,
 // and return LOCERR_OK as 200)
@@ -2299,6 +2285,7 @@ void splitURL(const char *aURI,string *aProtocol,string *aHost,string *aDoc,stri
   }
 } // splitURL
 
+#endif //SYSYNC_ENGINE
 
 
 // returns type from meta
@@ -2348,12 +2335,16 @@ SmlMetInfMetInfPtr_t smlPCDataToMetInfP(const SmlPcdataPtr_t aPCDataP)
 } // smlPCDataToMetInfP
 
 
-
-// returns true on successful conversion of PCData string to sInt32
-bool smlPCDataToLong(const SmlPcdataPtr_t aPCDataP, sInt32 &aLong)
+// allocate memory via SyncML toolkit allocation function, but throw
+// exception if it fails. Used by SML
+void *_smlMalloc(MemSize_t size)
 {
-  return StrToLong(smlPCDataToCharP(aPCDataP),aLong);
-} // smlPCDataToLong
+  void *p;
+
+  p=smlLibMalloc(size);
+  if (!p) SYSYNC_THROW(TMemException("smlLibMalloc() failed"));
+  return p;
+} // _smlMalloc
 
 
 // returns true on successful conversion of PCData string to sInt32
@@ -2362,7 +2353,13 @@ bool smlPCDataToULong(const SmlPcdataPtr_t aPCDataP, uInt32 &aLong)
   return StrToULong(smlPCDataToCharP(aPCDataP),aLong);
 } // smlPCDataToLong
 
+// returns true on successful conversion of PCData string to sInt32
+bool smlPCDataToLong(const SmlPcdataPtr_t aPCDataP, sInt32 &aLong)
+{
+  return StrToLong(smlPCDataToCharP(aPCDataP),aLong);
+} // smlPCDataToLong
 
+#ifdef SYSYNC_ENGINE
 // returns true on successful conversion of PCData string to format
 bool smlPCDataToFormat(const SmlPcdataPtr_t aPCDataP, TFmtTypes &aFmt)
 {
@@ -2378,7 +2375,7 @@ bool smlPCDataToFormat(const SmlPcdataPtr_t aPCDataP, TFmtTypes &aFmt)
   }
   return true;
 } // smlPCDataToFormat
-
+#endif //SYSYNC_ENGINE
 
 // build Meta anchor
 SmlPcdataPtr_t newMetaAnchor(const char *aNextAnchor, const char *aLastAnchor)
