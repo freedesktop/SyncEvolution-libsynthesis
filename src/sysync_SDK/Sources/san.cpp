@@ -602,8 +602,8 @@ TSyError SanPackage::GetNthSync( int    nth,
   fSessionID      =            GetBits( tp->bitField, 40,16 );
 
   /*If the version does not match, this should be an invalid SAN message*/
-  if (fProtocolVersion!=SyncML12 ||
-      fProtocolVersion!=SyncML11 ||
+  if (fProtocolVersion!=SyncML12 &&
+      fProtocolVersion!=SyncML11 &&
       fProtocolVersion!=SyncML10) return DB_Forbidden;
 
   byte* b= (byte*)(tp+1);
