@@ -1633,6 +1633,12 @@ void TSyncSession::MarkSuspendAlertSent(bool aSent)
 // abort session (that is: flag abortion)
 void TSyncSession::AbortSession(TSyError aStatusCode, bool aLocalProblem, TSyError aReason)
 {
+	// Catch the case that some inner routine, e.g. a plugin, detects a user suspend. It can
+  // return LOCERR_USERSUSPEND then and will cause the engine instead of aborting.
+  if (aStatusCode==LOCERR_USERSUSPEND) {
+  	SuspendSession(LOCERR_USERSUSPEND);
+    return;
+  }
   // make sure session gets aborted
   // BUT: do NOT reset yet. Reset would incorrectly abort message answering
   if (!fAborted && !fTerminated) {
