@@ -1167,7 +1167,9 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
         #endif
         if (dberr!=LOCERR_OK) {
           PDEBUGPRINTFX(DBG_ERROR,("DBapi::ReadNextItem fatal error = %hd",dberr));
+		      #if defined(DBAPI_ASKEYITEMS) && defined(ENGINEINTERFACE_SUPPORT)
           if (mfitemP) delete mfitemP;
+          #endif
           goto endread;
         }
         // check if we have seen all items
