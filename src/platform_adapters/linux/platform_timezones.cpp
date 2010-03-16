@@ -1,11 +1,12 @@
 /*
  *  File:         platform_timezones.cpp
  *
- *  Author:       Lukas Zeller / Patrick Ohly
+ *  Authors:      Lukas Zeller / Patrick Ohly
+ *                Beat Forster
  *
  *  Time zone dependent routines for Linux
  *
- *  Copyright (c) 2004-2009 by Synthesis AG (www.synthesis.ch)
+ *  Copyright (c) 2004-2010 by Synthesis AG (www.synthesis.ch)
  *
  *  2009-04-02 : Created by Lukas Zeller from timezones.cpp work by Patrick Ohly
  *
@@ -206,21 +207,36 @@ bool getSystemTimeZoneContext(timecontext_t &aContext, GZones* aGZones)
   bool ok = true;
 
   #ifdef ANDROID
-  // BFO_INCOMPLETE
+    time_t rawtime;
+    time( &rawtime );
+    struct tm* timeinfo= localtime( &rawtime );
+  //struct tm* utc_info=    gmtime( &rawtime );
+  //if        (timeinfo) t.name= timeinfo->tm_zone;
+
+  //__android_log_write( ANDROID_LOG_DEBUG, "tzname[ 0 ]", tzname[ 0 ] );
+  //__android_log_write( ANDROID_LOG_DEBUG, "tzname[ 1 ]", tzname[ 1 ] );
   #else
   tzset();
   #endif
-  t.name = tzname[ 0 ];
-  if (strcmp( t.name.c_str(),tzname[ 1 ] )!=0) {
-    t.name+= "/";
-    t.name+= tzname[ 1 ];
+
+  if (t.name=="") {
+      t.name = tzname[ 0 ];
+      if (strcmp( t.name.c_str(), tzname[ 1 ] )!=0) {
+        t.name+= "/";
+        t.name+= tzname[ 1 ];
+      } // if
   } // if
 
   //if (isDbg) PNCDEBUGPRINTFX( DBG_SESSION, ( "Timezone: %s", sName.c_str() ));
 
   // search based on name before potentially using offset search
-  if (TimeZoneNameToContext( t.name.c_str(),aContext, aGZones ))
+  if (TimeZoneNameToContext( t.name.c_str(),aContext, aGZones )) {
+  //#ifdef ANDROID
+  //  __android_log_print( ANDROID_LOG_DEBUG, "tz ok", "'%s' %d\n", t.name.c_str(), aContext );
+  //#endif
+
     return true; // found, done
+  }
 	#if defined USE_TM_GMTOFF
   else {
     // We can use tm_gmtoff as fallback when the name computed above doesn't

@@ -77,7 +77,12 @@ const class tzdata : public std::vector<tz_entry>
         tChange(t.dst.wMonth, t.dst.wDayOfWeek, t.dst.wNth, t.dst.wHour, t.dst.wMinute),
         tChange(t.std.wMonth, t.std.wDayOfWeek, t.std.wNth, t.std.wHour, t.std.wMinute),
         true // groupEnd
-      )); 
+      ));
+
+      // allow olson names for Android
+      #ifdef ANDROID
+      if (t.olsonName!=NULL) back().location= t.olsonName;
+      #endif
     }
     //push_back(tz_entry("unknown",               0,  0, "x",    "", tChange( 0, 0,0, 0,0),  tChange( 0, 0,0, 0,0)));  //   0
     #endif
@@ -487,16 +492,26 @@ static bool Same_tChange( const tChange &tCh1, const tChange &tCh2 )
 /*! Compare time zone information */
 static bool tzcmp( const tz_entry &t, const tz_entry &tzi )
 {
-  if        (!t.name.empty() &&
-              strucmp( t.name.c_str(), tzi.name.c_str() )!=0) return false;
+  bool sameName= !tzi.name.empty() &&
+         strucmp( tzi.name.c_str(), t.name.c_str() )==0;
+
+  bool sameLoc = false; // by default, no olson support here
+  #ifdef ANDROID
+    // allow olson names as well here
+       sameLoc=  !tzi.location.empty() &&
+         strucmp( tzi.location.c_str(), t.name.c_str() )==0;
+
+//__android_log_print( ANDROID_LOG_DEBUG, "TZ CMP", "'%s' == '%s' / '%s'\n",
+//                     t.name.c_str(), tzi.name.c_str(), tzi.location.c_str() );
+  #endif
+
+  if        (!t.name.empty() &&       !sameName && !sameLoc)  return false;
 
   bool idN=   t.ident.empty();
-  if (!idN && t.ident == "?" && // search for the name only
-              strucmp( t.name.c_str(), tzi.name.c_str()  )==0) return true;
+  if (!idN && t.ident == "?" &&       (sameName ||  sameLoc)) return true;
 
   if (!idN && t.ident == "$" &&
-              t.ident == tzi.ident &&
-              strucmp( t.name.c_str(), tzi.name.c_str()  )==0) return true;
+              t.ident == tzi.ident && (sameName ||  sameLoc)) return true;
 
   /*
   PNCDEBUGPRINTFX( DBG_SESSION,( "tS   m=%d dw=%d n=%d h=%d M=%d\n",   t.std.wMonth,   t.std.wDayOfWeek,   t.std.wNth,
@@ -807,6 +822,12 @@ bool TimeZoneContextToName( timecontext_t aContext, string &aName, GZones* g,
   tz_entry t;
   aName= "UNKNOWN";
 
+  // setting it via param does not work currently for some reasons, switch it on permanently for Android
+  #ifdef ANDROID
+    aPrefIdent= "o";
+  //__android_log_print( ANDROID_LOG_DEBUG, "ContextToName", "pref='%s' / aContext=%d\n", aPrefIdent, aContext );
+  #endif
+  
 	// if aPrefIndent contains "o", this means we'd like to see olson name, if possible
   // %%% for now, we can return olson for the built-ins only
   if (TCTX_IS_BUILTIN(aContext) && aPrefIdent && strchr(aPrefIdent, 'o')!=NULL) {
