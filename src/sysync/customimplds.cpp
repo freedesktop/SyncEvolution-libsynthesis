@@ -3283,18 +3283,32 @@ localstatus TCustomImplDS::getItemByID(localid_t aLocalID, TSyncItem *&aItemP)
   string localid;
   LOCALID_TO_STRING(aLocalID,localid);
   TSyncSetList::iterator syncsetpos = findInSyncSet(localid.c_str());
-  if (syncsetpos==fSyncSetList.end())
-    return 404; // not found
-  // return sync item from syncset item (fetches data now if not fetched before)
-  return getItemFromSyncSetItem(*syncsetpos,aItemP);
+  if (syncsetpos==fSyncSetList.end()) {
+  	// not found in current sync set, but could be a newly inserted item - try direct load
+    // - create new empty TMultiFieldItem
+    aItemP = (TMultiFieldItem *) newItemForRemote(ity_multifield);
+    if (!aItemP) return 510;
+    // - assign local id, as it is required e.g. by DoDataSubstitutions
+    aItemP->setLocalID(localid.c_str());
+    // - set default operation
+    aItemP->setSyncOp(sop_replace);
+		// - now fetch directly from DB
+  	return apiFetchItem(*((TMultiFieldItem *)aItemP),true,NULL);
+  }
+  else {
+    // return sync item from syncset item (fetches data now if not fetched before)
+    return getItemFromSyncSetItem(*syncsetpos,aItemP);
+  }
 } // TCustomImplDS::getItemByID
 
 
 // private helper: get item with data from sync set list. Retrieves item if not already
 // there from loading the sync set
+// Note: can be called with aSyncSetItemP==NULL, which causes directly loading from DB
+//       in all cases. 
 localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
 {
-  if (aSyncSetItemP->itemP) {
+  if (aSyncSetItemP && aSyncSetItemP->itemP) {
     // already fetched - pass it to caller and remove link in syncsetitem
     aItemP = aSyncSetItemP->itemP;
     aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
@@ -3306,12 +3320,12 @@ localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, T
       (TMultiFieldItem *) newItemForRemote(ity_multifield);
     if (!aItemP)
       return 510;
-    // - assign local id, as it is required by DoDataSubstitutions
+    // - assign local id, as it is required e.g. by DoDataSubstitutions
     aItemP->setLocalID(aSyncSetItemP->localid.c_str());
     // - set default operation
     aItemP->setSyncOp(sop_replace);
     // Now fetch item (read phase)
-    localstatus sta=apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
+    localstatus sta = apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
     if (sta!=LOCERR_OK)
       return sta; // error
   }
