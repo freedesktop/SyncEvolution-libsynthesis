@@ -4138,10 +4138,17 @@ endchange:
 
 
 
-// test abort status, datastore is aborted also when session is just suspended
+// test datastore abort status
+// datastore is aborted when
+// - it was explicitly aborted (engAbortDataStoreSync() called, fAbortStatusCode set)
+// - session is suspending and the datastore has not yet completed sync up to sending
+//   maps (client) or admin already saved (server+client).
+//   If client has sent maps, all that MIGHT be missing would be map status, and
+//   if that hasn't arrived, the pendingMaps mechanism will make sure these get
+//   sent in the next session.
 bool TLocalEngineDS::isAborted(void)
 {
-  return fAbortStatusCode!=0 || fSessionP->isSuspending();
+  return fAbortStatusCode!=0 || (fSessionP->isSuspending() && !testState(dssta_clientmapssent));
 } // TLocalEngineDS::isAborted
 
 
