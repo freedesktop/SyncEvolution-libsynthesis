@@ -109,7 +109,6 @@ struct TBody {
 
 
 // ---- defined locally for the moment to avoid dependencies ----
-// - sysync_free replaced by free
 //
 // MD5 and B64 given string
 static void MD5B64_Local(const char *aString, sInt32 aLen, string &aMD5B64)
@@ -128,7 +127,7 @@ static void MD5B64_Local(const char *aString, sInt32 aLen, string &aMD5B64)
   // assign result
   aMD5B64.assign(b64md5,b64md5len);
   // done
-  /*sysync_*/free(b64md5); // return buffer allocated by b64::encode
+  b64::free(b64md5); // return buffer allocated by b64::encode
 } // MD5B64_Local
 
 

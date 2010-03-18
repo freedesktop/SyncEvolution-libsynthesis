@@ -674,7 +674,7 @@ const char *appendDecoded(
       binsz=0;
       binP = b64::decode(aText, aSize, &binsz);
       aBinString.append((const char *)binP,binsz);
-      sysync_free(binP);
+      b64::free(binP);
       aText+=aSize;
       break;
     case enc_7bit:
@@ -799,7 +799,7 @@ void appendEncoded(
         if (b64) {
           aString.append(b64,b64len);
           // release buffer
-          sysync_free(b64);
+          b64::free(b64);
         }
         if (aEncoding!=enc_b) {
           // make sure it ends with a newline for "base64" (but NOT for "b" as used in RFC2047)
@@ -1896,7 +1896,7 @@ void MD5B64(const char *aString, sInt32 aLen, string &aMD5B64)
   // assign result
   aMD5B64.assign(b64md5,b64md5len);
   // done
-  sysync_free(b64md5); // return buffer allocated by b64::encode
+  b64::free(b64md5); // return buffer allocated by b64::encode
 } // MD5B64
 
 
@@ -2699,7 +2699,7 @@ SmlPcdataPtr_t newPCDataFormatted(
       b64len=0;
       b64data=b64::encode(aData, aLength, &b64len);
       pcdataP = newPCDataString(b64data,b64len);
-      sysync_free(b64data);
+      b64::free(b64data);
       return pcdataP;
     default:
       // just copy into string or opaque/C_DATA string
@@ -2886,7 +2886,7 @@ SmlChalPtr_t newChallenge(TAuthTypes aAuthType, const string &aNextNonce, bool a
         uInt32 b64len;
         char *b64=b64::encode((const uInt8 *)aNextNonce.c_str(),aNextNonce.size(),&b64len);
         metaP->nextnonce=newPCDataString(b64,b64len);
-        sysync_free(b64); // return buffer allocated by b64_encode
+        b64::free(b64); // return buffer allocated by b64_encode
       }
     }
   }

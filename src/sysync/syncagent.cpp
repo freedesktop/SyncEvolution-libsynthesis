@@ -2613,7 +2613,7 @@ bool TSyncAgent::handleHeaderStatus(TStatusCommand *aStatusCmdP)
           uInt32 l;
           uInt8 *nonce = b64::decode(smlPCDataToCharP(chalmetaP->nextnonce), 0, &l);
           fRemoteNonce.assign((char *)nonce,l);
-          sysync_free(nonce);
+          b64::free(nonce);
         }
         // - show
         PDEBUGPRINTFX(DBG_PROTO,(

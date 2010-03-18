@@ -1923,7 +1923,7 @@ static void decodeValue(
     uInt32 binsz=0;
     uInt8 *binP = b64::decode(p, q-p, &binsz);
     aVal.append((const char *)binP,binsz);
-    sysync_free(binP);
+    b64::free(binP);
     // - continue at next char after b64 value
     p=q;
   }

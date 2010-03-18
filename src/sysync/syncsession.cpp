@@ -3835,7 +3835,7 @@ SmlCredPtr_t TSyncSession::newCredentials(const char *aUser, const char *aPasswo
         // - MD5 it while adding nonce
         md5::Init (&context);
         md5::Update (&context, authdata, authdatalen);
-        sysync_free((void *)authdata); // return buffer allocated by b64::encode
+        b64::free((void *)authdata); // return buffer allocated by b64::encode
         // - important: add colon as nonce separator
         md5::Update (&context, (uInt8 *) ":", 1);
         // - also add nonce that will be used for checking later
@@ -3878,7 +3878,7 @@ SmlCredPtr_t TSyncSession::newCredentials(const char *aUser, const char *aPasswo
     metinfP->format=newPCDataFormat(fRemoteRequestedAuthEnc,false); // no format if default of fmt_chr
   }
   // free buffer
-  if (tobefreed) sysync_free(tobefreed);
+  if (tobefreed) b64::free(tobefreed);
   // return cred or NULL if none
   return credP;
 } // TSyncSession::newCredentials
@@ -4035,7 +4035,7 @@ bool TSyncSession::checkCredentials(const char *aUserName, const SmlCredPtr_t aC
     }
   }
   // free buffer if any
-  if (tobefreed) sysync_free(tobefreed);
+  if (tobefreed) b64::free(tobefreed);
   // make sure we see what config was used in the log
   DebugShowCfgInfo();
   PDEBUGPRINTFX(DBG_HOT,(
@@ -4220,7 +4220,7 @@ bool TSyncSession::getAuthBasicUserPass(const char *aBasicCreds, string &aUserna
       ok=true;
     }
   }
-  sysync_free(userpw);
+  b64::free(userpw);
   return ok;
 } // TSyncSession::getAuthBasicUserPass
 
