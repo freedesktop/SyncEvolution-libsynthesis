@@ -947,6 +947,11 @@ TSyncSession::TSyncSession(
   // assume normal, full-featured session. Profile config or session progress might set this flag later 
   fLegacyMode = false;
   fLenientMode = false;
+
+  //initialize the conditonal variables to keep valgrind happy
+  fNeedAuth = true;
+  fRemoteRequestedAuth = auth_none;
+
   #ifdef SYDEBUG
   // initialize session debug logging
   fSessionDebugLogs=getRootConfig()->fDebugConfig.fSessionDebugLogs; /// init from config @todo: get rid of this special session level flag, handle it all via session logger's fDebugEnabled / getDbgMask()
