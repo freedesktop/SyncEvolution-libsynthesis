@@ -50,8 +50,6 @@ admindata.cpp
 admindata.h
 dbitem.cpp
 dbitem.h
-blobs.cpp
-blobs.h
 enginesessiondispatch.cpp
 syncserver.cpp
 EOF
