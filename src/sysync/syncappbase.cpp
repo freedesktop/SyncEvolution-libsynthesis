@@ -1466,7 +1466,11 @@ void TSyncAppBase::ConferrPuts(const char *msg)
     // a config error path is defined
     if (strucmp(filename.c_str(),"console")==0) {
       // put message directly to what is supposed to be the console
+      #ifdef ANDROID
+      __android_log_write( ANDROID_LOG_DEBUG, "ConferrPuts", msg );
+      #else
       AppConsolePuts(msg);
+      #endif
       return; // done
     }
   #else // ENGINE_LIBRARY
