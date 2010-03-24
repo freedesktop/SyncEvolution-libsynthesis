@@ -651,7 +651,9 @@ static Ret_t buildDevInfProperty(XltDecoderPtr_t pDecoder, VoidPtr_t *ppElem, in
     XltDecScannerPtr_t            pScanner      = pDecoder->scanner;
     Ret_t rc;
 
-    if (IS_EMPTY(pScanner->curtok)) {
+    /* Do not return immediately for <1.2 style, the outer loop ends only meeting an end tag
+     * which will lead to an infinite loop*/
+    if (datastoreLocal && IS_EMPTY(pScanner->curtok)) {
         return SML_ERR_OK;
     }
 
@@ -825,6 +827,7 @@ Ret_t buildDevInfCtcap(XltDecoderPtr_t pDecoder, VoidPtr_t *ppElem, Boolean_t da
               rc = buildDevInfProperty(pDecoder, (VoidPtr_t)&pCtcap->data->prop,datastoreLocal);
               if (rc==SML_ERR_OK)
                 continue; // re-evaluate current tag (tag that caused buildDevInfProperty() to end, either unknown or closing </CTCap>
+                          // this means do not return SML_ERR_OK unless this is an unknow tag or closing </CTCcap>, otherwise it will trigger an infinite loop
             }
             break;
 
