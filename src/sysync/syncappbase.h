@@ -627,6 +627,10 @@ public:
   uInt8 fRegDuration;
   uInt8 fRelDuration;
   uInt32 fLicCRC;
+  #if defined(EXPIRES_AFTER_DAYS) && defined(ENGINEINTERFACE_SUPPORT)
+  lineardate_t fFirstUseDate;
+  uInt32 fFirstUseVers;
+	#endif
   // checks if registered (must be implemented in base class)
   // returns LOCERR_EXPIRED, LOCERR_TOONEW or LOCERR_BADREG if not registered correctly
   virtual localstatus isRegistered(void);
@@ -653,8 +657,7 @@ public:
   #endif
   #ifdef EXPIRES_AFTER_DAYS
   // gets information of first use for a given variant of the software.
-  virtual void getFirstUseInfo(uInt8 aVariant, lineardate_t &aFirstUseDate, uInt32 &aFirstUseVers)
-    { aFirstUseDate=0; aFirstUseVers=0; }
+  virtual void getFirstUseInfo(uInt8 aVariant, lineardate_t &aFirstUseDate, uInt32 &aFirstUseVers);
   // update first use info to allow for repeated eval when user installs an all-new version
   bool updateFirstUseInfo(lineardate_t &aFirstUseDate, uInt32 &aFirstUseVers);
   #endif

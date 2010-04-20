@@ -1198,7 +1198,7 @@ TSyncAppBase::TSyncAppBase() :
   sInt16 y,m,d;
   lineartime2date(getSystemNowAs(TCTX_UTC),&y,&m,&d);
   // - calculate scrambled version thereof
-  fScrambledNow=
+  fScrambledNow =
     ((sInt32)y-1720l)*12l*42l+
     ((sInt32)m-1)*42l+
     ((sInt32)d+7l);
@@ -1210,32 +1210,24 @@ TSyncAppBase::TSyncAppBase() :
   */
   #endif
   #ifdef APP_CAN_EXPIRE
-  fAppExpiryStatus=LOCERR_OK; // do not compare here, would be too easy
+  fAppExpiryStatus = LOCERR_OK; // do not compare here, would be too easy
   #endif
   #if defined(SYDEBUG) && defined(HARDCODED_CONFIG)
-  fConfigFilePath="<hardcoded config>";
+  fConfigFilePath = "<hardcoded config>";
   #endif
   #ifdef SYSER_REGISTRATION
   // make sure that license is standard (no phone home, no expiry) in case there is NO license at all
-  fRegLicenseType=0;
-  fRelDuration=0;
-  fRegDuration=0;
+  fRegLicenseType = 0;
+  fRelDuration = 0;
+  fRegDuration = 0;
+  #if defined(EXPIRES_AFTER_DAYS) && defined(ENGINE_LIBRARY)
+  fFirstUseDate = 0;
+  fFirstUseVers = 0;
+	#endif
   #endif
 
-  // TODO: put this somewhere where the return code can be checked and
-  // reported to the user of TSyncAppBase
+  // TODO: put this somewhere where the return code can be checked and reported to the user of TSyncAppBase
   fAppZones.initialize();
-
-  /* %%%%
-  string zoneName;
-  sInt16 stdBias;
-  sInt16 dstBias;
-  lineartime_t stdStart;
-  lineartime_t dstStart;
-  bool ok = getSystemTimeZone(zoneName, stdBias, dstBias, stdStart, dstStart);
-  printf("getSystemTimeZone: name=%s, stdBias=%hd, dstBias=%hd, stdStart=%lld, dstStart=%lld\n", zoneName.c_str(), stdBias, dstBias, stdStart, dstStart);
-  */
-
 } // TSyncAppBase::TSyncAppBase
 
 
@@ -2827,7 +2819,7 @@ localstatus TSyncAppBase::getAppEnableInfo(sInt16 &aDaysLeft, string *aRegnameP,
   // no registration
   if (aRegnameP) aRegnameP->erase();
   if (aRegInternalsP) aRegInternalsP->erase();
-  aDaysLeft = -1; // no expiring license (altough hardexpiry might still apply
+  aDaysLeft = -1; // no expiring license (altough hardexpiry might still apply)
   return appEnableStatus();
   #else
   // we have registration
@@ -2904,6 +2896,23 @@ localstatus TSyncAppBase::getAppEnableInfo(sInt16 &aDaysLeft, string *aRegnameP,
   #error "SYSER_VERSCHECK_MASK must be defined in target_options.h"
 #endif
 
+
+
+/// @brief get time and version of first use. Version is included to allow re-evaluating after version changes significantly
+void TSyncAppBase::getFirstUseInfo(uInt8 aVariant, lineardate_t &aFirstUseDate, uInt32 &aFirstUseVers)
+{
+	#ifndef ENGINEINTERFACE_SUPPORT
+  // no first use date in base class, is overridden in derived platform-specific appBase classes.
+  aFirstUseDate=0;
+  aFirstUseVers=0;
+  #else
+  // use values stored into engine via settings keys
+  aFirstUseDate=fFirstUseDate;
+  aFirstUseVers=fFirstUseVers;
+  #endif
+} // TSyncAppBase::getFirstUseInfo
+
+
 /// @brief update first use info to allow for repeated eval when user installs an all-new version
 /// @return true if update was needed
 /// @param[in] aVariant variant context to perform update
@@ -2928,7 +2937,7 @@ bool TSyncAppBase::updateFirstUseInfo(lineardate_t &aFirstUseDate, uInt32 &aFirs
   return false;
 } // TSyncAppBase::updateFirstUseInfo
 
-#endif
+#endif // EXPIRES_AFTER_DAYS
 
 
 #ifdef SYSER_REGISTRATION

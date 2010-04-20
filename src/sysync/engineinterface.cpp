@@ -984,6 +984,33 @@ static TSyError readRegStatus(
 } // readRegStatus
 
 
+#if defined(EXPIRES_AFTER_DAYS) && defined(ENGINEINTERFACE_SUPPORT)
+
+// - write first use version number
+static TSyError writeFuv(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+	uInt32 fuv = *((uInt32 *)aBuffer);
+  if (fuv==0x53595359) {
+  	// start eval
+    aStructFieldsKeyP->getEngineInterface()->getSyncAppBase()->updateFirstUseInfo(
+    	aStructFieldsKeyP->getEngineInterface()->getSyncAppBase()->fFirstUseDate,
+      aStructFieldsKeyP->getEngineInterface()->getSyncAppBase()->fFirstUseVers
+    );
+  }
+  else {
+  	// simply assign (usually values read from here in an earlier session and stored persistently outside)
+   	aStructFieldsKeyP->getEngineInterface()->getSyncAppBase()->fFirstUseVers = fuv; 
+  }
+  // always ok
+  return LOCERR_OK;
+} // writeFuv
+
+#endif // EXPIRES_AFTER_DAYS+ENGINEINTERFACE_SUPPORT
+
+
 
 // macro simplifying typing in the table below
 #define OFFS_SZ_AB(n) (offsetof(TSyncAppBase,n)), sizeof(dP_ab->n)
@@ -997,6 +1024,11 @@ static const TStructFieldInfo LicensingFieldInfos[] =
   // - license text and code (writable)
   { "licensetext", VALTYPE_TEXT, true, 0, 0, &readLicenseText, &writeLicenseText },
   { "licensecode", VALTYPE_TEXT, true, 0, 0, NULL, &writeLicenseCode },
+  #if defined(EXPIRES_AFTER_DAYS) && defined(ENGINEINTERFACE_SUPPORT)
+  // - read/write for eval 
+  { "fud", VALTYPE_INT32, true, OFFS_SZ_AB(fFirstUseDate) }, // first use date
+  { "fuv", VALTYPE_INT32, true, OFFS_SZ_AB(fFirstUseVers), NULL, &writeFuv  }, // first use version
+	#endif  
   // - read-only info about licensing status from syncappbase
   { "regStatus", VALTYPE_INT16, false, 0, 0, &readRegStatus, NULL },
   { "regOK", VALTYPE_ENUM, false, OFFS_SZ_AB(fRegOK) },
