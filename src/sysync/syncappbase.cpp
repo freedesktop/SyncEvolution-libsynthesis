@@ -43,7 +43,7 @@ extern "C" int GlobalNotifyProgressEvent (
   #ifdef PROGRESS_EVENTS
   TSyncAppBase *baseP = getExistingSyncAppBase();
   if (baseP) {
-    return baseP->NotifyProgressEvent(aEventType,NULL,aExtra1,aExtra2,aExtra3);
+    return baseP->NotifyAppProgressEvent(aEventType,NULL,aExtra1,aExtra2,aExtra3);
   }
   #endif
   return true; // not aborted
@@ -1160,7 +1160,7 @@ TSyncAppBase::TSyncAppBase() :
   fDeleting(false),
   fConfigP(NULL),
   fRequestCount(0),
-  #ifdef PROGRESS_EVENTS
+  #if defined(PROGRESS_EVENTS) && !defined(ENGINE_LIBRARY)
   fProgressEventFunc(NULL),
   #endif
   #ifdef ENGINEINTERFACE_SUPPORT
@@ -1910,10 +1910,10 @@ localstatus TSyncAppBase::readXMLConfigStandard(const char *aConfigFileName, boo
 
 /* progress sevent notification */
 
-#ifdef PROGRESS_EVENTS
+#if defined(PROGRESS_EVENTS) && !defined(ENGINE_LIBRARY)
 
 // event generator
-bool TSyncAppBase::NotifyProgressEvent(
+bool TSyncAppBase::NotifyAppProgressEvent(
   TProgressEventType aEventType,
   TLocalDSConfig *aDatastoreID,
   sInt32 aExtra1,
@@ -1939,9 +1939,9 @@ bool TSyncAppBase::NotifyProgressEvent(
   }
   // if no callback, never abort
   return true; // ok, no abort
-} // TSyncAppBase::NotifyProgressEvent
+} // TSyncAppBase::NotifyAppProgressEvent
 
-#endif
+#endif // non-engine progress events
 
 
 

@@ -785,9 +785,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
   while (foundone) {
     // report event to allow progress display, use existing number as approx for total # of items
     ++seen;
-    #ifdef PROGRESS_EVENTS
-    fSessionP->getSyncAppBase()->NotifyProgressEvent(pev_preparing,getDSConfig(),seen,numexistinglogentries);
-    #endif
+    DB_PROGRESS_EVENT(this,pev_preparing,seen,numexistinglogentries,0);
     // process now
     bool chgentryexists=false; // none found yet
     // - get local ID
