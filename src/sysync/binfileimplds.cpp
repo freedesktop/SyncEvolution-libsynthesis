@@ -73,7 +73,7 @@ public:
           fldP->setAsInteger(fint);
           return fldP;
         }
-      }    
+      }
     }
     // no such field, return an unassigned field
     fldP=newItemField(fty_none, aFuncContextP->getSessionZones());
@@ -602,7 +602,7 @@ bool TBinfileImplDS::openChangeLog(void)
   changelogname += getName();
   changelogname += CHANGELOG_DB_SUFFIX;
   fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
-  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) { 
+  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) {
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
@@ -800,9 +800,9 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     }
     else {
       // without CRC, we have got the ID into itemLocalID already
-      localid=LOCALID_OUT_TO_IN(itemLocalID);    
+      localid=LOCALID_OUT_TO_IN(itemLocalID);
     }
-    #endif // not RECORDHASH_FROM_DBAPI    
+    #endif // not RECORDHASH_FROM_DBAPI
     // show item info found in DB
     #ifdef SYDEBUG
     string sl;
@@ -812,7 +812,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: seen=%ld, NOC=%ld : localid=%s, dataCRC=0x%04hX",(long)seen,(long)fNumberOfLocalChanges,sl.c_str(),dataCRC));
       #else
       PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: seen=%ld, NOC=%ld : localid=%s",(long)seen,(long)fNumberOfLocalChanges,sl.c_str()));
-      #endif    
+      #endif
     }
     else {
       PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,(
@@ -897,7 +897,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
           existingentries[logindex].modcount=fCurrentModCount; // update modification count
           // this is a local change for this session
           fNumberOfLocalChanges++; // for suspend: those that detect a change here were modified AFTER last suspend, so always count them
-          
+
         }
       }
       else {
@@ -1009,7 +1009,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     }
   }
   #endif
-  fChangeLog.updateRecord(0,existingentries,numexistinglogentries);  
+  fChangeLog.updateRecord(0,existingentries,numexistinglogentries);
   aValidChangelog=true;
   DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: seen=%ld, fNumberOfLocalChanges=%ld",(long)seen,(long)fNumberOfLocalChanges));
 done:
@@ -1063,7 +1063,7 @@ localstatus TBinfileImplDS::loadTarget(bool aCreateIfMissing, cAppCharP aRemoteD
       uInt32 ti;
       targetsBinFileP->newRecord(ti,&fTarget);
       fTargetIndex = ti;
-      return LOCERR_OK; // created and loaded now    
+      return LOCERR_OK; // created and loaded now
     }
     return 404; // not found
   }
@@ -1090,7 +1090,7 @@ sInt32 TBinfileImplDS::getNumberOfChanges(void)
   // otherwise, let base class handle it (server and client w/o binfile)
   return inherited::getNumberOfChanges();
 }
- 
+
 
 /// sync login (into this database)
 /// @note might be called several times (auth retries at beginning of session)
@@ -1116,10 +1116,10 @@ localstatus TBinfileImplDS::implMakeAdminReady(
   fPreviousSyncTime=0;
   fFirstTimeSync=false; // assume not first time
 
-  
+
   #if !defined(PRECONFIGURED_SYNCREQUESTS)
   // when sync params are in binfiles, target must be present by now - make sure it is loaded
-	sta=loadTarget(false); 
+	sta=loadTarget(false);
   // target info must already be present by now (loaded at session's SelectProfile)
   if (sta!=LOCERR_OK || fTargetIndex<0) {
   	// problem loading target record
@@ -1173,7 +1173,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
       fPreviousSuspendModCount = 0;
       // - no compare references yet
       fPreviousToRemoteSyncCmpRef = noLinearTime;
-      fPreviousSuspendIdentifier.erase(); 
+      fPreviousSuspendIdentifier.erase();
     }
     else {
       // Get token and date representing last update of this changelog (last preflight)
@@ -1194,7 +1194,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
       fPreviousSuspendIdentifier = fPreviousToRemoteSyncIdentifier; // DB on top of binfile only needs one reference time, which is the last changelog check time.
 	    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- last preflight update (fPreviousToRemoteSyncIdentifier) is '%s'",fPreviousToRemoteSyncIdentifier.c_str()));
       #endif // TARGETS_DB_VERSION>=6
-  	}  
+  	}
   }
   // get pending maps anyway (even if not resuming there might be pending maps)
   if(openPendingMaps()) {
@@ -1311,7 +1311,7 @@ bool TBinfileImplDS::testFilters(TMultiFieldItem *aItemP)
 void TBinfileImplDS::implMarkOnlyUngeneratedForResume(void)
 {
 	if (!binfileDSActive()) return; // must be active when called at all
-  
+
   TChangeLogEntry *chglogP;
 
   // simply return aEof when just refreshing
@@ -2032,7 +2032,7 @@ void TBinfileImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID,
 localstatus TBinfileImplDS::implSaveResumeMarks(void)
 {
 	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
-  
+
   // update modcount reference of last suspend
   fPreviousSuspendModCount = fCurrentModCount;
   // save admin data now
@@ -2220,7 +2220,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   fTarget.lastChangeCheck=fPreviousToRemoteSyncCmpRef;
   #if TARGETS_DB_VERSION>=6
   // - identifiers (tokens for StartDataRead)
-  AssignCString(fTarget.dummyIdentifier1,fPreviousToRemoteSyncIdentifier.c_str(),remoteAnchorMaxLen); // former lastSyncIdentifier 
+  AssignCString(fTarget.dummyIdentifier1,fPreviousToRemoteSyncIdentifier.c_str(),remoteAnchorMaxLen); // former lastSyncIdentifier
   AssignCString(fTarget.dummyIdentifier2,NULL,remoteAnchorMaxLen); // former lastSuspendIdentifier, not needed, make empty
   // store remote datastore's display name (is empty if we haven't got one from the remote via devInf)
   if (getRemoteDatastore()) {
