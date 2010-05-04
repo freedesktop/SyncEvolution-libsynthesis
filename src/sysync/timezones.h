@@ -251,7 +251,7 @@ class GZones {
      *                     refers to the tz_entry without a dynYear
      * @return true if match found
      */
-    bool matchTZ(const tz_entry &aTZ, timecontext_t &aContext);
+    bool matchTZ(const tz_entry &aTZ, TDebugLogger *aLogP, timecontext_t &aContext);
 
     class visitor {
     public:

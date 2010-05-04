@@ -109,7 +109,7 @@ bool GZones::initialize()
 }
 
 
-bool GZones::matchTZ(const tz_entry &aTZ, timecontext_t &aContext)
+bool GZones::matchTZ(const tz_entry &aTZ, TDebugLogger *aLogP, timecontext_t &aContext)
 {
   // keeps track of best match while iterating
   class comparison : public visitor {
@@ -128,16 +128,20 @@ bool GZones::matchTZ(const tz_entry &aTZ, timecontext_t &aContext)
     /** the last entry without dynYear, i.e., the main entry of a group */
     timecontext_t fLeadContext;
 
+    TDebugLogger *fLogP;
+
     /** time zones */
     GZones *fG;
 
+
   public:
-    comparison(const tz_entry &aTZ, GZones *g) :
+    comparison(const tz_entry &aTZ, TDebugLogger *aLogP, GZones *g) :
       fRuleMatch(false),
       fLocationMatch(false),
       fContext(TCTX_UNKNOWN),
       fTZID(aTZ.name),
       fLeadContext(TCTX_UNKNOWN),
+      fLogP(aLogP),
       fG(g)
     {
       // prepare information for tzcmp() and YearFit()
@@ -164,6 +168,8 @@ bool GZones::matchTZ(const tz_entry &aTZ, timecontext_t &aContext)
          !fTZ.name.empty() && // empty match is NOT better !!
           fTZ.name == aTZ.name) {
         // name AND rule match => best possible match, return early
+        PLOGDEBUGPRINTFX(fLogP, DBG_PARSE+DBG_EXOTIC,
+                         ("matchTZ: final rule and name match for %s", fTZ.name.c_str()));
         fContext = fLeadContext;
         return true;
       }
@@ -175,6 +181,10 @@ bool GZones::matchTZ(const tz_entry &aTZ, timecontext_t &aContext)
             (!fRuleMatch && rule_match)) {
           // previous match did not match location or
           // not the rules and we do, so this match is better
+          PLOGDEBUGPRINTFX(fLogP, DBG_PARSE+DBG_EXOTIC,
+                           ("matchTZ %s: location %s found, rules %s",
+                            aTZ.name.c_str(), aTZ.location.c_str(),
+                            rule_match ? "match" : "don't match"));
           fLocationMatch = true;
           fRuleMatch = rule_match;
           fContext = fLeadContext;
@@ -186,6 +196,8 @@ bool GZones::matchTZ(const tz_entry &aTZ, timecontext_t &aContext)
       if (!fLocationMatch &&
           rule_match &&
           !fRuleMatch) {
+          PLOGDEBUGPRINTFX(fLogP, DBG_PARSE+DBG_EXOTIC,
+                           ("matchTZ %s: rules match", aTZ.name.c_str()));
         fContext = fLeadContext;
         fRuleMatch = true;
       }
@@ -204,7 +216,7 @@ bool GZones::matchTZ(const tz_entry &aTZ, timecontext_t &aContext)
     } // result
   }
 
-  c(aTZ, this);
+  c(aTZ, aLogP, this);
 
   foreachTZ(c);
 
