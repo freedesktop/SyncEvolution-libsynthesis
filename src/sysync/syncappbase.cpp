@@ -1360,6 +1360,20 @@ bool TSyncAppBase::setConfigVar(cAppCharP aVarName, cAppCharP aNewValue)
 } // TSyncAppBase::setConfigVar
 
 
+// undefine config variable
+bool TSyncAppBase::unsetConfigVar(cAppCharP aVarName)
+{
+  TStringToStringMap::iterator pos = fConfigVars.find(aVarName);
+  if (pos!=fConfigVars.end()) {
+  	// exist, remove from map
+    fConfigVars.erase(pos);
+    return true;
+  }
+  // did not exist
+  return false;
+} // TSyncAppBase::unsetConfigVar
+
+
 // expand config vars in string
 bool TSyncAppBase::expandConfigVars(string &aString, sInt8 aCfgVarExp, TConfigElement *aCfgElement, cAppCharP aElementName)
 {

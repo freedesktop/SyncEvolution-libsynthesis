@@ -470,6 +470,7 @@ public:
   // access to config variables
   bool getConfigVar(cAppCharP aVarName, string &aValue);
   bool setConfigVar(cAppCharP aVarName, cAppCharP aNewValue);
+  bool unsetConfigVar(cAppCharP aVarName);
   bool expandConfigVars(string &aString, sInt8 aCfgVarExp, TConfigElement *aCfgElement=NULL, cAppCharP aElementName=NULL);
   #endif
   #ifdef SYDEBUG

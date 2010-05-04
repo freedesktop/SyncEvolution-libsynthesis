@@ -719,7 +719,11 @@ TSyError TConfigVarKey::SetValueInternal(
   sInt32 aID, sInt32 aArrayIndex,
   cAppPointer aBuffer, memSize aValSize
 ) {
-	if (!aBuffer) return LOCERR_WRONGUSAGE; // cannot handle NULL values
+	if (!aBuffer) {
+  	// writing NULL means undefining variable
+	  fEngineInterfaceP->getSyncAppBase()->unsetConfigVar(fVarName.c_str());
+    return LOCERR_OK;
+  }
   string v; v.assign((cAppCharP)aBuffer,(size_t)aValSize); // copy because input could be unterminated string
   if (!fEngineInterfaceP->getSyncAppBase()->setConfigVar(fVarName.c_str(),v.c_str()))
     return DB_NotFound;
