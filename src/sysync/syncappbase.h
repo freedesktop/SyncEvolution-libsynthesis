@@ -670,6 +670,9 @@ public:
   bool updateFirstUseInfo(lineardate_t &aFirstUseDate, uInt32 &aFirstUseVers);
   #endif
 private:
+  // to be executed after reading config stream or hard-coded config
+  localstatus finishConfig();
+
   // debug logging
   #ifdef SYDEBUG
   TDebugLogger fAppLogger; // the logger
