@@ -220,6 +220,13 @@ class GZones {
      */
     bool initialize();
 
+    /*! @brief log and/or add more GZones
+     *
+     * Called after config was read and normal debug logging
+     * is possible.
+     */
+    void loggingStarted();
+
     /*! @brief find a matching time zone
      *
      * This returns the best match, with "better" defined as (best
@@ -449,6 +456,8 @@ lineartime_t getSystemNowAs( timecontext_t aTimeContext, GZones* g, bool aNoOffs
  */
 bool loadSystemZoneDefinitions( GZones* aGZones );
 
+/*! @brief platform specific implementation of GZone::loggingStarted */
+void logSystemZoneDefinitions( GZones* aGZones );
 
 /*! @brief get current system time zone
  *  @return true if successful

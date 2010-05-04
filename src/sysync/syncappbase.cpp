@@ -1427,7 +1427,14 @@ bool TSyncAppBase::expandConfigVars(string &aString, sInt8 aCfgVarExp, TConfigEl
 
 #endif // not HARDCODED_CONFIG
 
-
+localstatus TSyncAppBase::finishConfig()
+{
+#ifdef SYDEBUG
+  fAppZones.getDbgLogger = getDbgLogger();
+#endif
+  fAppZones.loggingStarted();
+  return LOCERR_OK;
+}
 
 #ifdef HARDCODED_CONFIG
 
@@ -1444,7 +1451,7 @@ localstatus TSyncAppBase::initHardcodedConfig(void)
   // make sure it gets all resolved
   fConfigP->ResolveAll();
   // is ok now
-  return LOCERR_OK;
+  return finishConfig();
 } // TSyncAppBase::initHardcodedConfig
 
 
@@ -1737,7 +1744,7 @@ localstatus TSyncAppBase::readXMLConfigStream(TXMLConfigReadFunc aReaderFunc, vo
   #endif
   // ok if done
   MP_SHOWCURRENT(DBG_HOT,"finished reading config");
-  return LOCERR_OK;
+  return finishConfig();
 } // TSyncAppBase::readXMLConfigStream
 
 
