@@ -28,6 +28,7 @@
 
 #include "timezones.h"
 #include "vtimezone.h"
+#include "sysync_debug.h"
 
 #ifdef HAVE_LIBICAL
 # ifndef HANDLE_LIBICAL_MEMORY
@@ -149,9 +150,17 @@ namespace sysync {
  */
 bool loadSystemZoneDefinitions(GZones* aGZones)
 {
-	// load zones from system here
-	#ifdef HAVE_LIBICAL
+  // load zones from system here
+#ifdef HAVE_LIBICAL
+  PLOGDEBUGBLOCKDESCCOLL(aGZones->getDbgLogger, "loadSystemZoneDefinitions", "Linux system time zones");
   icalarray *builtin = ICALTIMEZONE_GET_BUILTIN_TIMEZONES();
+#ifdef EVOLUTION_COMPATIBILITY
+  PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
+                   ("runtime check: libical %s",
+                    icalcontext.icaltimezone_get_builtin_timezones_p ? "available" : "unavailable"))
+#endif
+  PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
+                   ("%d time zones from libical", builtin->num_elements));
   for (unsigned i = 0; builtin && i < builtin->num_elements; i++) {
     icaltimezone *zone = (icaltimezone *)ICALARRAY_ELEMENT_AT(builtin, i);
     if (!zone)
@@ -162,6 +171,7 @@ bool loadSystemZoneDefinitions(GZones* aGZones)
     char *vtimezone = ICALCOMPONENT_AS_ICAL_STRING(comp);
     if (!vtimezone)
       continue;
+    PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC, vtimezone);
     tz_entry t;
     string dstName, stdName;
     if (VTIMEZONEtoTZEntry(
@@ -189,8 +199,12 @@ bool loadSystemZoneDefinitions(GZones* aGZones)
     }
     ICAL_FREE(vtimezone);
   }
-	#endif // HAVE_LIBICAL
-	// return true if this list is considered complete (i.e. no built-in zones should be used additionally)
+  PLOGDEBUGENDBLOCK(aGZones->getDbgLogger, "loadSystemZoneDefinitions");
+#else
+  PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC, "support for libical not compiled");
+#endif // HAVE_LIBICAL
+
+  // return true if this list is considered complete (i.e. no built-in zones should be used additionally)
   return false; // we need the built-in zones
 } // loadSystemZoneDefinitions
 
