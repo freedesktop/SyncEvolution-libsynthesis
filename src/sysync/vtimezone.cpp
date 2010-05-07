@@ -98,14 +98,14 @@ const char* VTZ_NAME  = "TZNAME";
  *  Converts  vCalendar 2.0 RRULE string into internal recurrence representation
  */
 static bool RRULE2toInternalR( const char*   aText,   // RRULE string to be parsed
-                               lineartime_t  dtstart, // reference date for parsing RRULE
+                               lineartime_t* dtstartP, // reference date for parsing RRULE (might be modified!)
                                RType         &r,
                                TDebugLogger* aLogP )
 {
   timecontext_t untilcontext = TCTX_UNKNOWN;
-  bool ok= RRULE2toInternal( aText, dtstart, TCTX_UNKNOWN,
+  bool ok= RRULE2toInternal( aText, *dtstartP, TCTX_UNKNOWN,
                              r.freq,r.freqmod,r.interval,r.firstmask,r.lastmask,r.until,untilcontext,
-                               aLogP );
+                               aLogP, dtstartP );
   if (aLogP) RTypeInfo( r, ok, aLogP );
   return ok;
 } // RRULE2toInternalR
@@ -281,7 +281,8 @@ static bool GetTZInfo( cAppCharP     aText,
   if (ISO8601StrToTimestamp( st.c_str(), dtstart, tctx )==0)  return false;
   if (!Get_Bias( of,ot, cBias ))                              return false;
 
-  if (RRULE2toInternalR    ( rr.c_str(), dtstart, r, aLogP )) {
+	// Note: dtstart might be adjusted by this call in case of DTSTART not meeting a occurrence for given RRULE
+  if (RRULE2toInternalR    ( rr.c_str(), &dtstart, r, aLogP )) {
     string             vvv;
     internalRToRRULE2( vvv, r, false, aLogP );
     Rtm_to_tChange        ( r, dtstart, c );
