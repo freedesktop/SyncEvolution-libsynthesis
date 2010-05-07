@@ -141,17 +141,18 @@ TDebugLogger *getDbgLogger(void);
   #define PDEBUGTEST(lvl) (((lvl) & getDbgMask()) == (lvl))
   #define PDEBUGMASK getDbgMask()
   // direct output to a logger
-  #define PLOGDEBUGBLOCKFMT(lo,m) (lo)->DebugOpenBlockExpanded m
-  #define PLOGDEBUGBLOCKFMTCOLL(lo,m) (lo)->DebugOpenBlockCollapsed m
-  #define PLOGDEBUGBLOCKDESC(lo,n,d) (lo)->DebugOpenBlock(n,d)
-  #define PLOGDEBUGBLOCKDESCCOLL(lo,n,d) (lo)->DebugOpenBlock(n,d,true)
-  #define PLOGDEBUGBLOCK(lo,n) (lo)->DebugOpenBlock(n)
-  #define PLOGDEBUGBLOCKCOLL(lo,n) (lo)->DebugOpenBlock(n,NULL,true)
-  #define PLOGDEBUGENDBLOCK(lo,n) (lo)->DebugCloseBlock(n)
-  #define PLOGDEBUGPUTSX(lo,lvl,m) { if ((lo) &&((lvl) & (lo)->getMask()) == (lvl)) (lo)->DebugPuts(lvl,m); }
-  #define PLOGDEBUGPUTSXX(lo,lvl,m,s,p) { if ((lo) &&((lvl) & (lo)->getMask()) == (lvl)) (lo)->DebugPuts(lvl,m,s,p); }
-  #define PLOGDEBUGVPRINTFX(lo,lvl,f,a) { if ((lo) &&((lvl) & (lo)->getMask()) == (lvl)) (lo)->DebugVPrintf(lvl,f,a); }
-  #define PLOGDEBUGPRINTFX(lo,lvl,m) { if ((lo) &&((lvl) & (lo)->getMask()) == (lvl)) (lo)->setNextMask(lvl).DebugPrintfLastMask m; }
+  #define PLOGDEBUGTEST(lo,lvl) ((lo) && (((lvl) & (lo)->getMask()) == (lvl)))
+  #define PLOGDEBUGBLOCKFMT(lo,m) { if (lo) (lo)->DebugOpenBlockExpanded m; }
+  #define PLOGDEBUGBLOCKFMTCOLL(lo,m) { if (lo) (lo)->DebugOpenBlockCollapsed m; }
+  #define PLOGDEBUGBLOCKDESC(lo,n,d) { if (lo) (lo)->DebugOpenBlock(n,d); }
+  #define PLOGDEBUGBLOCKDESCCOLL(lo,n,d) { if (lo) (lo)->DebugOpenBlock(n,d,true); }
+  #define PLOGDEBUGBLOCK(lo,n) { if (lo) (lo)->DebugOpenBlock(n); }
+  #define PLOGDEBUGBLOCKCOLL(lo,n) { if (lo) (lo)->DebugOpenBlock(n,NULL,true); }
+  #define PLOGDEBUGENDBLOCK(lo,n) { if (lo) (lo)->DebugCloseBlock(n); }
+  #define PLOGDEBUGPUTSX(lo,lvl,m) { if ((lo) && ((lvl) & (lo)->getMask()) == (lvl)) (lo)->DebugPuts(lvl,m); }
+  #define PLOGDEBUGPUTSXX(lo,lvl,m,s,p) { if ((lo) && ((lvl) & (lo)->getMask()) == (lvl)) (lo)->DebugPuts(lvl,m,s,p); }
+  #define PLOGDEBUGVPRINTFX(lo,lvl,f,a) { if ((lo) && ((lvl) & (lo)->getMask()) == (lvl)) (lo)->DebugVPrintf(lvl,f,a); }
+  #define PLOGDEBUGPRINTFX(lo,lvl,m) { if ((lo) && ((lvl) & (lo)->getMask()) == (lvl)) (lo)->setNextMask(lvl).DebugPrintfLastMask m; }
   // non-class context or C-level debug output
   #ifdef DIRECT_APPBASE_GLOBALACCESS
     #ifdef __cplusplus
@@ -191,6 +192,7 @@ TDebugLogger *getDbgLogger(void);
   #define PPOINTERTEST(p,m)
   #define PDEBUGTEST(lvl) false
   #define PDEBUGMASK 0
+  #define PLOGDEBUGTEST(lo,lvl) false
   #define PLOGDEBUGBLOCKFMT(lo,m)
   #define PLOGDEBUGBLOCKFMTCOLL(lo,m)
   #define PLOGDEBUGBLOCKDESC(lo,n,d)
@@ -233,6 +235,7 @@ TDebugLogger *getDbgLogger(void);
   #define NCDEBUGPUTSXX(lvl,m,s,p) PNCDEBUGPUTSXX(lvl,m,s,p)
   #define NCDEBUGPRINTFX(lvl,m) PNCDEBUGPRINTFX(lvl,m)
   #define NCDEBUGVPRINTFX(lvl,f,a) PNCDEBUGVPRINTFX(lvl,f,a)
+  #define LOGDEBUGTEST(lo,lvl) PLOGDEBUGTEST(lo,lvl)
   #define LOGDEBUGBLOCKFMT(lo,m) PLOGDEBUGBLOCKFMT(lo,m)
   #define LOGDEBUGBLOCKFMTCOLL(lo,m) PLOGDEBUGBLOCKFMTCOLL(lo,m)
   #define LOGDEBUGBLOCKDESC(lo,n,d) PLOGDEBUGBLOCKDESC(lo,n,d)
@@ -265,6 +268,7 @@ TDebugLogger *getDbgLogger(void);
   #define NCDEBUGPUTSXX(lvl,m,s,p)
   #define NCDEBUGPRINTFX(lvl,m)
   #define NCDEBUGVPRINTFX(lvl,f,a)
+  #define LOGDEBUGTEST(lo,lvl) false
   #define LOGDEBUGBLOCKFMT(lo,m)
   #define LOGDEBUGBLOCKFMTCOLL(lo,m)
   #define LOGDEBUGBLOCKDESC(lo,n,d)
