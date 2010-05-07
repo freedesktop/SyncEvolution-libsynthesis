@@ -60,7 +60,7 @@ int wbxmlConv(int argc, const char *argv[]);
 	  #define APP_PROGRESS_EVENT(a,e,d,x,y,z) true
   #endif
   #define SESSION_PROGRESS_EVENT(s,e,d,x,y,z) true
-  #define DB_PROGRESS_EVENT(s,e,d,x,y,z) true
+  #define DB_PROGRESS_EVENT(s,e,x,y,z) true
 #endif
 
 // non-class print to console (#ifdef CONSOLEINFO)
