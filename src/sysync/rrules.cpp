@@ -484,7 +484,7 @@ bool internalToRRULE2(
 {
   LOGDEBUGPRINTFX(aLogP,DBG_EXOTIC+DBG_GEN,(
   	"InternalToRRULE2(): expanding freq=%c, freqmod=%c, interval=%hd, firstmask=%llX, lastmask=%llX",
-    freq, freqmod, interval, firstmask, lastmask
+    freq, freqmod, interval, (long long)firstmask, (long long)lastmask
   ));
 
   // Now do the conversion
