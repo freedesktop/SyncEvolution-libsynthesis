@@ -1225,6 +1225,9 @@ TSyncAppBase::TSyncAppBase() :
   fFirstUseVers = 0;
 	#endif
   #endif
+
+  // TODO: put this somewhere where the return code can be checked and reported to the user of TSyncAppBase
+  fAppZones.initialize();
 } // TSyncAppBase::TSyncAppBase
 
 
@@ -1429,11 +1432,7 @@ localstatus TSyncAppBase::finishConfig()
 #ifdef SYDEBUG
   fAppZones.getDbgLogger = getDbgLogger();
 #endif
-  if (!fAppZones.initialize()) {
-    fConfigP->setFatalError(LOCERR_CFGREAD);
-    return LOCERR_CFGREAD;
-  }
-
+  fAppZones.loggingStarted();
   return LOCERR_OK;
 }
 

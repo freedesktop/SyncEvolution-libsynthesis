@@ -150,6 +150,18 @@ namespace sysync {
  */
 bool loadSystemZoneDefinitions(GZones* aGZones)
 {
+  // always add the builtin time zones
+  return false;
+}
+
+/*! @brief we use this callback to add and log libical time zone handling
+ *
+ * The advantage is that this handling can be logged. The disadvantage
+ * is that these time zones cannot be used in the configuration. Builtin
+ * time zones (if any) have to be used there.
+ */
+void logSystemZoneDefinitions(GZones* aGZones)
+{
   // load zones from system here
 #ifdef HAVE_LIBICAL
   PLOGDEBUGBLOCKDESCCOLL(aGZones->getDbgLogger, "loadSystemZoneDefinitions", "Linux system time zones");
@@ -203,9 +215,6 @@ bool loadSystemZoneDefinitions(GZones* aGZones)
 #else
   PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC, "support for libical not compiled");
 #endif // HAVE_LIBICAL
-
-  // return true if this list is considered complete (i.e. no built-in zones should be used additionally)
-  return false; // we need the built-in zones
 } // loadSystemZoneDefinitions
 
 

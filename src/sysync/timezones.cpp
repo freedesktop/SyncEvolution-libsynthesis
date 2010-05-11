@@ -108,6 +108,11 @@ bool GZones::initialize()
   return ok;
 }
 
+void GZones::loggingStarted()
+{
+  logSystemZoneDefinitions(this);
+}
+
 
 bool GZones::matchTZ(const tz_entry &aTZ, TDebugLogger *aLogP, timecontext_t &aContext)
 {
