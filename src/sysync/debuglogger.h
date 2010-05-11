@@ -57,6 +57,42 @@ typedef enum {
   numDbgSubthreadModes
 } TDbgSubthreadModes;
 
+/// Container for information about the location where a debug call was made.
+/// Strings are owned by caller.
+struct TDbgLocation {
+  /// function name, may be NULL, derived from __FUNC__ if available
+  const char *fFunction;
+  /// file name, may be NULL, from __FILE__
+  const char *fFile;
+  /// line number, 0 if unknown
+  const int fLine;
+
+  TDbgLocation(const char *aFunction = NULL,
+               const char *aFile = NULL,
+               const int aLine = 0) :
+    fFunction(aFunction),
+    fFile(aFile),
+    fLine(aLine)
+  {}
+};
+
+#ifdef SYDEBUG_LOCATION
+# define TDBG_LOCATION_PROTO const TDbgLocation &aTDbgLoc,
+# define TDBG_LOCATION_ARG aTDbgLoc,
+# define TDBG_LOCATION_HERE TDbgLocation(__func__, __FILE__, __LINE__),
+# define TDBG_LOCATION_NONE TDbgLocation(),
+# define TDBG_LOCATION_ARGS(_func, _file, _line) TDbgLocation(_func, _file, _line), 
+# define TDBG_VARARGS(m...) (TDbgLocation(__PRETTY_FUNCTION__, __FILE__, __LINE__), ## m)
+# define TDBG_LOCATION_ARG_NUM 1
+#else
+# define TDBG_LOCATION_PROTO
+# define TDBG_LOCATION_ARG
+# define TDBG_LOCATION_HERE
+# define TDBG_LOCATION_NONE
+# define TDBG_LOCATION_ARGS(_func, _file, _line)
+# define TDBG_VARARGS
+# define TDBG_LOCATION_ARG_NUM 0
+#endif
 
 #ifndef HARDCODED_CONFIG
 extern cAppCharP const DbgOutFormatNames[numDbgOutFormats];
@@ -237,18 +273,18 @@ public:
   /// @param aDbgMask debug mask, bits set here must be set in the debuglogger's own mask in order to display the debug text
   /// @param aText[in] text to be written out
   /// @param aTextSize[in] if>0, this is the maximum number of chars to output from aText
-  virtual void DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize=0, bool aPreFormatted=false);
+  virtual void DebugPuts(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize=0, bool aPreFormatted=false);
   /// @brief Write formatted text to debug output channel.
   /// @param aDbgMask debug mask, bits set here must be set in the debuglogger's own mask in order to display the debug text
   /// @param aFormat[in] format text in vprintf style to be written out
   /// @param aArgs[in] varargs in vprintf style
-  virtual void DebugVPrintf(uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs);
+  virtual void DebugVPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs);
   /// @brief Write formatted text to debug output channel.
   /// @param aDbgMask debug mask, bits set here must be set in the debuglogger's own mask in order to display the debug text
   /// @param aFormat[in] format text in printf style to be written out
-  void DebugPrintf(uInt32 aDbgMask, cAppCharP aFormat, ...)
+  void DebugPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, ...)
   	#ifdef __GNUC__
-    __attribute__((format(printf, 3, 4)))
+    __attribute__((format(printf, TDBG_LOCATION_ARG_NUM + 3, TDBG_LOCATION_ARG_NUM + 4)))
 		#endif
     ;
   /// @brief set debug mask to be used for next DebugPrintfLastMask() call
@@ -256,9 +292,9 @@ public:
   virtual TDebugLoggerBase &setNextMask(uInt32 aDbgMask);
   /// @brief like DebugPrintf(), but using mask previously set by setNextMask()
   /// @param aFormat[in] format text in printf style to be written out
-  void DebugPrintfLastMask(cAppCharP aFormat, ...)
+  void DebugPrintfLastMask(TDBG_LOCATION_PROTO cAppCharP aFormat, ...)
 		#ifdef __GNUC__
-    __attribute__((format(printf, 2, 3)))
+    __attribute__((format(printf, TDBG_LOCATION_ARG_NUM + 2, TDBG_LOCATION_ARG_NUM + 3)))
 		#endif
     ;
   // - Blocks
@@ -269,33 +305,33 @@ public:
   /// @param aBlockFmt[in]   Format string for additional Block info. Should contain one or multiple tag=value pairs, separated by the pipe char |.
   ///                          This will be used to generate XML attributes or other identifiers.
   /// @param aArgs[in]         varargs in vprintf style for aBlockFmt
-  virtual void DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs);
+  virtual void DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs);
   /// @brief Open structure Block, printf style variant
-  void DebugOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, ...)
+  void DebugOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, ...)
     #ifdef __GNUC__
-    __attribute__((format(printf, 5, 6)))
+    __attribute__((format(printf, TDBG_LOCATION_ARG_NUM + 5, TDBG_LOCATION_ARG_NUM + 6)))
 		#endif
       ;
-  void DebugOpenBlockExpanded(cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
+  void DebugOpenBlockExpanded(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
     #ifdef __GNUC__
-    __attribute__((format(printf, 4, 5)))
+    __attribute__((format(printf, TDBG_LOCATION_ARG_NUM + 4, TDBG_LOCATION_ARG_NUM + 5)))
 		#endif
     ;
-  void DebugOpenBlockCollapsed(cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
+  void DebugOpenBlockCollapsed(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
     #ifdef __GNUC__
-    __attribute__((format(printf, 4, 5)))
+    __attribute__((format(printf, TDBG_LOCATION_ARG_NUM + 4, TDBG_LOCATION_ARG_NUM + 5)))
 		#endif
     ;
   /// @brief Open structure Block, without any attributes
-  virtual void DebugOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle=NULL, bool aCollapsed=false);
+  virtual void DebugOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle=NULL, bool aCollapsed=false);
   /// @brief Close structure Block. Name is used to close possibly unclosed contained Blocks automatically.
-  virtual void DebugCloseBlock(cAppCharP aBlockName);
+  virtual void DebugCloseBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName);
 protected:
   // helper methods
   /// @brief start debugging output if needed and sets fOutStarted
   bool DebugStartOutput(void);
   /// @brief Output single line to debug channel (includes indenting, but no other formatting)
-  void DebugPutLine(cAppCharP aText, stringSize aTextSize=0, bool aPre=false);
+  void DebugPutLine(TDBG_LOCATION_PROTO cAppCharP aText, stringSize aTextSize=0, bool aPre=false);
   /// @brief finalize debugging output
   void DebugFinalizeOutput(void);
   /// @brief get block number
@@ -305,7 +341,7 @@ protected:
   /// @brief internal helper for closing debug Blocks
   /// @param aBlockName[in]   Name of Block to close. All Blocks including the first with given name will be closed. If NULL, all Blocks will be closed.
   /// @param aCloseComment[in]  Comment about closing Block. If NULL, no comment will be shown (unless implicit closes occur, which auto-creates a comment)
-  void internalCloseBlocks(cAppCharP aBlockName, cAppCharP aCloseComment);
+  void internalCloseBlocks(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aCloseComment);
   // Variables
   TDbgOut *fDbgOutP; // the debug output
   string fDbgPath; // the output path+filename (w/o extension)
@@ -342,10 +378,10 @@ public:
   virtual ~TDebugLogger();
   // methods
   #ifdef MULTI_THREAD_SUPPORT
-  virtual void DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize=0, bool aPreFormatted=false);
-  virtual void DebugVPrintf(uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs);
-  virtual void DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs);
-  virtual void DebugCloseBlock(cAppCharP aBlockName);
+  virtual void DebugPuts(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize=0, bool aPreFormatted=false);
+  virtual void DebugVPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs);
+  virtual void DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs);
+  virtual void DebugCloseBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName);
   virtual TDebugLoggerBase &setNextMask(uInt32 aDbgMask);
   #endif
   // - thread debug output serializing

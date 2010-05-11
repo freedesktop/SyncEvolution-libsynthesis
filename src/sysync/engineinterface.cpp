@@ -1848,7 +1848,7 @@ TSyError TEngineInterface::debugPuts(cAppCharP aFile, int aLine, cAppCharP aFunc
                                      cAppCharP aText)
 {
   #if defined(SYDEBUG)
-  getSyncAppBase()->getDbgLogger()->DebugPuts(/* aFile, aLine, aFunction, aPrefix */
+  getSyncAppBase()->getDbgLogger()->DebugPuts(TDBG_LOCATION_ARGS(aFunction, aFile, aLine /*, aPrefix */)
                                               aDbgLevel, aText);
   return 0;
   #else
