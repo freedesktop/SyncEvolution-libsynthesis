@@ -510,7 +510,7 @@ void TDebugLoggerBase::outputVia(TDebugLoggerBase *aDebugLoggerP)
 
 
 // output formatted text
-void TDebugLoggerBase::DebugVPrintf(uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs)
+void TDebugLoggerBase::DebugVPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs)
 {
   // we need a format and debug not completely off
   if ((getMask() & aDbgMask)==aDbgMask && aFormat) {
@@ -520,7 +520,7 @@ void TDebugLoggerBase::DebugVPrintf(uInt32 aDbgMask, cAppCharP aFormat, va_list 
     // assemble the message string
     vsnprintf(msg, maxmsglen, aFormat, aArgs);
     // write the string
-    DebugPuts(aDbgMask,msg);
+    DebugPuts(TDBG_LOCATION_ARG aDbgMask,msg);
   }
 } // TDebugLoggerBase::DebugVPrintf
 
@@ -534,13 +534,13 @@ TDebugLoggerBase &TDebugLoggerBase::setNextMask(uInt32 aDbgMask)
 
 
 // like DebugPrintf(), but using mask previously set by setNextMask()
-void TDebugLoggerBase::DebugPrintfLastMask(cAppCharP aFormat, ...)
+void TDebugLoggerBase::DebugPrintfLastMask(TDBG_LOCATION_PROTO cAppCharP aFormat, ...)
 {
   va_list args;
   // we need a format and debug not completely off
   if ((getMask() & fNextDebugMask)==fNextDebugMask && aFormat) {
     va_start(args, aFormat);
-    DebugVPrintf(fNextDebugMask,aFormat,args);
+    DebugVPrintf(TDBG_LOCATION_ARG fNextDebugMask,aFormat,args);
     va_end(args);
   }
   fNextDebugMask=0;
@@ -548,78 +548,129 @@ void TDebugLoggerBase::DebugPrintfLastMask(cAppCharP aFormat, ...)
 
 
 // output formatted text
-void TDebugLoggerBase::DebugPrintf(uInt32 aDbgMask, cAppCharP aFormat, ...)
+void TDebugLoggerBase::DebugPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, ...)
 {
   va_list args;
   // we need a format and debug not completely off
   if ((getMask() & aDbgMask)==aDbgMask && aFormat) {
     va_start(args, aFormat);
-    DebugVPrintf(aDbgMask,aFormat,args);
+    DebugVPrintf(TDBG_LOCATION_ARG aDbgMask,aFormat,args);
     va_end(args);
   }
 } // TDebugLoggerBase::DebugVPrintf
 
 
 // open new Block without attribute list
-void TDebugLoggerBase::DebugOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed)
+void TDebugLoggerBase::DebugOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed)
 {
   // we need a format and debug not completely off
   if (getMask() && aBlockName) {
-    DebugOpenBlock(aBlockName,aBlockTitle,aCollapsed,NULL);
+    DebugOpenBlock(TDBG_LOCATION_ARG aBlockName,aBlockTitle,aCollapsed,NULL);
   }
 } // TDebugLoggerBase::DebugOpenBlock
 
 
 // open new Block with attribute list, printf style
-void TDebugLoggerBase::DebugOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, ...)
+void TDebugLoggerBase::DebugOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, ...)
 {
   va_list args;
   // we need a format and debug not completely off
   if (getMask() && aBlockName) {
     va_start(args, aBlockFmt);
-    DebugVOpenBlock(aBlockName,aBlockTitle,aCollapsed,aBlockFmt,args);
+    DebugVOpenBlock(TDBG_LOCATION_ARG aBlockName,aBlockTitle,aCollapsed,aBlockFmt,args);
     va_end(args);
   }
 } // TDebugLoggerBase::DebugOpenBlock
 
 
 // open new Block with attribute list, printf style, expanded by default
-void TDebugLoggerBase::DebugOpenBlockExpanded(cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
+void TDebugLoggerBase::DebugOpenBlockExpanded(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
 {
   va_list args;
   // we need a format and debug not completely off
   if (getMask() && aBlockName) {
     va_start(args, aBlockFmt);
-    DebugVOpenBlock(aBlockName,aBlockTitle,false,aBlockFmt,args);
+    DebugVOpenBlock(TDBG_LOCATION_ARG aBlockName,aBlockTitle,false,aBlockFmt,args);
     va_end(args);
   }
 } // TDebugLoggerBase::DebugOpenBlockExpanded
 
 
 // open new Block with attribute list, printf style, collapsed by default
-void TDebugLoggerBase::DebugOpenBlockCollapsed(cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
+void TDebugLoggerBase::DebugOpenBlockCollapsed(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, cAppCharP aBlockFmt, ...)
 {
   va_list args;
   // we need a format and debug not completely off
   if (getMask() && aBlockName) {
     va_start(args, aBlockFmt);
-    DebugVOpenBlock(aBlockName,aBlockTitle,true,aBlockFmt,args);
+    DebugVOpenBlock(TDBG_LOCATION_ARG aBlockName,aBlockTitle,true,aBlockFmt,args);
     va_end(args);
   }
 } // TDebugLoggerBase::DebugOpenBlockCollapsed
 
+#ifdef SYDEBUG_LOCATION
+/// turn text into link to source code
+static string TDbg2Link(const TDbgLocation &aTDbgLoc, const string &aTxt)
+{
+  if (!aTDbgLoc.fFile)
+    return aTxt;
+
+  string line;
+
+  line+="<a href=\"";
+  // replace path with path to Doxygen HTML pages,
+  // mangle base name like Doxygen does
+  line+=SYDEBUG_LOCATION;
+  line+="/";
+  string file = aTDbgLoc.fFile;
+  size_t off = file.rfind('/');
+  if (off != file.npos)
+    file = file.substr(off + 1);
+  for (off = 0; off < file.size(); off++) {
+    switch(file[off]) {
+    case '_':
+      line+="__";
+      break;
+    case '.':
+      line+="_8";
+      break;
+    default:
+      line+=file[off];
+      break;
+    }
+  }
+  StringObjAppendPrintf(line,"-source.html#l%05d",aTDbgLoc.fLine);
+  line+="\"";
+  if (aTDbgLoc.fFunction) {
+    line+=" title=\"";
+    line+=aTDbgLoc.fFunction;
+    line+="\"";
+  }
+  line+=">";
+  line+=aTxt;
+  line+="</a>";
+
+  return line;
+}
+#else
+static string TDbg2Link(const string &aTxt)
+{
+  return aTxt;
+}
+#endif
+
 
 // output text to debug channel
-void TDebugLoggerBase::DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize, bool aPreFormatted)
+void TDebugLoggerBase::DebugPuts(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize, bool aPreFormatted)
 {
   // we need a text and debug not completely off
   if (!((getMask() & aDbgMask)==aDbgMask && aText && fDbgOptionsP)) {
     // cannot output
     //#ifdef __MWERKS__
     //#warning "ugly hack"
-    DebugPutLine("<li><span class=\"error\">Warning: Dbg output system already half shut down (limited formatting)!</span></li><li>");
-    if (aText) DebugPutLine(aText);
-    DebugPutLine("</li>");
+    DebugPutLine(TDBG_LOCATION_NONE "<li><span class=\"error\">Warning: Dbg output system already half shut down (limited formatting)!</span></li><li>");
+    if (aText) DebugPutLine(TDBG_LOCATION_NONE aText);
+    DebugPutLine(TDBG_LOCATION_NONE "</li>");
     //#endif
   }
   else {
@@ -659,18 +710,21 @@ void TDebugLoggerBase::DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aT
             line="<li>";
             // add timestamp if needed for every line
             if (fDbgOptionsP->fTimestampForAll || fDbgOptionsP->fThreadIDForAll) {
-              line+="<i>[";
+              string prefix;
+              prefix+="<i>[";
               #ifdef MULTI_THREAD_SUPPORT
               if (fDbgOptionsP->fThreadIDForAll) {
-                StringObjAppendPrintf(line,"%09lu",myThreadID());
-                if (fDbgOptionsP->fTimestampForAll) line+=", ";
+                StringObjAppendPrintf(prefix,"%09lu",myThreadID());
+                if (fDbgOptionsP->fTimestampForAll) prefix+=", ";
               }
               #endif
               if (fDbgOptionsP->fTimestampForAll) {
                 StringObjTimestamp(ts,getSystemNowAs(TCTX_SYSTEM));
-                line+=ts;
+                prefix+=ts;
               }
-              line+="]</i>&nbsp;";
+              prefix+="]</i>&nbsp;";
+
+              line+=TDbg2Link(TDBG_LOCATION_ARG prefix);
             }
             // colorize some messages
             string cl="";
@@ -749,7 +803,7 @@ void TDebugLoggerBase::DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aT
               line+=ts;
               line+="</time>";
             }
-            DebugPutLine(line.c_str(),line.size());
+            DebugPutLine(TDBG_LOCATION_NONE line.c_str(),line.size());
             line.erase();
           }
           if (fDbgOptionsP->fSeparateMsgs) {
@@ -868,7 +922,7 @@ void TDebugLoggerBase::DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aT
         }
         line+="</li>"; // we need to close the list entry
       }
-      DebugPutLine(line.c_str(),line.size(),pre);
+      DebugPutLine(TDBG_LOCATION_NONE line.c_str(),line.size(),pre);
       // next line, if any
       aText=p;
     } // loop until all text done
@@ -877,7 +931,7 @@ void TDebugLoggerBase::DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aT
 
 
 // open new Block with attribute list, varargs passed
-void TDebugLoggerBase::DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs)
+void TDebugLoggerBase::DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs)
 {
   if (!fDbgOptionsP)
     return;
@@ -920,7 +974,7 @@ void TDebugLoggerBase::DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTit
         }
         StringObjAppendPrintf(bl,"<a name=\"H%ld\">", long(getBlockNo()));
         if (withTime) {
-          bl+="[" + ts + "] ";
+          bl+=TDbg2Link(TDBG_LOCATION_ARG string("[") + ts + "] ");
         }
         bl+="'";
         bl+=aBlockName;
@@ -1035,7 +1089,7 @@ void TDebugLoggerBase::DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTit
         break;
     } // switch preamble
     // now output Block line (on current indent level)
-    DebugPutLine(bl.c_str(), bl.size());
+    DebugPutLine(TDBG_LOCATION_NONE bl.c_str(), bl.size());
     // increase indent level (applies to all Block contents)
     fIndent++;
     // save Block on stack
@@ -1050,18 +1104,18 @@ void TDebugLoggerBase::DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTit
 
 
 // close named Block. If no name given, topmost Block will be closed
-void TDebugLoggerBase::DebugCloseBlock(cAppCharP aBlockName)
+void TDebugLoggerBase::DebugCloseBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName)
 {
   if (fOutStarted && getMask() && fDbgOptionsP && fBlockHistory) {
     if (aBlockName==NULL) {
       #if SYDEBUG>1
-      internalCloseBlocks(fBlockHistory->fBlockName.c_str(),"Block Nest Warning: Missing Block name at close");
+      internalCloseBlocks(TDBG_LOCATION_ARG fBlockHistory->fBlockName.c_str(),"Block Nest Warning: Missing Block name at close");
       #else
-      internalCloseBlocks(fBlockHistory->fBlockName.c_str(),NULL);
+      internalCloseBlocks(TDBG_LOCATION_ARG fBlockHistory->fBlockName.c_str(),NULL);
       #endif
     }
     else {
-      internalCloseBlocks(aBlockName,NULL);
+      internalCloseBlocks(TDBG_LOCATION_ARG aBlockName,NULL);
     }
   }
 } // TDebugLoggerBase::DebugCloseBlock
@@ -1069,7 +1123,7 @@ void TDebugLoggerBase::DebugCloseBlock(cAppCharP aBlockName)
 
 
 // internal helper used to close all or some Blocks
-void TDebugLoggerBase::internalCloseBlocks(cAppCharP aBlockName, cAppCharP aCloseComment)
+void TDebugLoggerBase::internalCloseBlocks(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aCloseComment)
 {
   if (!fDbgOptionsP) return; // security
   bool withTime = fDbgOptionsP->fTimestampStructure;
@@ -1077,7 +1131,7 @@ void TDebugLoggerBase::internalCloseBlocks(cAppCharP aBlockName, cAppCharP aClos
   #if SYDEBUG>1
   if (!fBlockHistory && aBlockName) {
     // no blocks open any more and not close-all-remaining call (log close...)
-    DebugPrintf(DBG_EXOTIC+DBG_ERROR,"Block Nest Warning: Trying to close block '%s', but no block is open",aBlockName);
+    DebugPrintf(TDBG_LOCATION_ARG DBG_EXOTIC+DBG_ERROR,"Block Nest Warning: Trying to close block '%s', but no block is open",aBlockName);
   }
   #endif
   while (fBlockHistory) {
@@ -1106,7 +1160,7 @@ void TDebugLoggerBase::internalCloseBlocks(cAppCharP aBlockName, cAppCharP aClos
       // for XML, the time must be shown before the close tag on a separate line
       if (fDbgOptionsP->fOutputFormat == dbgfmt_xml) {
         StringObjPrintf(bl,"<endblock time=\"%s\"/>",ts.c_str());
-        DebugPutLine(bl.c_str(), bl.size()); // still within block, indented
+        DebugPutLine(TDBG_LOCATION_NONE bl.c_str(), bl.size()); // still within block, indented
       }
     }
     // - now unindent
@@ -1138,7 +1192,7 @@ void TDebugLoggerBase::internalCloseBlocks(cAppCharP aBlockName, cAppCharP aClos
         }
         StringObjAppendPrintf(bl,"<a name=\"F%ld\">",long(fBlockHistory->fBlockNo));
         if (withTime) {
-          bl+="[" + ts + "] ";
+          bl+=TDbg2Link(TDBG_LOCATION_ARG string("[") + ts + "] ");
         }
         bl += "End of '";
         bl+=fBlockHistory->fBlockName;
@@ -1170,7 +1224,7 @@ void TDebugLoggerBase::internalCloseBlocks(cAppCharP aBlockName, cAppCharP aClos
         break;
     } // switch Block close
     // - output closing Block line
-    DebugPutLine(bl.c_str(), bl.size());
+    DebugPutLine(TDBG_LOCATION_NONE bl.c_str(), bl.size());
     // - remove Block level
     TBlockLevel *closedLevel = fBlockHistory;
     fBlockHistory = closedLevel->fNext;
@@ -1212,10 +1266,10 @@ bool TDebugLoggerBase::DebugStartOutput(void)
         // 256 is a safe assumption because the "fold" button <divs> alone are around 250 bytes
         fBlockNo = 1 + (fDbgOutP->dbgFileSize()/256);
         // now create required prefix
-        DebugPutLine(fDbgOptionsP->fCustomPrefix.empty() ? DbgOutDefaultPrefixes[fDbgOptionsP->fOutputFormat] : fDbgOptionsP->fCustomPrefix.c_str());
+        DebugPutLine(TDBG_LOCATION_NONE fDbgOptionsP->fCustomPrefix.empty() ? DbgOutDefaultPrefixes[fDbgOptionsP->fOutputFormat] : fDbgOptionsP->fCustomPrefix.c_str());
         // add folding javascript if needed
         if (fDbgOptionsP->fOutputFormat==dbgfmt_html && fDbgOptionsP->fFoldingMode!=dbgfold_none) {
-          DebugPutLine(FoldingPrefix);
+          DebugPutLine(TDBG_LOCATION_NONE FoldingPrefix);
         }
       } // debug channel opened successfully
     } // use own debug channel
@@ -1229,17 +1283,17 @@ void TDebugLoggerBase::DebugFinalizeOutput(void)
 {
   if (fOutputLoggerP) {
   	// just close my own blocks
-    internalCloseBlocks(NULL,"closed because sub-log ends here");    
+    internalCloseBlocks(TDBG_LOCATION_NONE NULL,"closed because sub-log ends here");    
   }
   if (fOutStarted && fDbgOptionsP && fDbgOutP) {
     // close all left-open open Blocks
-    internalCloseBlocks(NULL,"closed because log ends here");
+    internalCloseBlocks(TDBG_LOCATION_NONE NULL,"closed because log ends here");
     // now finalize output
     // - special stuff before
     if (fDbgOptionsP->fOutputFormat == dbgfmt_xml)
       fIndent=0; // unindent to zero (document is not a real Block)
     // - then suffix
-    DebugPutLine(fDbgOptionsP->fCustomSuffix.empty() ? DbgOutDefaultSuffixes[fDbgOptionsP->fOutputFormat] : fDbgOptionsP->fCustomSuffix.c_str());
+    DebugPutLine(TDBG_LOCATION_NONE fDbgOptionsP->fCustomSuffix.empty() ? DbgOutDefaultSuffixes[fDbgOptionsP->fOutputFormat] : fDbgOptionsP->fCustomSuffix.c_str());
     // now close the debug channel
     fDbgOutP->closeDbg();
   }
@@ -1249,7 +1303,7 @@ void TDebugLoggerBase::DebugFinalizeOutput(void)
 
 
 // Output single line to debug channel (includes indenting and other prefixing, but no further formatting)
-void TDebugLoggerBase::DebugPutLine(cAppCharP aText, stringSize aTextSize, bool aPre)
+void TDebugLoggerBase::DebugPutLine(TDBG_LOCATION_PROTO cAppCharP aText, stringSize aTextSize, bool aPre)
 {
   if (!aText || (!fDbgOutP && !fOutputLoggerP)) return;
   if (*aText) {
@@ -1445,31 +1499,31 @@ TDebugLoggerBase &TDebugLogger::setNextMask(uInt32 aDbgMask)
 
 
 // output text to debug channel, with checking for subthreads
-void TDebugLogger::DebugPuts(uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize, bool aPreFormatted)
+void TDebugLogger::DebugPuts(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize, bool aPreFormatted)
 {
   TDebugLoggerBase *loggerP = getThreadLogger();
-  if (loggerP) loggerP->inherited::DebugPuts(aDbgMask,aText,aTextSize,aPreFormatted);
+  if (loggerP) loggerP->inherited::DebugPuts(TDBG_LOCATION_ARG aDbgMask,aText,aTextSize,aPreFormatted);
 } // TDebugLogger::DebugPuts
 
 
-void TDebugLogger::DebugVPrintf(uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs)
+void TDebugLogger::DebugVPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs)
 {
   TDebugLoggerBase *loggerP = getThreadLogger();
-  if (loggerP) loggerP->inherited::DebugVPrintf(aDbgMask,aFormat,aArgs);
+  if (loggerP) loggerP->inherited::DebugVPrintf(TDBG_LOCATION_ARG aDbgMask,aFormat,aArgs);
 } // TDebugLogger::DebugVPrintf
 
 
-void TDebugLogger::DebugVOpenBlock(cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs)
+void TDebugLogger::DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs)
 {
   TDebugLoggerBase *loggerP = getThreadLogger();
-  if (loggerP) loggerP->inherited::DebugVOpenBlock(aBlockName, aBlockTitle, aCollapsed, aBlockFmt, aArgs);
+  if (loggerP) loggerP->inherited::DebugVOpenBlock(TDBG_LOCATION_ARG aBlockName, aBlockTitle, aCollapsed, aBlockFmt, aArgs);
 } // TDebugLogger::DebugVOpenBlock
 
 
-void TDebugLogger:: DebugCloseBlock(cAppCharP aBlockName)
+void TDebugLogger:: DebugCloseBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName)
 {
   TDebugLoggerBase *loggerP = getThreadLogger();
-  if (loggerP) loggerP->inherited::DebugCloseBlock(aBlockName);
+  if (loggerP) loggerP->inherited::DebugCloseBlock(TDBG_LOCATION_ARG aBlockName);
 } // TDebugLogger::DebugCloseBlock
 
 #endif

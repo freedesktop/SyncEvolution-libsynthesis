@@ -220,7 +220,7 @@ extern "C" void AppBaseLogDebugBlock(void *aCallbackRef, const char *aTag, const
   if (aCallbackRef) {
     bool collapsed=false;
     if (aTag && aTag[0]=='-') { aTag++; collapsed=true; }
-    static_cast<TSyncAppBase *>(aCallbackRef)->getDbgLogger()->DebugOpenBlock(aTag,aDesc,collapsed,"%s",aAttrText);
+    static_cast<TSyncAppBase *>(aCallbackRef)->getDbgLogger()->DebugOpenBlock(TDBG_LOCATION_NONE aTag,aDesc,collapsed,"%s",aAttrText);
   }
 } // AppBaseLogDebugBlock
 
@@ -229,7 +229,7 @@ extern "C" void AppBaseLogDebugEndBlock(void *aCallbackRef, const char *aTag)
 {
   if (aCallbackRef) {
     if (aTag && aTag[0]=='-') aTag++;
-    static_cast<TSyncAppBase *>(aCallbackRef)->getDbgLogger()->DebugCloseBlock(aTag);
+    static_cast<TSyncAppBase *>(aCallbackRef)->getDbgLogger()->DebugCloseBlock(TDBG_LOCATION_NONE aTag);
   }
 } // AppBaseLogDebugEndBlock
 

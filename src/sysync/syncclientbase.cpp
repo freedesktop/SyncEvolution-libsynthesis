@@ -197,7 +197,7 @@ TSyError TClientEngineInterface::debugPuts(cAppCharP aFile, int aLine, cAppCharP
                                            cAppCharP aText)
 {
   #if defined(SYDEBUG)
-  static_cast<TSyncClientBase *>(getSyncAppBase())->getDbgLogger()->DebugPuts(/* aFile, aLine, aFunction, aPrefix */
+  static_cast<TSyncClientBase *>(getSyncAppBase())->getDbgLogger()->DebugPuts(TDBG_LOCATION_ARGS(aFunction, aFile, aLine /* aPrefix */)
                                                                               aDbgLevel, aText);
   return 0;
   #else
