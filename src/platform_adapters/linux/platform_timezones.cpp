@@ -152,7 +152,8 @@ bool loadSystemZoneDefinitions(GZones* aGZones)
 {
   // always add the builtin time zones
   return false;
-}
+} // loadSystemZoneDefinitions
+
 
 /*! @brief we use this callback to add and log libical time zone handling
  *
@@ -160,7 +161,7 @@ bool loadSystemZoneDefinitions(GZones* aGZones)
  * is that these time zones cannot be used in the configuration. Builtin
  * time zones (if any) have to be used there.
  */
-void logSystemZoneDefinitions(GZones* aGZones)
+void finalizeSystemZoneDefinitions(GZones* aGZones)
 {
   // load zones from system here
 #ifdef HAVE_LIBICAL
@@ -215,7 +216,7 @@ void logSystemZoneDefinitions(GZones* aGZones)
 #else
   PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC, "support for libical not compiled");
 #endif // HAVE_LIBICAL
-} // loadSystemZoneDefinitions
+} // finalizeSystemZoneDefinitions
 
 
 

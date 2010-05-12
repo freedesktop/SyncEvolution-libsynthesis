@@ -453,11 +453,17 @@ lineartime_t getSystemNowAs( timecontext_t aTimeContext, GZones* g, bool aNoOffs
 /*! @brief platform specific loading of time zone definitions
  *  @return true if this list is considered complete (i.e. no built-in zones should be used additionally)
  *  @param[in/out] aGZones : the GZones object where system zones should be loaded into
+ *  @note this is called at construction of the SyncAppBase before any logging facilities are
+ *        available. This routine should load enough time zone information such that config
+ *        can be read and conversion between UTC and system local time is possible.
+ *        Use finalizeSystemZoneDefinitions() to add time zones with full logging available.
  */
 bool loadSystemZoneDefinitions( GZones* aGZones );
 
-/*! @brief platform specific implementation of GZone::loggingStarted */
-void logSystemZoneDefinitions( GZones* aGZones );
+/*! @brief second opportunity to load platform specific time zone definitions with logging available (and config already parsed)
+ *  @param[in/out] aGZones : the GZones object where additional system zones should be loaded into
+ */
+void finalizeSystemZoneDefinitions( GZones* aGZones );
 
 /*! @brief get current system time zone
  *  @return true if successful

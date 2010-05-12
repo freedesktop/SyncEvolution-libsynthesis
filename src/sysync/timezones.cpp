@@ -110,7 +110,7 @@ bool GZones::initialize()
 
 void GZones::loggingStarted()
 {
-  logSystemZoneDefinitions(this);
+  finalizeSystemZoneDefinitions(this);
 }
 
 
@@ -1068,57 +1068,6 @@ timecontext_t SelectTZ( TDaylightSavingZone zone, int bias, int biasDST, lineart
   return TCTX_SYMBOLIC_TZ+t;
 } // SelectTZ
 
-
-
-/* %%% luz 2009-04-02 seems of no relevance except for Symbian/Epoc -> Epoc code moved to Symbian/platform_timezones.cpp.
-
-   Note: added a replacement using MyContext which should return the same result (but not
-   the debug output, as SystemTZ is still being called from sysytest.
-
-timecontext_t SystemTZ( GZones *g, bool isDbg )
-{
-  TDaylightSavingZone zone= EDstNone;
-  int                 bias= 0;
-  lineartime_t        tNow = 0;
-
-  #ifdef __EPOC_OS__
-    TLocale                 tl;
-    zone=                   tl.HomeDaylightSavingZone();
-    TTimeIntervalSeconds o= tl.UniversalTimeOffset();
-    bias=                o.Int() / SecsPerMin; // bias is based on minutes
-    bool             isDst= tl.QueryHomeHasDaylightSavingOn();
-    isDbg= true;
-
-    const char* zs;
-    switch (zone) {
-      case EDstHome     : zs= "EDstHome";     break;
-      case EDstNone     : zs= "EDstNone";     break;
-      case EDstEuropean : zs= "EDstEuropean"; break;
-      case EDstNorthern : zs= "EDstNorthern"; break;
-      case EDstSouthern : zs= "EDstSouthern"; break;
-      default           : zs= "???";          break;
-    } // switch
-
-    PNCDEBUGPRINTFX( DBG_SESSION,( "SystemTZ (EPOC): %s %d dst=%s", zs,bias, isDst ? "on":"off" ));
-
-    #ifdef _WIN32
-      PNCDEBUGPRINTFX( DBG_SESSION,( "SystemTZ (EPOC): on emulator" ));
-    #endif
-  #endif
-
-  #if defined _WIN32 && !defined __EPOC_OS__
-    TIME_ZONE_INFORMATION tzi;
-    DWORD rslt= GetTimeZoneInformation( &tzi );
-    zone= EDstEuropean;
-    bias= -tzi.Bias; // as negative value
-    PNCDEBUGPRINTFX( DBG_SESSION,( "SystemTZ (WIN): %s %d", "", bias ) );
-  #endif
-
-  // is only dependendent on current time/date, if any DST zone
-  if (zone!=EDstNone) tNow= getSystemNowAs(TCTX_SYSTEM, g);
-  return SelectTZ( zone,bias,tNow, isDbg );
-} // SystemTZ
-*/
 
 
 // Get int value <i> as string
