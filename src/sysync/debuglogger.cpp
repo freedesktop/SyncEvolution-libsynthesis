@@ -1041,9 +1041,11 @@ void TDebugLoggerBase::DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName,
         if (withTime) {
           bl += MAKEDBGLINK(string("[") + ts + "] ");
         }
+        #ifdef SYDEBUG_LOCATION
         else if (fDbgOptionsP->fSourceLinkMode!=dbgsource_none) {
         	bl += MAKEDBGLINK(string("[src] "));
         }
+        #endif
         bl+="'";
         bl+=aBlockName;
         bl+="'";
