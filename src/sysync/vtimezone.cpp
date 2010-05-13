@@ -272,7 +272,17 @@ static bool GetTZInfo( cAppCharP     aText,
       i++;
     } // while
   } // if
-                     a= VStr( aText, aIdent, aNth );
+
+  a= VStr( aText, aIdent, aNth );
+  if ( a.empty() ) {
+    // Happens for VTIMEZONEs without summer saving time when this
+    // function is called to extract changes for DAYLIGHT. Don't
+    // treat this as failure and continue with clean change rules, as
+    // before.
+    c = tChange();
+    return success;
+  }
+
   string rr= VValue( a, VTZ_RR    ); // sub items: - RRULE
          st= VValue( a, VTZ_START ); //            - start time
   string of= VValue( a, VTZ_OFROM ); //            - tz offset from
@@ -282,8 +292,12 @@ static bool GetTZInfo( cAppCharP     aText,
   if (ISO8601StrToTimestamp( st.c_str(), dtstart, tctx )==0)  return false;
   if (!Get_Bias( of,ot, cBias ))                              return false;
 
-	// Note: dtstart might be adjusted by this call in case of DTSTART not meeting a occurrence for given RRULE
-  if (RRULE2toInternalR    ( rr.c_str(), &dtstart, r, aLogP )) {
+  if ( rr.empty() ) {
+    // Happens when parsing STANDARD part of VTIMEZONE 
+    // without DAYLIGHT saving.
+    c = tChange();
+  } else if (RRULE2toInternalR    ( rr.c_str(), &dtstart, r, aLogP )) {
+    // Note: dtstart might have been adjusted by this call in case of DTSTART not meeting a occurrence for given RRULE
     string             vvv;
     internalRToRRULE2( vvv, r, false, aLogP );
     Rtm_to_tChange        ( r, dtstart, c );
