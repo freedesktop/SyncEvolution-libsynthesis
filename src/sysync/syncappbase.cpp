@@ -920,6 +920,12 @@ bool TDebugConfig::localStartElement(const char *aElementName, const char **aAtt
     expectEnum(sizeof(fSessionDbgLoggerOptions.fOutputFormat),&fSessionDbgLoggerOptions.fOutputFormat,DbgOutFormatNames,numDbgOutFormats);
   else if (strucmp(aElementName,"folding")==0)
     expectEnum(sizeof(fSessionDbgLoggerOptions.fFoldingMode),&fSessionDbgLoggerOptions.fFoldingMode,DbgFoldingModeNames,numDbgFoldingModes);
+  #ifdef SYDEBUG_LOCATION
+  else if (strucmp(aElementName,"sourcelink")==0)
+    expectEnum(sizeof(fSessionDbgLoggerOptions.fSourceLinkMode),&fSessionDbgLoggerOptions.fSourceLinkMode,DbgSourceModeNames,numDbgSourceModes);
+  else if (strucmp(aElementName,"sourcebase")==0)
+    expectPath(fSessionDbgLoggerOptions.fSourceRootPath);
+  #endif
   else if (strucmp(aElementName,"indentstring")==0)
     expectCString(fSessionDbgLoggerOptions.fIndentString);
   else if (strucmp(aElementName,"fileprefix")==0)

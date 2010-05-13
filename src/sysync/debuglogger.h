@@ -57,6 +57,18 @@ typedef enum {
   numDbgSubthreadModes
 } TDbgSubthreadModes;
 
+
+/// @brief HTML linking into source code
+typedef enum {
+  dbgsource_none,     ///< do not include links into source code in HTML logs
+  dbgsource_hint,     ///< no links, but info about what file/line number the message comes from 
+  dbgsource_doxygen,  ///< include link into doxygen prepared HTML version of source code
+  dbgsource_txmt,     ///< include txmt:// link (understood by TextMate and BBEdit) into source code
+  numDbgSourceModes
+} TDbgSourceModes;
+
+
+
 /// Container for information about the location where a debug call was made.
 /// Strings are owned by caller.
 struct TDbgLocation {
@@ -99,6 +111,7 @@ extern cAppCharP const DbgOutFormatNames[numDbgOutFormats];
 extern cAppCharP const DbgFoldingModeNames[numDbgFoldingModes];
 extern cAppCharP const DbgFlushModeNames[numDbgFlushModes];
 extern cAppCharP const DbgSubthreadModeNames[numDbgSubthreadModes];
+extern cAppCharP const DbgSourceModeNames[numDbgSourceModes];
 #endif
 extern cAppCharP const DbgOutFormatExtensions[numDbgOutFormats];
 
@@ -121,6 +134,10 @@ public:
   bool fThreadIDForAll; ///< include thread ID information for every message
   TDbgFlushModes fFlushMode; ///< how and when to flush
   TDbgFoldingModes fFoldingMode; ///< if and how to fold HTML output
+  #ifdef SYDEBUG_LOCATION
+  TDbgSourceModes fSourceLinkMode; ///< if and how to link with source code
+  string fSourceRootPath; ///< defines root path for source links
+  #endif
   bool fAppend; ///< if set, existing debug files will not be overwritten, but appended to
   TDbgSubthreadModes fSubThreadMode; ///< how to handle debug messages from subthreads
   uInt32 fSubThreadBufferMax; ///< how much to buffer for subthread maximally
@@ -342,6 +359,10 @@ protected:
   /// @param aBlockName[in]   Name of Block to close. All Blocks including the first with given name will be closed. If NULL, all Blocks will be closed.
   /// @param aCloseComment[in]  Comment about closing Block. If NULL, no comment will be shown (unless implicit closes occur, which auto-creates a comment)
   void internalCloseBlocks(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aCloseComment);
+	#ifdef SYDEBUG_LOCATION
+	/// @brief turn text into link to source code
+	string dbg2Link(const TDbgLocation &aTDbgLoc, const string &aTxt);
+  #endif // SYDEBUG_LOCATION
   // Variables
   TDbgOut *fDbgOutP; // the debug output
   string fDbgPath; // the output path+filename (w/o extension)

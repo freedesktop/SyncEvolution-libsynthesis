@@ -44,6 +44,14 @@ cAppCharP const DbgFoldingModeNames[numDbgFoldingModes] = {
 };
 
 
+cAppCharP const DbgSourceModeNames[numDbgSourceModes] = {
+  "none",       // do not include links into source code in HTML logs
+  "hint",       // no links, but info about what file/line number the message comes from 
+  "doxygen",    // include link into doxygen prepared HTML version of source code
+  "txmt",       // include txmt:// link (understood by TextMate and BBEdit) into source code
+};
+
+
 // debug flush modes
 cAppCharP const DbgFlushModeNames[numDbgFlushModes] = {
   "buffered",   // no flush, keep open as long as possible, output buffered (fast, needed for network drives)
@@ -217,19 +225,23 @@ TDbgOptions::TDbgOptions()
 
 void TDbgOptions::clear(void)
 {
-  fOutputFormat=dbgfmt_html; // most universally readable and convenient
-  fIndentString="  "; // two spaces
+  fOutputFormat = dbgfmt_html; // most universally readable and convenient
+  fIndentString = "  "; // two spaces
   fCustomPrefix.erase(); // no custom prefix
   fCustomSuffix.erase(); // no custom suffix
-  fSeparateMsgs=true; // separate text message lines (<msg></msg> in xml)
-  fTimestampStructure=true; // timestamps in structure...
-  fTimestampForAll=false; // ..but not for every line
-  fThreadIDForAll=false; // not by default
-  fFlushMode=dbgflush_none; // no special flush or openclose (fast, but might loose info on process abort)
-  fFoldingMode=dbgfold_auto; // dynamic folding enabled, expanded/collapsed defaults automatically set on block-by-block basis
-  fAppend=false; // default to overwrite existing logfiles
-  fSubThreadMode=dbgsubthread_suppress; // simply suppress subthread info
-  fSubThreadBufferMax=1024*1024; // don't buffer more than one meg.
+  fSeparateMsgs = true; // separate text message lines (<msg></msg> in xml)
+  fTimestampStructure = true; // timestamps in structure...
+  fTimestampForAll = false; // ..but not for every line
+  fThreadIDForAll = false; // not by default
+  fFlushMode = dbgflush_none; // no special flush or openclose (fast, but might loose info on process abort)
+  fFoldingMode = dbgfold_auto; // dynamic folding enabled, expanded/collapsed defaults automatically set on block-by-block basis
+  #ifdef SYDEBUG_LOCATION
+  fSourceLinkMode = dbgsource_none; // no links into source code
+  fSourceRootPath = SYDEBUG_LOCATION; // use default path from build
+  #endif
+  fAppend = false; // default to overwrite existing logfiles
+  fSubThreadMode = dbgsubthread_suppress; // simply suppress subthread info
+  fSubThreadBufferMax = 1024*1024; // don't buffer more than one meg.
 } // TDbgOptions::clear
 
 
@@ -608,56 +620,97 @@ void TDebugLoggerBase::DebugOpenBlockCollapsed(TDBG_LOCATION_PROTO cAppCharP aBl
   }
 } // TDebugLoggerBase::DebugOpenBlockCollapsed
 
-#ifdef SYDEBUG_LOCATION
-/// turn text into link to source code
-static string TDbg2Link(const TDbgLocation &aTDbgLoc, const string &aTxt)
-{
-  if (!aTDbgLoc.fFile)
-    return aTxt;
 
+#ifdef SYDEBUG_LOCATION
+
+#define MAKEDBGLINK(txt) dbg2Link(TDBG_LOCATION_ARG txt)
+
+/// turn text into link to source code
+string TDebugLoggerBase::dbg2Link(const TDbgLocation &aTDbgLoc, const string &aTxt)
+{
+  if (!aTDbgLoc.fFile || !fDbgOptionsP || fDbgOptionsP->fSourceLinkMode==dbgsource_none || fDbgOptionsP->fOutputFormat!=dbgfmt_html)
+    return aTxt; // disabled, non-html or no information to create source link
+	// create link or hint to source code
   string line;
 
-  line+="<a href=\"";
-  // replace path with path to Doxygen HTML pages,
-  // mangle base name like Doxygen does
-  line+=SYDEBUG_LOCATION;
-  line+="/";
-  string file = aTDbgLoc.fFile;
-  size_t off = file.rfind('/');
-  if (off != file.npos)
-    file = file.substr(off + 1);
-  for (off = 0; off < file.size(); off++) {
-    switch(file[off]) {
-    case '_':
-      line+="__";
-      break;
-    case '.':
-      line+="_8";
-      break;
-    default:
-      line+=file[off];
+	switch(fDbgOptionsP->fSourceLinkMode) {
+		case dbgsource_hint: {
+    	// only add name/line number/function as title hint (in a otherwise inactive link)
+      line = "<a href=\"#\" title=";
+      StringObjPrintf(line,"<a href=\"#\" title=\"%s:%d",aTDbgLoc.fFile,aTDbgLoc.fLine);
+      StringObjAppendPrintf(line," in %s",aTDbgLoc.fFunction);
+      line += '"';  
+      goto closelink;
+    }
+		case dbgsource_doxygen: {
+    	// create link into doxygen
+      line = "<a href=\"";
+      // replace path with path to Doxygen HTML pages,
+      // mangle base name like Doxygen does
+      line += fDbgOptionsP->fSourceRootPath;
+      line += "/";
+      string file = aTDbgLoc.fFile;
+      size_t off = file.rfind('/');
+      if (off != file.npos)
+        file = file.substr(off + 1);
+      for (off = 0; off < file.size(); off++) {
+        switch(file[off]) {
+        case '_':
+          line+="__";
+          break;
+        case '.':
+          line+="_8";
+          break;
+        default:
+          line+=file[off];
+          break;
+        }
+      }
+      StringObjAppendPrintf(line,"-source.html#l%05d",aTDbgLoc.fLine);
+      line+="\"";
+      if (aTDbgLoc.fFunction) {
+        line+=" title=\"";
+        line+=aTDbgLoc.fFunction;
+        line+="\"";
+      }
+      goto closelink;
+    }
+		case dbgsource_txmt: {
+    	// create txmt:// URL scheme link, which opens TextMate or BBEdit at the correct line in MacOS X
+      line = "<a href=\"txmt://open/?url=file://";
+      // - create path
+      string path = fDbgOptionsP->fSourceRootPath;
+      path += aTDbgLoc.fFile;
+      // - add path CGI encoded
+      line += encodeForCGI(path.c_str());
+      // - add line number
+      if (aTDbgLoc.fLine>0)
+	      StringObjAppendPrintf(line,"&line=%d",aTDbgLoc.fLine);  
+      line+="\"";
+      if (aTDbgLoc.fFunction) {
+        line+=" title=\"";
+        line+=aTDbgLoc.fFunction;
+        line+='"';
+      }
+    }
+    closelink: {
+      line+=">";
+      line+=aTxt;
+      line+="</a>";
       break;
     }
-  }
-  StringObjAppendPrintf(line,"-source.html#l%05d",aTDbgLoc.fLine);
-  line+="\"";
-  if (aTDbgLoc.fFunction) {
-    line+=" title=\"";
-    line+=aTDbgLoc.fFunction;
-    line+="\"";
-  }
-  line+=">";
-  line+=aTxt;
-  line+="</a>";
-
+  	default:
+    	line = aTxt;
+  } // switch
+  // return 
   return line;
-}
+} // TDebugLoggerBase::dbg2Link
+
 #else
-static string TDbg2Link(const string &aTxt)
-{
-  return aTxt;
-}
-#endif
+
+#define MAKEDBGLINK(txt) (txt)
+
+#endif // SYDEBUG_LOCATION
 
 
 // output text to debug channel
@@ -709,22 +762,34 @@ void TDebugLoggerBase::DebugPuts(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP 
           if (firstLine) {
             line="<li>";
             // add timestamp if needed for every line
-            if (fDbgOptionsP->fTimestampForAll || fDbgOptionsP->fThreadIDForAll) {
+            if (
+            	fDbgOptionsP->fTimestampForAll
+            	|| fDbgOptionsP->fThreadIDForAll
+              #ifdef SYDEBUG_LOCATION
+              || fDbgOptionsP->fSourceLinkMode!=dbgsource_none
+              #endif
+            ) {
               string prefix;
-              prefix+="<i>[";
+              prefix = "<i>[";
               #ifdef MULTI_THREAD_SUPPORT
               if (fDbgOptionsP->fThreadIDForAll) {
                 StringObjAppendPrintf(prefix,"%09lu",myThreadID());
-                if (fDbgOptionsP->fTimestampForAll) prefix+=", ";
+                if (fDbgOptionsP->fTimestampForAll) prefix += ", ";
               }
               #endif
               if (fDbgOptionsP->fTimestampForAll) {
                 StringObjTimestamp(ts,getSystemNowAs(TCTX_SYSTEM));
-                prefix+=ts;
+                prefix += ts;
               }
+              #ifdef SYDEBUG_LOCATION
+              else if (!fDbgOptionsP->fThreadIDForAll) {
+              	// neither threadID nor timestamp, but source requested -> put small text here
+                prefix += "src";
+              }
+              #endif
               prefix+="]</i>&nbsp;";
-
-              line+=TDbg2Link(TDBG_LOCATION_ARG prefix);
+              // if we have links into source code, add it here
+              line += MAKEDBGLINK(prefix);
             }
             // colorize some messages
             string cl="";
@@ -974,7 +1039,10 @@ void TDebugLoggerBase::DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName,
         }
         StringObjAppendPrintf(bl,"<a name=\"H%ld\">", long(getBlockNo()));
         if (withTime) {
-          bl+=TDbg2Link(TDBG_LOCATION_ARG string("[") + ts + "] ");
+          bl += MAKEDBGLINK(string("[") + ts + "] ");
+        }
+        else if (fDbgOptionsP->fSourceLinkMode!=dbgsource_none) {
+        	bl += MAKEDBGLINK(string("[src] "));
         }
         bl+="'";
         bl+=aBlockName;
@@ -1192,7 +1260,7 @@ void TDebugLoggerBase::internalCloseBlocks(TDBG_LOCATION_PROTO cAppCharP aBlockN
         }
         StringObjAppendPrintf(bl,"<a name=\"F%ld\">",long(fBlockHistory->fBlockNo));
         if (withTime) {
-          bl+=TDbg2Link(TDBG_LOCATION_ARG string("[") + ts + "] ");
+          bl += MAKEDBGLINK(string("[") + ts + "] ");
         }
         bl += "End of '";
         bl+=fBlockHistory->fBlockName;
