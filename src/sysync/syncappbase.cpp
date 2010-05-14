@@ -3255,6 +3255,9 @@ bool TRootConfig::parseDatatypesConfig(const char **aAttributes, sInt32 aLine)
 #ifdef TEXTTYPE_SUPPORT
   #include "textitemtype.h"
 #endif
+#ifdef RAWTYPE_SUPPORT
+  #include "rawdataitemtype.h"
+#endif
 #ifdef DATAOBJ_SUPPORT
   #include "dataobjtype.h"
 #endif
@@ -3278,6 +3281,11 @@ TDataTypeConfig *TRootConfig::newDataTypeConfig(const char *aName, const char *a
   #ifdef TEXTTYPE_SUPPORT
   if (strucmp(aBaseType,"text")==0)
     return new TTextTypeConfig(aName,aParentP);
+  else
+  #endif
+  #ifdef RAWTYPE_SUPPORT
+  if (strucmp(aBaseType,"raw")==0)
+    return new TRawDataTypeConfig(aName,aParentP);
   else
   #endif
   #ifdef DATAOBJ_SUPPORT
