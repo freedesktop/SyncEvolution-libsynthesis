@@ -2569,7 +2569,7 @@ SmlEncoding_t TSyncAppBase::encodingFromContentType(cAppCharP aTypeString)
     if (strucmp(aTypeString,SYNCML_MIME_TYPE SYNCML_ENCODING_SEPARATOR,l)==0) {
       // is SyncML, check encoding
       cAppCharP p = strchr(aTypeString,';');
-      sInt16 cl = p ? p-aTypeString-l : 0; // length of encoding string (charset could be appended here)  
+      sInt16 cl = p ? p-aTypeString-l : 0; // length of encoding string (charset could be appended here)
       StrToEnum(SyncMLEncodingMIMENames,numSyncMLEncodings,enc,aTypeString+l,cl);
     }
   }
@@ -2683,7 +2683,7 @@ bool TSyncAppBase::getMyDeviceID(string &devid)
   	return true; // custom device ID is assumed to be guaranteed unique
   }
   #endif
-	// use device ID as determined by platform adapters  
+	// use device ID as determined by platform adapters
   return getLocalDeviceID(devid);
 } // TSyncAppBase::getMyDeviceID
 
@@ -3174,7 +3174,9 @@ localstatus TSyncAppBase::checkLicenseActivation(lineardate_t &aLastcheck, uInt3
   }
   // show it to user
   if (!ok) {
-    OBJ_PROGRESS_EVENT(this,pev_error,NULL,LOCERR_BADREG,0,0);
+  	#ifndef ENGINE_LIBRARY
+    APP_PROGRESS_EVENT(this,pev_error,NULL,LOCERR_BADREG,0,0);
+    #endif
   }
   // return status
   return ok ? LOCERR_OK : LOCERR_BADREG;

@@ -68,44 +68,6 @@ typedef enum {
 } TDbgSourceModes;
 
 
-
-/// Container for information about the location where a debug call was made.
-/// Strings are owned by caller.
-struct TDbgLocation {
-  /// function name, may be NULL, derived from __FUNC__ if available
-  const char *fFunction;
-  /// file name, may be NULL, from __FILE__
-  const char *fFile;
-  /// line number, 0 if unknown
-  const int fLine;
-
-  TDbgLocation(const char *aFunction = NULL,
-               const char *aFile = NULL,
-               const int aLine = 0) :
-    fFunction(aFunction),
-    fFile(aFile),
-    fLine(aLine)
-  {}
-};
-
-#ifdef SYDEBUG_LOCATION
-# define TDBG_LOCATION_PROTO const TDbgLocation &aTDbgLoc,
-# define TDBG_LOCATION_ARG aTDbgLoc,
-# define TDBG_LOCATION_HERE TDbgLocation(__func__, __FILE__, __LINE__),
-# define TDBG_LOCATION_NONE TDbgLocation(),
-# define TDBG_LOCATION_ARGS(_func, _file, _line) TDbgLocation(_func, _file, _line), 
-# define TDBG_VARARGS(m...) (TDbgLocation(__PRETTY_FUNCTION__, __FILE__, __LINE__), ## m)
-# define TDBG_LOCATION_ARG_NUM 1
-#else
-# define TDBG_LOCATION_PROTO
-# define TDBG_LOCATION_ARG
-# define TDBG_LOCATION_HERE
-# define TDBG_LOCATION_NONE
-# define TDBG_LOCATION_ARGS(_func, _file, _line)
-# define TDBG_VARARGS
-# define TDBG_LOCATION_ARG_NUM 0
-#endif
-
 #ifndef HARDCODED_CONFIG
 extern cAppCharP const DbgOutFormatNames[numDbgOutFormats];
 extern cAppCharP const DbgFoldingModeNames[numDbgFoldingModes];
