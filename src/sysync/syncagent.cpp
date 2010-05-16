@@ -2947,6 +2947,8 @@ done:
 } // TSyncAgent::SessionStep
 
 
+#ifdef PROGRESS_EVENTS
+
 bool TSyncAgent::HandleSessionProgressEvent(TEngineProgressInfo aProgressInfo)
 {
   // handle some events specially
@@ -2969,6 +2971,7 @@ bool TSyncAgent::HandleSessionProgressEvent(TEngineProgressInfo aProgressInfo)
   return !(fAbortRequested);
 } // TSyncAgent::HandleSessionProgressEvent
 
+#endif // PROGRESS_EVENTS
 
 #endif // ENGINE_LIBRARY
 
