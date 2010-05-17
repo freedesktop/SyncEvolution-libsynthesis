@@ -110,7 +110,10 @@ bool GZones::initialize()
 
 void GZones::loggingStarted()
 {
-  finalizeSystemZoneDefinitions(this);
+  if (!fSystemZoneDefinitionsFinalized) {
+    finalizeSystemZoneDefinitions(this);
+    fSystemZoneDefinitionsFinalized = true;
+  }
 }
 
 
