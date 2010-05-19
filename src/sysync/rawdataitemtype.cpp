@@ -250,7 +250,7 @@ bool TRawDataItemType::copyCTCapInfoFrom(TSyncItemType &aSourceItem)
   // must be same type as myself or based on the type of myself
   if (!aSourceItem.isBasedOn(getTypeID()))
     return false; // not compatible
-  // TRawDataItemType *itemTypeP = static_cast<TRawDataItemType *>(&aSourceItem);
+  //TRawDataItemType *itemTypeP = static_cast<TRawDataItemType *>(&aSourceItem);
   // all CTCap info we might have is in the field options of MultiFieldItemType
   return inherited::copyCTCapInfoFrom(aSourceItem);
 } // TRawDataItemType::copyCTCapInfoFrom
