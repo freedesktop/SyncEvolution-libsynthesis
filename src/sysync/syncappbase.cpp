@@ -2819,7 +2819,7 @@ localstatus TSyncAppBase::appEnableStatus(void)
       #endif
       {
         #ifdef EXPIRES_AFTER_DAYS
-        // (bfo found that we need to chec for > demo days too, as
+        // (bfo found that we need to check for > demo days too, as
         // otherwise some clever guys could install with the
         // clock 20 years in the future and then set the clock back)
         uInt32 vers;
