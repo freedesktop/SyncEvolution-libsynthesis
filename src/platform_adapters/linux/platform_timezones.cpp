@@ -172,6 +172,11 @@ void finalizeSystemZoneDefinitions(GZones* aGZones)
                    ("runtime check: libical %s",
                     icalcontext.icaltimezone_get_builtin_timezones_p ? "available" : "unavailable"))
 #endif
+  if (!builtin) {
+    PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_ERROR,
+                   "could not read timezone information from libical");
+    return;
+  }
   PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
                    ("%d time zones from libical", builtin->num_elements));
   for (unsigned i = 0; builtin && i < builtin->num_elements; i++) {
