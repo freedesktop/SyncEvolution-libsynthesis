@@ -303,6 +303,8 @@ void TBinfileDSConfig::initTarget(
   bool aEnabled // enabled?
 )
 {
+  //set to zeros to avoid memory warnings
+  memset(&aTarget, 0, sizeof(aTarget));
   // link to the profile
   aTarget.remotepartyID=aRemotepartyID;
   // enabled or not?
@@ -606,7 +608,8 @@ bool TBinfileImplDS::openChangeLog(void)
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
-  	AssignCString(fChgLogHeader.lastChangeCheckIdentifier,NULL,0);
+    //set all bytes to zero to avoid memory warnings
+    memset(fChgLogHeader.lastChangeCheckIdentifier, 0, changeIndentifierMaxLen);
   	fChgLogHeader.lastChangeCheck = noLinearTime;
     // - create new changelog
     fChangeLog.create(sizeof(TChangeLogEntry),sizeof(TChangeLogHeader),&fChgLogHeader,true);
@@ -708,6 +711,8 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
   uInt32 seen=0;
   uInt32 logindex;
   TChangeLogEntry newentry;
+  //set zeros to avoid memory warnings
+  memset(&newentry, 0, sizeof(newentry));
   TSyncItem *itemP = NULL;
   localid_out_t itemLocalID;
   uInt16 dataCRC = 0;
@@ -2247,6 +2252,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
     // make sure that resume alert codes of all other profile's targets for this datastore are erased
     // (because we have only a single changelog (markforresume flags!) and single pendingmap+pendingitem files)
     TBinfileDBSyncTarget otherTarget;
+    memset(&otherTarget, 0, sizeof(otherTarget));
     for (sInt32 ti=0; ti<sInt32(targetsBinFileP->getNumRecords()); ti++) {
       if (ti!=fTargetIndex) {
         // get that target

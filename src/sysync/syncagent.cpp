@@ -631,6 +631,10 @@ TSyncAgent::TSyncAgent(
   // - issue session start event here (in non-engine case this is done in TSyncSession constructor)
   SESSION_PROGRESS_EVENT(this,pev_sessionstart,NULL,0,0,0);
   #endif // ENGINE_LIBRARY
+  // reset data counts
+  fIncomingBytes = 0;
+  fOutgoingBytes = 0;
+
   // Specific for Client or Server
 	if (IS_CLIENT) {
 		#ifdef SYSYNC_CLIENT
@@ -652,9 +656,6 @@ TSyncAgent::TSyncAgent(
     // init answer buffer
     fBufferedAnswer = NULL;
     fBufferedAnswerSize = 0;
-    // reset data counts
-    fIncomingBytes = 0;
-    fOutgoingBytes = 0;
 	  #ifdef ENGINE_LIBRARY
     // engine
     fServerEngineState = ses_needdata;
@@ -1708,6 +1709,9 @@ void TSyncAgent::retryClientSessionStart(bool aOldMessageInBuffer)
 // create a RespURI string. If none needed, return NULL
 SmlPcdataPtr_t TSyncAgent::newResponseURIForRemote(void)
 {
+  if (IS_CLIENT) {
+    return NULL;
+  }
   // do it in a transport-independent way, therefore let dispatcher do it
   string respURI; // empty string
   if (fUseRespURI) {  
