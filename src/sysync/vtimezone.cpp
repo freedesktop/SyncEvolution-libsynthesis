@@ -245,7 +245,11 @@ static bool Get_Bias( string of, string ot, short &bias )
 } // Get_Bias
 
 
-/*! Fill in the TZ info */
+/*! Fill in the TZ info.
+ * @return false if some information was found, but couldn't be extracted;
+ *         true if not found (in which case c, cBias, cName are unchanged)
+ *         or found and extracted
+ */
 static bool GetTZInfo( cAppCharP     aText,
                        cAppCharP     aIdent, 
                        tChange      &c, 
@@ -279,7 +283,6 @@ static bool GetTZInfo( cAppCharP     aText,
     // function is called to extract changes for DAYLIGHT. Don't
     // treat this as failure and continue with clean change rules, as
     // before.
-    c = tChange();
     return success;
   }
 
@@ -295,7 +298,6 @@ static bool GetTZInfo( cAppCharP     aText,
   if ( rr.empty() ) {
     // Happens when parsing STANDARD part of VTIMEZONE 
     // without DAYLIGHT saving.
-    c = tChange();
   } else if (RRULE2toInternalR    ( rr.c_str(), &dtstart, r, aLogP )) {
     // Note: dtstart might have been adjusted by this call in case of DTSTART not meeting a occurrence for given RRULE
     string             vvv;
@@ -420,10 +422,14 @@ bool VTIMEZONEtoTZEntry( const char*    aText, // VTIMEZONE string to be parsed
                                  t.ident  = "";
                                  t.dynYear= "CUR";
                                  t.biasDST= 0;
+                                 t.bias   = 0;
   if (!GetTZInfo( aText,VTZ_STD, t.std, t.bias, aStdName, -1, aLogP )) {
     success = false;
   }
+  // default value if not found (which is treated as success by GetTZInfo)
+  dBias= t.bias;
   if (!GetTZInfo( aText,VTZ_DST, t.dst,  dBias, aDstName, -1, aLogP )) {
+    // unknown failure, better restore default
     dBias= t.bias;
     success = false;
   }
