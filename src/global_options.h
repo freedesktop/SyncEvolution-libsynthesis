@@ -81,7 +81,7 @@
   #if defined(__EPOC_OS__)
     #define SYSYNC_PLATFORM_NAME "SymbianOS"
   #elif defined(MOBOSX)
-    #define SYSYNC_PLATFORM_NAME "iPhoneOS"
+    #define SYSYNC_PLATFORM_NAME "iOS"
   #elif defined(MACOSX)
     #define SYSYNC_PLATFORM_NAME "MacOSX"
   #elif defined(ANDROID)
