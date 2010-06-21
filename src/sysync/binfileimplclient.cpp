@@ -229,6 +229,7 @@ static const TBinfileDBSyncTarget *dP_tg=NULL;
 const TStructFieldInfo TargetFieldInfos[] =
 {
   // valName, valType, writable, fieldOffs, valSiz
+  { "profileID", VALTYPE_INT32, false, OFFS_SZ_TG(remotepartyID) }, // read-only profile ID
   { "enabled", VALTYPE_ENUM, true, OFFS_SZ_TG(enabled) },
   { "forceslow", VALTYPE_ENUM, true, OFFS_SZ_TG(forceSlowSync) },
   { "syncmode", VALTYPE_ENUM, true, OFFS_SZ_TG(syncmode) },
