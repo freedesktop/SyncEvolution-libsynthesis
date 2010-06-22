@@ -3643,7 +3643,7 @@ bool TCustomImplDS::generateItemFieldData(
       StringObjAppendPrintf(aDataFields,"[%d]",arrayIndex);
     #endif
     // append value
-    if (aBasefieldP->isBasedOn(fty_blob)) {
+    if (aBasefieldP->elementsBasedOn(fty_blob)) {
       // - for blobs we use a BlobID and send the data later
       aDataFields += ";BLOBID=";
       aDataFields += aBaseFieldName;

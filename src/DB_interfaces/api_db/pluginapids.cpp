@@ -480,125 +480,6 @@ bool TPluginApiDS::generateDBItemData(
 } // TPluginApiDS::generateDBItemData
 
 
-/* %%% old version, common base part now moved to customimplds
-
-// generate text representations of item's fields (BLOBs and parametrized fields not included)
-// - returns true if at least one field appended
-bool TPluginApiDS::generateItemData(
-  bool aAssignedOnly,
-  TMultiFieldItem &aItem,
-  uInt16 aSetNo,
-  string &aDataFields
-)
-{
-  TFieldMapList *fmlP = &(fPluginDSConfigP->fFieldMappings.fFieldMapList);
-  TFieldMapList::iterator pos;
-  TApiFieldMapItem *fmiP;
-  string val;
-  bool createdone=false;
-
-  // pre-process (run scripts)
-  if (!preWriteProcessItem(aItem)) return false;
-  // create text representation for all mapped and writable fields
-  for (pos=fmlP->begin(); pos!=fmlP->end(); pos++) {
-    fmiP = static_cast<TApiFieldMapItem *>(*pos);
-    if (
-      fmiP->writable &&
-      fmiP->setNo==aSetNo
-    ) {
-      // get field
-      TItemField *basefieldP,*leaffieldP;
-      sInt16 fid = fmiP->fid;
-      // determine base field (might be array)
-      basefieldP = getMappedBaseFieldOrVar(aItem,fid);
-      // ignore map if we have no field for it
-      if (!basefieldP) continue;
-      // ignore map if field is not assigned and assignedonly flag is set
-      if (aAssignedOnly && basefieldP->isUnassigned()) continue;
-      // yes, we want to write this field
-      #ifdef ARRAYFIELD_SUPPORT
-      uInt16 arrayIndex=0;
-      #endif
-      do {
-        // first check if there is an element at all
-        #ifdef ARRAYFIELD_SUPPORT
-        if (basefieldP->isArray())
-          leaffieldP = basefieldP->getArrayField(arrayIndex,true); // get existing leaf fields only
-        else
-          leaffieldP = basefieldP; // leaf is base field
-        #else
-        leaffieldP = basefieldP; // leaf is base field
-        #endif
-        // if no leaf field, we'll need to exit here (we're done with the array)
-        if (leaffieldP==NULL) break;
-        // we have some data, first append name
-        aDataFields+=fmiP->getName();
-        #ifdef ARRAYFIELD_SUPPORT
-        // append array index if this is an array field
-        if (basefieldP->isArray())
-          StringObjAppendPrintf(aDataFields,"[%d]",arrayIndex);
-        #endif
-        // append value
-        if (basefieldP->isBasedOn(fty_blob) || fmiP->as_param) {
-          // - for blobs and parametrized values, we use a BlobID and send the data later
-          aDataFields+= ";BLOBID=";
-          aDataFields+= fmiP->getName();
-          #ifdef ARRAYFIELD_SUPPORT
-          // append array index if this is an array field
-          if (basefieldP->isArray())
-            StringObjAppendPrintf(aDataFields,"[%d]",arrayIndex);
-          #endif
-        }
-        else {
-          // - literal value (converted to DB charset as C-escaped string)
-          if (leaffieldP->isBasedOn(fty_timestamp) && fmiP->dbfieldtype==dbft_timestamp) {
-            TTimestampField *tsfP = static_cast<TTimestampField *>(leaffieldP);
-            // get original zone
-            timecontext_t tctx = tsfP->getTimeContext();
-          	if (TCTX_IS_DURATION(tctx) || TCTX_IS_DATEONLY(tctx) ||!TCTX_IS_UNKNOWN(tctx)) {
-            	// not fully floating, get name
-		          TimeZoneContextToName(tctx, val, tsfP->getGZones());
-              // append it
-              aDataFields+= ";TZNAME=";
-              aDataFields+= val;
-            }
-            // now convert to database time zone
-            tctx = fPluginDSConfigP->fDataTimeZone; // desired database zone
-            // report as-is if we have a floating map or if it IS floating
-            if (fmiP->floating_ts || tsfP->isFloating())
-              tctx = TCTX_UNKNOWN; // report as-is
-            // now create ISO8601 of it
-            tsfP->getAsISO8601(val,tctx,true,false,false);
-          }
-          else {
-            leaffieldP->getAsString(val); // get value
-          }
-          aDataFields+=':'; // delimiter
-          string valDB;
-          appendUTF8ToString(
-            val.c_str(),
-            valDB,
-            fPluginDSConfigP->fDataCharSet,
-            fPluginDSConfigP->fDataLineEndMode
-          );
-          StrToCStrAppend(valDB.c_str(),aDataFields,true); // allow 8-bit chars to be represented as-is (no \xXX escape needed)
-        } // if
-        aDataFields+="\r\n"; // CRLF at end
-        // we now have at least one field
-        createdone=true;
-        // next item in array
-        #ifdef ARRAYFIELD_SUPPORT
-        arrayIndex++;
-        #endif
-      } while(basefieldP->isArray()); // only arrays do loop
-    } // if writable field
-  } // for all field mappings
-  PDEBUGPRINTFX(DBG_USERDATA+DBG_DBAPI+DBG_EXOTIC+DBG_HOT,("generateItemData generated string for DBApi:"));
-  PDEBUGPUTSXX(DBG_USERDATA+DBG_DBAPI+DBG_EXOTIC,aDataFields.c_str(),0,true);
-  return createdone;
-} // TPluginApiDS::generateItemData
-
-*/
 
 #endif // DBAPI_TEXTITEMS
 
@@ -614,56 +495,81 @@ bool TPluginApiDS::postReadProcessItem(TMultiFieldItem &aItem, uInt16 aSetNo)
     TFieldMapList::iterator pos;
     TApiFieldMapItem *fmiP;
 
-    // create text representation for all mapped and writable fields
+    // post-process all mapped and writable fields
     for (pos=fmlP->begin(); pos!=fmlP->end(); pos++) {
       fmiP = static_cast<TApiFieldMapItem *>(*pos);
       if (
         fmiP->readable &&
-        fmiP->setNo==aSetNo &&
-        fmiP->as_param // only if explicitly marked as parameter
+        fmiP->setNo==aSetNo
       ) {
         // get field
         TItemField *basefieldP, *leaffieldP;
+        #ifdef ARRAYFIELD_SUPPORT
+        uInt16 arrayIndex=0;
+        #endif
         sInt16 fid = fmiP->fid;
         // determine base field (might be array)
         basefieldP = getMappedBaseFieldOrVar(aItem,fid);
         // ignore map if we have no field for it
         if (!basefieldP) continue;
-        // ignore all that can't have a blob proxy (non-strings)
-        if (!basefieldP->isBasedOn(fty_string)) continue;
-        // unlike with textItems that get the BLOBID from the DB,
-        // in asKey mode, BLOBID is just map name plus a possible array index.
-        // Plugin must be able to identify the BLOB using this plus the item ID.
-        // Plugin must also make sure an array element exists (value does not matter, can be empty)
-        // for each element that should be proxied here.
-        // - create the proxies (one for each array element)
-        #ifdef ARRAYFIELD_SUPPORT
-        uInt16 arrayIndex=0;
-        #endif
-        do {
-          // first check if there is an element at all
-          string blobid = fmiP->getName(); // map name
+        // We have a base field for this, check what to do
+        if (fPluginDSConfigP->fUserZoneOutput && !fmiP->floating_ts && basefieldP->elementsBasedOn(fty_timestamp)) {
+        	// userzoneoutput requested for non-floating timestamp field, move it!
           #ifdef ARRAYFIELD_SUPPORT
-          if (basefieldP->isArray()) {
-            leaffieldP = basefieldP->getArrayField(arrayIndex,true); // get existing leaf fields only
-            StringObjAppendPrintf(blobid,"[%d]",arrayIndex); // add array index to blobid
-            arrayIndex++;
-          }
-          else
-            leaffieldP = basefieldP; // leaf is base field
-          // if no leaf field, we'll need to exit here (we're done with the array)
-          if (leaffieldP==NULL) break;
-          #else
-          leaffieldP = basefieldP; // no arrays: leaf is always base field
+					arrayIndex=0;
           #endif
-          // this array element exists, create the proxy
-          TApiBlobProxy *apiProxyP = new TApiBlobProxy(this,!leaffieldP->isBasedOn(fty_blob),blobid.c_str(),aItem.getLocalID());
-          // Note: we do not support "READNOW" proxies here, as they are useless in ItemKey context: if the
-          //       BLOB cannot be read later, no need for as_aparam map exists and plugin should just put the value
-          //      directly via the SetKeyValue() API.
-          // attach proxy to the string or blob field
-          static_cast<TStringField *>(leaffieldP)->setBlobProxy(apiProxyP);
-        } while(basefieldP->isArray()); // only arrays do loop all array elements
+          do {
+            #ifdef ARRAYFIELD_SUPPORT
+            if (basefieldP->isArray()) {
+              leaffieldP = basefieldP->getArrayField(arrayIndex,true); // get existing leaf fields only
+              arrayIndex++;
+            }
+            else
+              leaffieldP = basefieldP; // leaf is base field
+            // if no leaf field, we'll need to exit here (we're done with the array)
+            if (leaffieldP==NULL) break;
+            #else
+            leaffieldP = basefieldP; // no arrays: leaf is always base field
+            #endif
+	          static_cast<TTimestampField *>(leaffieldP)->moveToContext(fSessionP->fUserTimeContext, false);
+          } while(basefieldP->isArray()); // only arrays do loop all array elements
+        }
+        if (fmiP->as_param && basefieldP->elementsBasedOn(fty_string)) {
+        	// string based field (string or BLOB) mapped as parameter 
+          // unlike with textItems that get the BLOBID from the DB,
+          // in asKey mode, BLOBID is just map name plus a possible array index.
+          // Plugin must be able to identify the BLOB using this plus the item ID.
+          // Plugin must also make sure an array element exists (value does not matter, can be empty)
+          // for each element that should be proxied here.
+          // - create the proxies (one for each array element)
+          #ifdef ARRAYFIELD_SUPPORT
+          arrayIndex=0;
+          #endif
+          do {
+            // first check if there is an element at all
+            string blobid = fmiP->getName(); // map name
+            #ifdef ARRAYFIELD_SUPPORT
+            if (basefieldP->isArray()) {
+              leaffieldP = basefieldP->getArrayField(arrayIndex,true); // get existing leaf fields only
+              StringObjAppendPrintf(blobid,"[%d]",arrayIndex); // add array index to blobid
+              arrayIndex++;
+            }
+            else
+              leaffieldP = basefieldP; // leaf is base field
+            // if no leaf field, we'll need to exit here (we're done with the array)
+            if (leaffieldP==NULL) break;
+            #else
+            leaffieldP = basefieldP; // no arrays: leaf is always base field
+            #endif
+            // this array element exists, create the proxy
+            TApiBlobProxy *apiProxyP = new TApiBlobProxy(this,!leaffieldP->isBasedOn(fty_blob),blobid.c_str(),aItem.getLocalID());
+            // Note: we do not support "READNOW" proxies here, as they are useless in ItemKey context: if the
+            //       BLOB cannot be read later, no need for as_aparam map exists and plugin should just put the value
+            //      directly via the SetKeyValue() API.
+            // attach proxy to the string or blob field
+            static_cast<TStringField *>(leaffieldP)->setBlobProxy(apiProxyP);
+          } while(basefieldP->isArray()); // only arrays do loop all array elements
+        }
       } // readable field mapping with explicit as_param mark
     } // for all field mappings
   } // if AsKey access
@@ -733,7 +639,7 @@ bool TPluginApiDS::writeBlobs(
       // omit all non-BLOB normal fields
       // Note: in ItemKey mode, blobs must have the as_aparam flag to be written as blobs.
       //       in textItem mode, all fty_blob based fields will ALWAYS be written as blobs.
-      if (!(fmiP->as_param || (basefieldP->isBasedOn(fty_blob) && !fPluginDSConfigP->fItemAsKey))) continue;
+      if (!(fmiP->as_param || (basefieldP->elementsBasedOn(fty_blob) && !fPluginDSConfigP->fItemAsKey))) continue;
       // yes, we want to write this field as a BLOB
       #ifdef ARRAYFIELD_SUPPORT
       uInt16 arrayIndex;
@@ -888,7 +794,7 @@ bool TPluginApiDS::deleteBlobs(
       // omit all non-BLOB normal fields
       // Note: in ItemKey mode, blobs must have the as_aparam flag to be written as blobs.
       //       in textItem mode, all fty_blob based fields will ALWAYS be written as blobs.
-      if (!(fmiP->as_param || (basefieldP->isBasedOn(fty_blob) && !fPluginDSConfigP->fItemAsKey))) continue;
+      if (!(fmiP->as_param || (basefieldP->elementsBasedOn(fty_blob) && !fPluginDSConfigP->fItemAsKey))) continue;
       // yes, we want to write this field as a BLOB
 
       #ifdef ARRAYFIELD_SUPPORT

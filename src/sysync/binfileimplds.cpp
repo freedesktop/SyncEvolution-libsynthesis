@@ -118,46 +118,6 @@ public:
   }; // func_TargetSetting
 
 
-	/* %%% replaced by generic implementation above
-  // variant TARGETSETTING(string settingsfieldname)
-  // returns data from target settings (like /profiles/n/targets/dbid/settingsfieldname does)
-  static void func_TargetSetting(TItemField *&aTermP, TScriptContext *aFuncContextP)
-  {
-    string varname;
-
-    TBinfileImplDS *dsP = static_cast<TBinfileImplDS *>(aFuncContextP->getCallerContext());
-    // get name
-    aFuncContextP->getLocalVar(0)->getAsString(varname);
-    // %%% simple implementation for now, only limit1, limit2, extras and remoteFilters are supported
-    // %%% later: add generic way to access target settings fields, and
-    //            probably profile settings as well.
-    if (strucmp(varname.c_str(),"extras")==0) {
-      aTermP = newItemField(fty_integer, aFuncContextP->getSessionZones());
-      aTermP->setAsInteger(dsP->fTarget.extras);
-    }
-    else if (strucmp(varname.c_str(),"limit1")==0) {
-      aTermP = newItemField(fty_integer, aFuncContextP->getSessionZones());
-      aTermP->setAsInteger(dsP->fTarget.limit1);
-    }
-    else if (strucmp(varname.c_str(),"limit2")==0) {
-      aTermP = newItemField(fty_integer, aFuncContextP->getSessionZones());
-      aTermP->setAsInteger(dsP->fTarget.limit2);
-    }
-    #if TARGETS_DB_VERSION>5
-    else if (strucmp(varname.c_str(),"remoteFilters")==0) {
-      aTermP = newItemField(fty_string, aFuncContextP->getSessionZones());
-      aTermP->setAsString(dsP->fTarget.remoteFilters);
-    }
-    #endif
-    else {
-      aTermP=newItemField(fty_none, aFuncContextP->getSessionZones());
-      aTermP->unAssign(); // make it (already is...) unassigned
-    }
-  }; // func_TargetSetting
-	*/
-
-
-
 }; // TBFDSfuncs
 
 
