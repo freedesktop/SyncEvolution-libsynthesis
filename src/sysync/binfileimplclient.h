@@ -460,6 +460,8 @@ public:
   void getBinFilesPath(string &aPath);
   // activtion switch (for making it inactive e.g. in server case)
   bool fBinfilesActive;
+  // separate changelogs per profile
+  bool fSeparateChangelogs;
   #ifndef HARDCODED_CONFIG
   // - configurable path where to store binfiles
   string fBinFilesPath;
@@ -469,9 +471,11 @@ public:
   // Binary Files
   TBinFile fProfileBinFile;
   TBinFile fTargetsBinFile;
-	// -  cleanup
-	void cleanChangeLogForTarget(sInt32 aTargetIndex);
-	void cleanChangeLogForDBname(cAppCharP aDBName);
+	// -  cleanup changelog, pendingmap, pendingitem
+  string relatedDBNameBase(cAppCharP aDBName, sInt32 aProfileID);
+	void cleanChangeLogForTarget(sInt32 aTargetIndex, sInt32 aProfileID);
+	void cleanChangeLogForDBname(cAppCharP aDBName, sInt32 aProfileID);
+	void separateChangeLogsAndRelated(cAppCharP aDBName);
   // - called when app should save its persistent state
   virtual void saveAppState(void);
   // - MUST be called after creating config to load (or pre-load) variable parts of config
@@ -482,6 +486,9 @@ public:
   // open and close the settings databases
   localstatus openSettingsDatabases(bool aDoLoose);
   void closeSettingsDatabases(void);
+private:
+	// helper for migrating to separated changelogs/pendingmaps/pendingitem
+	void separateDBFile(cAppCharP aDBName, cAppCharP aDBSuffix, sInt32 aProfileID);
 protected:
   // check config elements
   #ifndef HARDCODED_CONFIG

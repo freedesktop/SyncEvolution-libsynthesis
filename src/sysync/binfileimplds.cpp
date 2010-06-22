@@ -489,7 +489,7 @@ localstatus TBinfileImplDS::changeLogPostflight(uInt32 aOldestSyncModCount)
       (logentry.flags & chgl_deleted) &&
       (logentry.modcount<=aOldestSyncModCount)
     ) {
-      // all targets have seen this delete already, so this one should be deleted
+      // all peers (in all profiles) have seen this delete already, so this one should be deleted
       // - delete the record, another one will appear at this index
       fChangeLog.deleteRecord(logindex);
     }
@@ -600,14 +600,30 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
 bool TBinfileImplDS::openChangeLog(void)
 {
   if (fChangeLog.isOpen()) return true; // was already open
+  // open and possibly migrate the changelog
+  TBinfileImplClient *bfcP = static_cast<TBinfileImplClient *>(fSessionP);
+  TBinfileClientConfig *bfcfgP = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig());
   // open changelog. Name is datastore name with _clg.bfi suffix
-  string changelogname;
-  static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-    getBinFilesPath(changelogname);
-  changelogname += getName();
+  string changelogname = bfcfgP->relatedDBNameBase(getName(), bfcP->fRemotepartyID);
   changelogname += CHANGELOG_DB_SUFFIX;
   fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
   if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) {
+  	// can't open changelog - check if we might need need migration from united changelogs to separated
+    if (bfcfgP->fSeparateChangelogs) {
+    	// check if we have the old united changelog and migrate everything if so
+      string changelogname = bfcfgP->relatedDBNameBase(getName(), -1); // united name
+      changelogname += CHANGELOG_DB_SUFFIX;
+      fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
+		  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)==BFE_OK) {
+      	// the old unified changelog is there - we need to do a full migration now
+        // - close it
+        fChangeLog.close();
+        // - perform migration for this DB
+        bfcfgP->separateChangeLogsAndRelated(getName());
+        // - recursively call myself, now the profile specific log should be there
+        return openChangeLog();
+      }
+    }
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
@@ -648,15 +664,13 @@ bool TBinfileImplDS::openChangeLog(void)
 bool TBinfileImplDS::openPendingMaps(void)
 {
   if (fPendingMaps.isOpen()) return true; // was already open
-  string pendingmapsname;
-  static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-    getBinFilesPath(pendingmapsname);
-  pendingmapsname += getName();
+  openChangeLog(); // must be open, because it checks for migration of pendingmaps as well
+  string pendingmapsname = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->relatedDBNameBase(getName(), fTarget.remotepartyID);
   pendingmapsname += PENDINGMAP_DB_SUFFIX;
   fPendingMaps.setFileInfo(pendingmapsname.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID, sizeof(TPendingMapEntry));
   PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("openPendingMaps: file name='%s'",pendingmapsname.c_str()));
   if (fPendingMaps.open(sizeof(TPendingMapHeader),&fPendingMapHeader)!=BFE_OK) {
-    // create new change log or overwrite incompatible one
+    // create new pending maps or overwrite incompatible one
     // - bind to remote party (we have a single pendingmap file, and it is valid only for ONE remote party)
     fPendingMapHeader.remotepartyID = static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID;
     // - create new changelog
@@ -1207,6 +1221,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
   // get pending maps anyway (even if not resuming there might be pending maps)
   if(openPendingMaps()) {
     // there is a pending map file, check if these are really our maps
+    // Note: with separated changelogs, this should be always the case!
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
 	    "implMakeAdminReady: remotePartyID of pendingmaps=%ld, current profile's remotepartyID=%ld",
       (long)fPendingMapHeader.remotepartyID,
@@ -1230,10 +1245,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
     // - prep file
     TBinFile pendingItemFile;
     TPendingItemHeader pendingItemHeader;
-    string fname;
-    static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-      getBinFilesPath(fname);
-    fname += getName();
+    string fname = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->relatedDBNameBase(getName(), fTarget.remotepartyID);
     fname += PENDINGITEM_DB_SUFFIX;
     pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0); // no expected record size
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
@@ -2121,29 +2133,38 @@ localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
   localstatus sta=SaveAdminData(true,aUpdateAnchors); // end of session
   if (sta==LOCERR_OK) {
     // finalize admin data stuff now
-    TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
-    // do a postFlight to remove unused entries from the changelog
-    // - find oldest sync modcount
-    uInt32 maxidx = targetsBinFileP->getNumRecords();
-    uInt32 idx;
     uInt32 oldestmodcount=0xFFFFFFFF;
-    TBinfileDBSyncTarget target;
-    for (idx=0; idx<maxidx; idx++) {
-      targetsBinFileP->readRecord(idx,&target);
-      if (
-        // Note: %%% this is same mechanism as for changelog filenames
-        //       Not ok if multiple databases go with the same datastore.getName()
-        strucmp(target.dbname,getName())==0
-      ) {
-        // target for this database found, check if modcount is older
-        if (target.lastSuspendModCount!=0 && target.lastSuspendModCount<oldestmodcount)
-          oldestmodcount=target.lastSuspendModCount; // older one found
-        if (target.lastTwoWayModCount!=0 && target.lastTwoWayModCount<oldestmodcount)
-          oldestmodcount=target.lastTwoWayModCount; // older one found
-      }
+    // do a postFlight to remove unused entries from the changelog
+    if (static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
+    	// Each profile has it's own changelog, so just delete entries that are older than this profile's last sync or resume
+      oldestmodcount = fTarget.lastSuspendModCount;
+      if (fTarget.lastTwoWayModCount<oldestmodcount)
+	      oldestmodcount = fTarget.lastTwoWayModCount;
     }
-    // Now do cleanup of all deleted entries that are same age or older as oldest target
-    sta=changeLogPostflight(oldestmodcount);
+    else {
+    	// Combined changelog for all profiles, need to keep deleted markers for other profiles
+      // - find oldest sync modcount
+	    TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
+      uInt32 maxidx = targetsBinFileP->getNumRecords();
+      uInt32 idx;
+      TBinfileDBSyncTarget target;
+      for (idx=0; idx<maxidx; idx++) {
+        targetsBinFileP->readRecord(idx,&target);
+        if (
+          // Note: %%% this is same mechanism as for changelog filenames
+          //       Not ok if multiple databases go with the same datastore.getName()
+          strucmp(target.dbname,getName())==0
+        ) {
+          // target for this database found, check if modcount is older
+          if (target.lastSuspendModCount!=0 && target.lastSuspendModCount<oldestmodcount)
+            oldestmodcount=target.lastSuspendModCount; // older one found
+          if (target.lastTwoWayModCount!=0 && target.lastTwoWayModCount<oldestmodcount)
+            oldestmodcount=target.lastTwoWayModCount; // older one found
+        }
+      }
+      // Now do cleanup of all deleted entries that we don't need any more
+      sta=changeLogPostflight(oldestmodcount);
+    }
   }
   // done
   return sta;
@@ -2282,6 +2303,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   TPendingMapEntry pme;
   localid_t localid;
   // - pending maps now belong to us!
+  //   Note: they always do with separated changelogs
   fPendingMapHeader.remotepartyID = static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID;
   fPendingMaps.setExtraHeaderDirty();
   // - now pending maps (unsent ones)
@@ -2338,10 +2360,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   }
   if (saveit) {
     TBinFile pendingItemFile;
-    string fname;
-    static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-      getBinFilesPath(fname);
-    fname += getName();
+    string fname = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->relatedDBNameBase(getName(), fTarget.remotepartyID);
     fname += PENDINGITEM_DB_SUFFIX;
     pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0);
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
