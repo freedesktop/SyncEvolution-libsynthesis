@@ -4192,7 +4192,7 @@ void TLocalEngineDS::engAbortDataStoreSync(TSyError aStatusCode, bool aLocalProb
     DB_PROGRESS_EVENT(
     	this,
       pev_syncend,
-      getAbortStatusCode(), //%%%aLocalProblem ? localError(aStatusCode) : syncmlError(aStatusCode),
+      getAbortStatusCode(),
       fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0,
       fResuming ? 1 : 0
     );

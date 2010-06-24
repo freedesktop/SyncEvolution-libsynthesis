@@ -2190,7 +2190,7 @@ localstatus syncmlError(localstatus aErr)
 // SyncML status code <10000, and convert 200 into LOCERR_OK)
 localstatus localError(localstatus aErr)
 {
-  if (aErr==200) return LOCERR_OK;
+  if (aErr==200 || aErr==0) return LOCERR_OK;
   if (aErr<LOCAL_STATUS_CODE) return aErr+LOCAL_STATUS_CODE;
   return aErr;
 } // localError

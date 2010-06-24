@@ -1658,14 +1658,13 @@ localstatus TCustomImplDS::implStartDataRead()
     sta = inherited::implStartDataRead();
     if (sta==LOCERR_OK) {
       // now make sure the syncset is loaded
-      if (!makeSyncSetLoaded(
+			sta = makeSyncSetLoaded(
         fSlowSync // all items with data needed for slow sync
         #ifdef OBJECT_FILTERING
         || fFilteringNeededForAll // all item data needed for dynamic filtering
         #endif
         || CRC_CHANGE_DETECTION // all item data needed when binfile must detect changes using CRC
-      ))
-        sta = 510; // error
+      );
     }
   }
   else
@@ -3178,11 +3177,11 @@ localstatus TCustomImplDS::implSaveResumeMarks(void)
 //       these routines are never called and can't harm
 
 // private helper
-bool TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
+localstatus TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
 {
-  localstatus sta = LOCERR_OK;
-
+  localstatus sta = LOCERR_OK; // assume loaded ok
   if (!fSyncSetLoaded) {
+  	// not yet loaded, try to load
     PDEBUGBLOCKFMTCOLL(("ReadSyncSet","Reading Sync Set from Database","datastore=%s",getName()));
     SYSYNC_TRY {
       sta = apiReadSyncSet(aNeedAll);
@@ -3197,7 +3196,7 @@ bool TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
     if (sta==LOCERR_OK)
       fSyncSetLoaded=true; // is now loaded
   }
-  return fSyncSetLoaded; // ok only if now loaded
+  return sta; // ok only if now loaded
 } // TCustomImplDS::makeSyncSetLoaded
 
 
@@ -3414,7 +3413,9 @@ localstatus TCustomImplDS::zapDatastore(void)
   // make sure we have the sync set if we need it to zap it
   if (apiNeedSyncSetToZap()) {
     // make sure we have the sync set
-    if (!makeSyncSetLoaded(false)) return 510; // error
+    localstatus sta = makeSyncSetLoaded(false); 
+    if (sta!=LOCERR_OK)
+    	return sta; // error
   }
   // Zap the sync set in this datastore (will possibly call zapSyncSet)
   return apiZapSyncSet();

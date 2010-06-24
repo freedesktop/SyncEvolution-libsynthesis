@@ -2045,7 +2045,7 @@ void TBinfileImplDS::dsLogSyncResult(void)
     // - create record
     TLogFileEntry logInfo;
     logInfo.time = fCurrentSyncTime; // current sync's time
-    logInfo.status = fAbortStatusCode; // reason for abort (0 if ok)
+    logInfo.status = getAbortStatusCode(); // reason for abort (0 if ok)
     logInfo.mode =
 	    (fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0) +
       (fResuming ? 10 : 0);

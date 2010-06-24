@@ -806,7 +806,7 @@ protected:
   #endif // BINFILE_ALWAYS_ACTIVE
   #ifdef BASED_ON_BINFILE_CLIENT
   bool fSyncSetLoaded; // set if sync set is currently loaded
-  bool makeSyncSetLoaded(bool aNeedAll);
+  localstatus makeSyncSetLoaded(bool aNeedAll);
 	localstatus getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP);
   #endif // BASED_ON_BINFILE_CLIENT
   bool fNoSingleItemRead; // if set, syncset list will also contain items
