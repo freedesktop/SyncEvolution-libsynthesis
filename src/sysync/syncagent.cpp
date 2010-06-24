@@ -3677,6 +3677,17 @@ static TSyError readTimedOut(
 } // readTimedOut
 
 
+// - show if this is a server (for DB plugins)
+static TSyError readIsServer(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnInt(mykeyP->fAgentP->getSyncAppBase()->isServer(), sizeof(bool), aBuffer, aBufSize, aValSize);
+} // readIsServer
+
+
 #ifdef SYSYNC_SERVER
 
 // - server only: read respURI enable flag
@@ -3751,6 +3762,7 @@ static const TStructFieldInfo ServerParamFieldInfos[] =
   { "connectDoc", VALTYPE_TEXT, false, 0, 0, &readConnectDoc, NULL },
   { "timedout", VALTYPE_INT8, false, 0, 0, &readTimedOut, NULL },
   { "lastused", VALTYPE_TIME64, false, 0, 0, &readLastUsed, NULL },
+  { "isserver", VALTYPE_INT8, false, 0, 0, &readIsServer, NULL },
   #ifdef SYSYNC_SERVER
   { "sendrespuri", VALTYPE_INT8, true, 0, 0, &readSendRespURI, &writeSendRespURI },
   #endif
