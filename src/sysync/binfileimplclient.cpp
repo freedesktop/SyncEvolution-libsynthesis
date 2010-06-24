@@ -350,10 +350,16 @@ TSyError TBinfileTargetsKey::OpenSubkey(
     }
     if (sta==LOCERR_OK && targetIndex>=0) {
       // we have loaded a target, create subkey handler and pass data
+      /* %%% old: search by name
       // - find related datastore config (by dbname)
       TBinfileDSConfig *dsCfgP = static_cast<TBinfileDSConfig *>(
         fBinfileClientConfigP->getLocalDS(targetP->dbname)
       );
+      */
+      // - find related datastore config (by dbtypeid)
+      TBinfileDSConfig *dsCfgP = static_cast<TBinfileDSConfig *>(
+        fBinfileClientConfigP->getLocalDS(NULL,targetP->localDBTypeID)
+      );      
       if (dsCfgP==NULL) {
         // this target entry is not configured in the config -> skip it while iterating,
         // or return "DB error" if explicitly addressed
@@ -2810,9 +2816,17 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
         if (target.remotepartyID == fRemotepartyID)
         {
           // get datastore config
+          #ifdef HARDCODED_CONFIG
+          // - traditional method by name for old monolythic builds (to make sure we don't break anything)
           TBinfileDSConfig *binfiledscfgP = static_cast<TBinfileDSConfig *>(
             getSessionConfig()->getLocalDS(target.dbname)
           );
+          #else
+          // - newer, engine based targets should use the DBtypeID instead, to allow change of DB name without loosing config
+          TBinfileDSConfig *binfiledscfgP = static_cast<TBinfileDSConfig *>(
+            getSessionConfig()->getLocalDS(NULL,target.localDBTypeID)
+          );
+          #endif
           // check if we have config and if this DS is available now (profile.dsAvailFlags, DSFLAGS_ALWAYS_AVAILABLE, evtl. license...)
           if (binfiledscfgP && binfiledscfgP->isAvailable(&fProfile)) {
             // check if this DB must be synced
