@@ -449,7 +449,8 @@ localstatus TBinfileImplDS::changeLogPostflight(uInt32 aOldestSyncModCount)
       (logentry.flags & chgl_deleted) &&
       (logentry.modcount<=aOldestSyncModCount)
     ) {
-      // all peers (in all profiles) have seen this delete already, so this one should be deleted
+      // all peers (in all profiles related to this changelog, which is only one with the separated changelogs!)
+      // have seen this delete already, so this one should be deleted
       // - delete the record, another one will appear at this index
       fChangeLog.deleteRecord(logindex);
     }
@@ -571,18 +572,22 @@ bool TBinfileImplDS::openChangeLog(void)
   	// can't open changelog - check if we might need need migration from united changelogs to separated
     if (bfcfgP->fSeparateChangelogs) {
     	// check if we have the old united changelog and migrate everything if so
-      string changelogname = bfcfgP->relatedDBNameBase(getName(), -1); // united name
-      changelogname += CHANGELOG_DB_SUFFIX;
-      fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
+      string unitedchangelogname = bfcfgP->relatedDBNameBase(getName(), -1); // united name
+      unitedchangelogname += CHANGELOG_DB_SUFFIX;
+      fChangeLog.setFileInfo(unitedchangelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
 		  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)==BFE_OK) {
       	// the old unified changelog is there - we need to do a full migration now
         // - close it
         fChangeLog.close();
         // - perform migration for this DB
+		    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: auto-migrating from common to profile-separated changelog for this datastore"));
         bfcfgP->separateChangeLogsAndRelated(getName());
         // - recursively call myself, now the profile specific log should be there
         return openChangeLog();
       }
+      // we're not migrating (we could not open the changelog because this is a new profile!)
+      // - restore the per-profile name for creation of new log below
+		  fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
     }
     // create new change log or overwrite incompatible one
     // - init changelog header fields
