@@ -75,7 +75,7 @@ void TBinFileBase::setFileInfo(const char *aFilename, uInt32 aVersion, uInt32 aI
 
 
 // - copy entire binfile 1:1 without looking at header
-bferr TBinFileBase::createAsCopyFrom(TBinFileBase &aSourceBinFile)
+bferr TBinFileBase::createAsCopyFrom(TBinFileBase &aSourceBinFile, bool aOverwrite)
 {
   // make sure it is closed first
   close();
@@ -92,6 +92,15 @@ bferr TBinFileBase::createAsCopyFrom(TBinFileBase &aSourceBinFile)
   // calculate file size
   uInt32 filesize = fBinFileHeader.headersize + fBinFileHeader.recordsize * fBinFileHeader.allocatedrecords;
   // create output file
+  if (!aOverwrite) {
+  	// first test for existing file
+    if (platformOpenFile(fFilename.c_str(), fopm_update)) {
+    	// already exists, don't copy
+      platformCloseFile(); // close existing file
+	    aSourceBinFile.platformCloseFile(); // close input
+      return BFE_EXISTS; // already exists, don't overwrite
+    }
+  }
   if (!platformOpenFile(fFilename.c_str(), fopm_create)) {
     aSourceBinFile.platformCloseFile(); // close input
   	return BFE_IOERR;

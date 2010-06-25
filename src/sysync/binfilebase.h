@@ -89,7 +89,7 @@ public:
   // - check if open
   bool isOpen(void) { return platformFileIsOpen(); };
 	// - create a copy
-	bferr createAsCopyFrom(TBinFileBase &aSourceBinFile);
+	bferr createAsCopyFrom(TBinFileBase &aSourceBinFile, bool aOverwrite=false);
   // - try to open existing DB file according to params set with setFileInfo
   bferr open(uInt32 aExtraHeadersize=0, void *aExtraHeaderP=NULL, TUpdateFunc aUpdateFunc=NULL);
   // - create existing DB file according to params set with setFileInfo
