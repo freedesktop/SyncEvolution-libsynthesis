@@ -573,7 +573,8 @@ bool internalToRRULE2(
     default :
       goto incompat;
   } // switch freqmod
-  // add end date (or #0 if no end date = endless)
+  // add end date
+  // Note: for correct iCalendar 2.0, this should be (and is, in mimedir) called with untilcontext=UTC unless it's date-only
   if (until!=noLinearTime) {
     // there is an end date, use it
     aString+=";UNTIL=";
