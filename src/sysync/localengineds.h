@@ -711,6 +711,8 @@ public:
     const char *aTargetURIOptions,      ///< option string contained in target URI
     bool aFromSyncCommand=false         ///< must be set when parsing options from <sync> target URI
   );
+  /// reset all filter settings
+  void resetFiltering(void);
   /// process SyncML 1.2 style filter
   localstatus engProcessDS12Filter(SmlFilterPtr_t aTargetFilter);
   /// initialize reception of syncop commands for datastore

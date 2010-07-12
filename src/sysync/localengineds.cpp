@@ -60,10 +60,12 @@ static void addToFilter(const char *aNewFilter, string &aFilter, bool aORChain=f
   if (aNewFilter && *aNewFilter) {
     // just assign if current filter expression is empty
     if (aFilter.empty())
-      aFilter=aNewFilter;
+      aFilter = aNewFilter;
     else {
       // construct new filter
-      StringObjPrintf(aFilter,"(%s)%c(%s)",aFilter.c_str(),aORChain ? '|' : '&',aNewFilter);
+      string newFilter;
+      StringObjPrintf(newFilter,"(%s)%c(%s)",aFilter.c_str(),aORChain ? '|' : '&',aNewFilter);
+      aFilter = newFilter;
     }
   }
 } // addToFilter
@@ -1209,31 +1211,8 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fRemoteSendToLocalTypeP = NULL;
 
   /// Init Filtering @ref dsFiltering
-  #ifdef OBJECT_FILTERING
-  // - dynamic sync set filter
-  fSyncSetFilter.erase();
-  // - static filter
-  fLocalDBFilter=fDSConfigP->fLocalDBFilterConf; // use configured localDB filter
-  // - TAF filters
-  #ifdef SYNCML_TAF_SUPPORT
-  fTargetAddressFilter.erase(); // none from <sync> yet
-  fIntTargetAddressFilter.erase(); // none from internal source (script)
-  #endif
-  #ifdef SYSYNC_TARGET_OPTIONS
-  // - Other filtering options
-  fDateRangeStart=0; // no date range
-  fDateRangeEnd=0;
-  fSizeLimit=-1; // no size limit
-  fMaxItemCount=0; // no item count limit
-  fNoAttachments=false; // attachments not suppressed
-  fDBOptions.erase(); // no options
-  #endif
-  // - Filtering requirements
-  fTypeFilteringNeeded=false;
-  fFilteringNeededForAll=false;
-  fFilteringNeeded=false;
-  #endif
-
+  resetFiltering();
+  
   /// Init item processing @ref dsItemProcessing
   fSessionConflictStrategy=cr_duplicate; // will be updated later when sync mode is known
   fItemSizeLimit=-1; // no limit yet
@@ -1704,8 +1683,40 @@ void TLocalEngineDS::addFilterCapPropsAndKeywords(SmlPcdataListPtr_t &aFilterKey
 
 
 
-#ifdef OBJECT_FILTERING
 
+
+// reset all filter settings
+void TLocalEngineDS::resetFiltering(void)
+{
+	#ifdef OBJECT_FILTERING
+  // - dynamic sync set filter
+  fSyncSetFilter.erase();
+  // - static filter
+  fLocalDBFilter=fDSConfigP->fLocalDBFilterConf; // use configured localDB filter
+  // - TAF filters
+  #ifdef SYNCML_TAF_SUPPORT
+  fTargetAddressFilter.erase(); // none from <sync> yet
+  fIntTargetAddressFilter.erase(); // none from internal source (script)
+  #endif
+  #ifdef SYSYNC_TARGET_OPTIONS
+  // - Other filtering options
+  fDateRangeStart=0; // no date range
+  fDateRangeEnd=0;
+  fSizeLimit=-1; // no size limit
+  fMaxItemCount=0; // no item count limit
+  fNoAttachments=false; // attachments not suppressed
+  fDBOptions.erase(); // no options
+  #endif
+  // - Filtering requirements
+  fTypeFilteringNeeded=false;
+  fFilteringNeededForAll=false;
+  fFilteringNeeded=false;
+  #endif // OBJECT_FILTERING
+} // TLocalEngineDS::resetFiltering
+
+
+
+#ifdef OBJECT_FILTERING
 
 /// @brief check single filter term for DS 1.2 filterkeywords.
 /// @return true if term still needs to be added to normal filter expression, false if term will be handled otherwise
@@ -3355,6 +3366,10 @@ localstatus TLocalEngineDS::engPrepareClientSyncAlert(void)
 localstatus TLocalEngineDS::engPrepareClientDSForAlert(void)
 {
   localstatus sta;
+
+	// reset the filters that might be added to in alertprepscript
+  // (as they might have been half set-up in a previous failed alert, they must be cleared and re-constructed here)
+  resetFiltering();
 
   #ifdef SCRIPT_SUPPORT
   // AlertPrepareScript to add filters and CGI
