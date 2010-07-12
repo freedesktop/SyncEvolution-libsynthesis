@@ -1163,12 +1163,8 @@ bool TPluginApiDS::apiNeedSyncSetToZap(void)
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created()) return inherited::apiNeedSyncSetToZap();
   #endif
-  // we do not need the sync set to zap it (DBApi has a DeleteAllItems() function)
-  //return false;
-  //%%% NOTE: the DeleteAllItems() is a fake and is not passed to the datastore, and calls
-  //          ReadNextItem out of StartDataRead/EndDataRead bracket, and is not AsKey aware
-  //          so we DO NOT USE IT.
-  return true; // instead, we need the sync set to zap using generic zapSyncSet()
+  // we might need the sync set to zap it (because DBApi's a DeleteSyncSet() might not be implemented or might not apply)
+  return true;
 } // TPluginApiDS::apiNeedSyncSetToZap
 
 
