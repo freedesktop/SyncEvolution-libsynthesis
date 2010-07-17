@@ -594,7 +594,8 @@ private:
 	  bool aCommaEscape,          // set if "," content escaping is needed (for values in valuelists like TYPE=TEL,WORK etc.)
     TEncodingTypes &aEncoding,  // modified if special value encoding is required
     bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
-    char aFirstChar=0           // will be appended before value if there is any value
+    char aFirstChar,            // will be appended before value if there is any value
+		sInt32 &aNumNonSpcs					// how many non-spaces are already in the value
   );
   // - recursive expansion of properties
   void expandProperty(
@@ -625,7 +626,8 @@ private:
     TMimeDirMode aMimeMode, // MIME mode (older or newer vXXX format compatibility)
     sInt16 aBaseOffset,
     sInt16 aRepOffset,
-    TPropNameExtension *aPropNameExt // propname extension for generating musthave param values
+    TPropNameExtension *aPropNameExt, // propname extension for generating musthave param values
+		sInt32 &aNumNonSpcs // how many non-spaces are already in the value
   );
   // - recursively generate levels
   void generateLevels(

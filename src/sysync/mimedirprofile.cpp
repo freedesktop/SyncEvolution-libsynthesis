@@ -2062,7 +2062,7 @@ static void finalizeProperty(
       n++;
       proptext++;
     }
-    // check for optional break indicator
+    // check for optional break indicator (MIME-DIR only)
     if (c=='\b') {
       aString.append(firstunwritten,n-1); // copy what we have up to that '\b'
       firstunwritten+=n; // now pointing to next char after '\b'
@@ -2172,7 +2172,8 @@ sInt16 TMimeDirProfileHandler::generateValue(
   bool aCommaEscape,          // set if "," content escaping is needed (for values in valuelists like TYPE=TEL,WORK etc.)
   TEncodingTypes &aEncoding,  // modified if special value encoding is required
   bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
-  char aFirstChar             // will be appended before value if there is any value (and a '\b' optional break indicator is appended as well)
+  char aFirstChar,            // will be appended before value if there is any value (and in MIME-DIR '\b' optional break indicator is appended as well)
+	sInt32 &aNumNonSpcs					// how many non-spaces are already in the value
 )
 {
   string vallist;             // as received from fieldToMIMEString()
@@ -2268,20 +2269,19 @@ sInt16 TMimeDirProfileHandler::generateValue(
             // perform escaping and determine need for encoding
             bool spaceonly = true;
             bool firstchar = true;
-            sInt32 wordSize=0;
             for (const char *p=val.c_str();(c=*p)!=0 && (c!=aConvDefP->combineSep);p++) {
               // process char
               // - check for whitespace
               if (!isspace(c)) {
                 spaceonly = false; // does not consist of whitespace only
-                wordSize++; // count consecutive non-spaces
-                if (aMimeMode==mimo_old && aEncoding==enc_none && wordSize>MIME_MAXLINESIZE/2) {
+                aNumNonSpcs++; // count consecutive non-spaces
+                if (aMimeMode==mimo_old && aEncoding==enc_none && aNumNonSpcs>MIME_MAXLINESIZE) {
                   // If text contains words with critical (probably unfoldable) size in mimo-old, select quoted printable encoding
                   aEncoding=enc_quoted_printable;
                 }
               }
               else {
-                wordSize = 0; // new word starts
+                aNumNonSpcs = 0; // new word starts
               }
               // only text must be fully escaped, turn escaping off for RRULE (RECUR type)
 			        bool noescape = aConvDefP->convmode==CONVMODE_RRULE;
@@ -2347,6 +2347,7 @@ sInt16 TMimeDirProfileHandler::generateValue(
               // - add separator if previous one is not empty param value
               if (!(spaceonly && aParamValue)) {
                 outval+=aSeparator;
+						    aNumNonSpcs++; // count it (assuming separator is never a space!)
                 valsiz++; // count it as part of the value
               }
               lp++; // skip input list separator
@@ -2407,7 +2408,8 @@ sInt16 TMimeDirProfileHandler::generateValue(
   // just append
   if (!outval.empty() && aFirstChar!=0) {
     aString+=aFirstChar; // we have a value, add sep char first
-    aString+='\b'; // and an optional break indicator
+    aNumNonSpcs++; // count it (assuming separator is never a space!)
+    if (aMimeMode==mimo_standard) aString+='\b'; // in MIME-DIR: show preferred break location
   }
   aString.append(outval);
   // done
@@ -2427,7 +2429,8 @@ bool TMimeDirProfileHandler::generateParams(
   TMimeDirMode aMimeMode, // MIME mode (older or newer vXXX format compatibility)
   sInt16 aBaseOffset,
   sInt16 aRepOffset,
-  TPropNameExtension *aPropNameExt // propname extension for generating musthave param values
+  TPropNameExtension *aPropNameExt, // propname extension for generating musthave param values
+  sInt32 &aNumNonSpcs // number of consecutive non-spaces, accumulated so far
 )
 {
   const TParameterDefinition *paramP;
@@ -2520,9 +2523,11 @@ bool TMimeDirProfileHandler::generateParams(
         //       but parameters of repeating properties can be stored in array elements (using the
         //       same index as for the property itself)
         // Note: Escape commas if separator is a comma
-        if (generateValue(aItem,&(paramP->convdef),aBaseOffset,aRepOffset,paramstr,sep,aMimeMode,true,false,sep==',',encoding,nonasc)>=GENVALUE_ELEMENT) {
+        sInt32 numNoSpcs = aNumNonSpcs;
+        if (generateValue(aItem,&(paramP->convdef),aBaseOffset,aRepOffset,paramstr,sep,aMimeMode,true,false,sep==',',encoding,nonasc,0,numNoSpcs)>=GENVALUE_ELEMENT) {
           // value generated, add parameter name/value (or separator/value for already started params)
           aString.append(paramstr);
+          aNumNonSpcs = numNoSpcs; // actually added, count now
           paramstarted=true; // started only if we really have appended something at all
         }
       } // if field defined for this param
@@ -2703,6 +2708,9 @@ sInt16 TMimeDirProfileHandler::generateProperty(
   }
   // - append name and (possibly) parameters that are constant over all repetitions
   proptext += aPrefix;
+  // - up to here assume no spaces
+  sInt32 numNonSpcs = proptext.size()+14; // some extra room for possible ";CHARSET=UTF8"
+	// - init flags
   bool anyvaluessupported=false; // at least one of the main values must be supported by the remote in order to generate property at all
   bool arrayexhausted=false; // flag will be set if a main value was not generated because array exhausted
   // - append parameter values
@@ -2714,7 +2722,8 @@ sInt16 TMimeDirProfileHandler::generateProperty(
     aMimeMode,
     aBaseOffset,
     aRepeatOffset,
-    aPropNameExt
+    aPropNameExt,
+    numNonSpcs
   );
   // - append value(s)
   encoding=enc_none; // default is no encoding
@@ -2752,7 +2761,8 @@ sInt16 TMimeDirProfileHandler::generateProperty(
         aPropP->valuesep==',' || aPropP->altvaluesep==',', // escape commas if one of the separators is a comma
         enc,
         na,
-        v>0 ? aPropP->valuesep : 0 // separate with specified multi-value-delimiter if not first value
+        v>0 ? aPropP->valuesep : 0, // separate with specified multi-value-delimiter if not first value
+        numNonSpcs // number of consecutive non-spaces, accumulated
       );
       // check if something was generated
       if (genres>=GENVALUE_ELEMENT) {
@@ -2801,7 +2811,9 @@ sInt16 TMimeDirProfileHandler::generateProperty(
         aPropP->numValues>1, // structured value, escape ";"
         aPropP->altvaluesep==',', // escape commas if alternate separator is a comma
         enc, // will receive needed encoding (usually B64 for binary values)
-        na
+        na,
+        0, // no first char
+        numNonSpcs // number of consecutive non-spaces, accumulated
       );
       //* %%% */ PDEBUGPRINTFX(DBG_EXOTIC,("generateValue #%hd for property '%s' returns genres==%hd",v,TCFG_CSTR(aPropP->propname),genres));
       // check if something was generated
@@ -2831,8 +2843,9 @@ sInt16 TMimeDirProfileHandler::generateProperty(
       if (v>=aPropP->numValues) break; // done with all values
       // add delimiter for next value
       elemtext+=aPropP->valuesep;
+	    numNonSpcs++; // count it (assuming separator is never a space!)
       // add break indicator
-      elemtext+='\b';
+    	if (aMimeMode==mimo_standard) elemtext+='\b'; // in MIME-DIR: show preferred break location
     } while(true);
     // if none of the data sources is an array, we can't be exhausted.
     if (!somearrays) arrayexhausted = false;
