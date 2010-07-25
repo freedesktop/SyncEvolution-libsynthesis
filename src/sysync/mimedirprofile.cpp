@@ -604,12 +604,14 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
       bool mandatory = false;
       bool showprop = true; // show property in devInf by default
       bool suppressempty = false;
+      bool allowFoldAtSep = false;
       bool canfilter = false; // 3.2.0.9 onwards: do not show filter caps by default (devInf gets too large)
       if (
         !getAttrBool(aAttributes,"mandatory",mandatory,true) ||
         !getAttrBool(aAttributes,"showindevinf",showprop,true) || // formerly just called "show" (but renamed to make it ineffective in old configs as new engine prevents duplicates automatically)
         !getAttrBool(aAttributes,"suppressempty",suppressempty,true) ||
-        !getAttrBool(aAttributes,"filter",canfilter,true)
+        !getAttrBool(aAttributes,"filter",canfilter,true) ||
+        !getAttrBool(aAttributes,"foldbetween",allowFoldAtSep,true)
       ) return fail("bad boolean value");
       const char *valsep= getAttr(aAttributes,"valueseparator");
       if (!valsep) valsep=";"; // default to semicolon if not defined
@@ -630,7 +632,7 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
       if (!getAttrShort(aAttributes,"delayedparsing",delayedprocessing,true))
         return fail ("bad 'delayedparsing' specification");
       // - create property now and open new level of parsing
-      fOpenProperty=fOpenProfile->addProperty(nam,numval,mandatory,showprop,suppressempty,delayedprocessing,*valsep,fPropertyGroupID,canfilter,modeDep, *altvalsep, groupFieldID);
+      fOpenProperty=fOpenProfile->addProperty(nam, numval, mandatory, showprop, suppressempty, delayedprocessing, *valsep, fPropertyGroupID, canfilter, modeDep, *altvalsep, groupFieldID, allowFoldAtSep);
       fLastProperty=fOpenProperty; // for group checking
       #ifndef NO_REMOTE_RULES
       // - add rule dependency (pointer will be resolved later)
@@ -961,7 +963,7 @@ TPropNameExtension::~TPropNameExtension()
 } // TPropNameExtension::~TPropNameExtension
 
 
-TPropertyDefinition::TPropertyDefinition(const char* aName, sInt16 aNumVals, bool aMandatory, bool aShowInCTCap, bool aSuppressEmpty, uInt16 aDelayedProcessing, char aValuesep, char aAltValuesep, uInt16 aPropertyGroupID, bool aCanFilter, TMimeDirMode aModeDep, sInt16 aGroupFieldID)
+TPropertyDefinition::TPropertyDefinition(const char* aName, sInt16 aNumVals, bool aMandatory, bool aShowInCTCap, bool aSuppressEmpty, uInt16 aDelayedProcessing, char aValuesep, char aAltValuesep, uInt16 aPropertyGroupID, bool aCanFilter, TMimeDirMode aModeDep, sInt16 aGroupFieldID, bool aAllowFoldAtSep)
 {
   next = NULL;
   TCFG_ASSIGN(propname,aName);
@@ -971,6 +973,7 @@ TPropertyDefinition::TPropertyDefinition(const char* aName, sInt16 aNumVals, boo
   expandlist = false; // not expanding value list into repeating property by default
   valuesep = aValuesep; // separator for structured-value and value-list properties
   altvaluesep = aAltValuesep; // alternate separator for structured-value and value-list properties (for parsing only)
+  allowFoldAtSep = aAllowFoldAtSep; // allow folding at value separators even if it inserts a space at the end of the previous value
   groupFieldID = aGroupFieldID; // fid for field that contains the group tag (prefix to the property name, like "a" in "a.TEL:079122327")
   propGroup = aPropertyGroupID; // property group ID
   if (aNumVals==NUMVAL_LIST || aNumVals==NUMVAL_REP_LIST) {
@@ -1135,12 +1138,13 @@ TPropertyDefinition *TProfileDefinition::addProperty(
   bool aCanFilter, // can be filtered -> show in filter cap
   TMimeDirMode aModeDep, // property valid only for specific MIME mode
   char aAltValuesep, // alternate separator (for parsing)
-  sInt16 aGroupFieldID // group field ID
+  sInt16 aGroupFieldID, // group field ID
+  bool aAllowFoldAtSep // allow folding at separators
 )
 {
   TPropertyDefinition **propPP=&propertyDefs;
   while (*propPP!=NULL) propPP=&((*propPP)->next);
-  *propPP=new TPropertyDefinition(aName,aNumValues,aMandatory,aShowInCTCap,aSuppressEmpty,aDelayedProcessing,aValuesep,aAltValuesep,aPropertyGroupID,aCanFilter,aModeDep,aGroupFieldID);
+  *propPP=new TPropertyDefinition(aName,aNumValues,aMandatory,aShowInCTCap,aSuppressEmpty,aDelayedProcessing,aValuesep,aAltValuesep,aPropertyGroupID,aCanFilter,aModeDep,aGroupFieldID,aAllowFoldAtSep);
   // return new property
   return *propPP;
 } // TProfileDefinition::addProperty
@@ -2041,13 +2045,14 @@ static void finalizeProperty(
   // make sure that allocation does not increase char by char
   aString.reserve(aString.size()+strlen(proptext)+100);
   char c;
-  ssize_t n=0,llen=0;
-  ssize_t lastlwsp=-1; // no linear white space found so far
+  ssize_t n = 0, llen = 0;
+  ssize_t foldLoc = -1; // possible break location - linear white space or explicit break indicator
   bool explf;
   cAppCharP firstunwritten=proptext; // none written yet
   while (proptext && (c=*proptext)!=0) {
     // remember position of last lwsp (space or TAB)
-    if (c==' ' || c==0x09) lastlwsp=n;
+    if (aMimeMode==mimo_old && (c==' ' || c==0x09))
+    	foldLoc=n; // white spaces are relevant in mimo_old only (but '\b' are checked also for MIME-DIR, see below)
     // next (UTF8) char
     // Note: we prevent folding within UTF8 sequences as result string would become inconvertible e.g. into UTF16
     uInt32 uc;
@@ -2062,12 +2067,12 @@ static void finalizeProperty(
       n++;
       proptext++;
     }
-    // check for optional break indicator (MIME-DIR only)
+    // check for optional break indicator (MIME-DIR or allowFoldAtSep)
     if (c=='\b') {
       aString.append(firstunwritten,n-1); // copy what we have up to that '\b'
-      firstunwritten+=n; // now pointing to next char after '\b'
-      lastlwsp=0; // usually now pointing to a NON-LWSP, except if by accident a LWSP follows, which is ok as well
-      n=0; // continue checking from here
+      firstunwritten += n; // now pointing to next char after '\b'
+      foldLoc = 0; // usually now pointing to a NON-LWSP, except if by accident a LWSP follows, which is ok as well
+      n = 0; // continue checking from here
       continue; // check next
     }
     // update line length
@@ -2081,64 +2086,70 @@ static void finalizeProperty(
         n--; // explicit \n or \r is ignored
         aString.append(firstunwritten,n);
         // forget the explicit linefeed - and continue
-        n=0;
-        llen=0;
-        firstunwritten=proptext;
+        n = 0;
+        llen = 0;
+        firstunwritten = proptext;
       }
     }
     else if ((llen>=MIME_MAXLINESIZE && *proptext) || explf) { // avoid unnecessary folding (there must be something more coming)
       // folding needed (line gets longer than MIME_MAXLINESIZE or '\n' found in input string)
       if (aMimeMode==mimo_old && !explf) {
         // vCard 2.1 type folding, must occur before an LWSP
-        #ifdef DONT_FORCE_FOLD_ITEMS_WITHOUT_LWSP
-        if (lastlwsp<0) continue; // no LWSP found, cannot fold
-        #else
-        if (lastlwsp<0) {
+        if (foldLoc<0) {
           // emergency force fold and accept data being shredded
           // - copy all we have by now
           aString.append(firstunwritten,n);
-          firstunwritten+=n; // now pointing to next
-          n=0; // none left (not needed, would be reset below anyway)
+          firstunwritten += n; // now pointing to next
+          n = 0; // none left - new line is empty now
           // - insert line break
           aString.append("\x0D\x0A "); // line break AND an extra shredding space
         }
-        else
-        #endif
-        {
-          // - copy all up to (but not including) last LWSP
-          aString.append(firstunwritten,lastlwsp);
-          firstunwritten+=lastlwsp; // now pointing to LWSP (or non-LWSP in case of '\b')
-          n-=lastlwsp; // number of chars left (including LWSP)
+        else {
+          // - copy all up to (but not including) last LWSP (or '\b' break indicator)
+          aString.append(firstunwritten,foldLoc);
+          firstunwritten += foldLoc; // now pointing to LWSP (or non-LWSP in case of '\b')
+          n -= foldLoc; // number of chars left (including LWSP)
           // - insert line break
           aString.append("\x0D\x0A"); // line break
           if (*firstunwritten!=' ' && *firstunwritten!=0x09)
-            aString+=' '; // breaking at location indicated by '\b', LWSP must be added
+            aString += ' '; // breaking at location indicated by '\b', LWSP must be added
           // - copy rest scanned so far (except in '\b' case, this begins with an LWSP)
           aString.append(firstunwritten,n);
         }
-        // we are on a new line now
-        n=0;
-        lastlwsp=-1;
-        llen=0;
-        firstunwritten=proptext;
       }
       else {
         // MIME-DIR type folding, can occur anywhere and *adds* a LWSP (which is removed at unfolding later)
         // or mimo-old type folding containing explicit CR(LF)s -> break here
-        // - copy line so far to output
-        if (explf)
-          n--; // explicit \n or \r is not copied, but only causes line break to occur
-        aString.append(firstunwritten,n);
+        if (explf) {
+        	// explicit \n or \r is not copied, but only causes line break to occur
+          n--;
+        }
+        if (foldLoc<0 || explf) {
+        	// no or explf indicator, just fold here
+	        aString.append(firstunwritten,n);
+          n = 0; // nothing left to carry over - new line is empty now
+        }
+        else {
+          // we have a preferred folding location detected before: copy all up to (but not including) break indicator
+          aString.append(firstunwritten,foldLoc);
+          firstunwritten += foldLoc; // now pointing to next char after break)
+          n -= foldLoc; // number of chars left (including LWSP)
+        }
+        // now fold
         aString.append("\x0D\x0A"); // line break
         if (
           (c!='\r' && aMimeMode==mimo_standard) || // folding indicator and MIME-DIR -> folding always must insert extra space
           (c=='\r' && !aDoSoftBreak) // soft-break indicator, but not in softbreak mode (i.e. B64 input) -> always insert extra space
         )
-          aString+=' '; // not only soft line break, but MIMD-DIR type folding
-        n=0;
-        llen=0;
-        firstunwritten=proptext;
+          aString += ' '; // not only soft line break, but MIMD-DIR type folding
+        // - copy carry over from previous line
+        if (n>0) aString.append(firstunwritten,n);
       }
+      // we are on a new line now
+      llen = n; // new line has this size of what was carried over from the previous line
+      foldLoc = -1;
+      n = 0;
+      firstunwritten = proptext;
     }
   }
   // append rest
@@ -2173,7 +2184,8 @@ sInt16 TMimeDirProfileHandler::generateValue(
   TEncodingTypes &aEncoding,  // modified if special value encoding is required
   bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
   char aFirstChar,            // will be appended before value if there is any value (and in MIME-DIR '\b' optional break indicator is appended as well)
-	sInt32 &aNumNonSpcs					// how many non-spaces are already in the value
+	sInt32 &aNumNonSpcs,				// how many non-spaces are already in the value
+  bool aFoldAtSeparators			// if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
 )
 {
   string vallist;             // as received from fieldToMIMEString()
@@ -2346,8 +2358,12 @@ sInt16 TMimeDirProfileHandler::generateValue(
               // more items in the list
               // - add separator if previous one is not empty param value
               if (!(spaceonly && aParamValue)) {
+              	if (aMimeMode==mimo_standard || aFoldAtSeparators) {
+                	outval+='\b'; // preferred break location (or location where extra space is allowed for mimo_old)
+                  aNumNonSpcs=0; // we can fold here, so word is broken
+                }
                 outval+=aSeparator;
-						    aNumNonSpcs++; // count it (assuming separator is never a space!)
+                aNumNonSpcs++; // count it (assuming separator is never a space!)
                 valsiz++; // count it as part of the value
               }
               lp++; // skip input list separator
@@ -2407,9 +2423,12 @@ sInt16 TMimeDirProfileHandler::generateValue(
     aEncoding=enc_quoted_printable;
   // just append
   if (!outval.empty() && aFirstChar!=0) {
+    if (aMimeMode==mimo_standard || aFoldAtSeparators) {
+    	aString+='\b'; // preferred break location (or location where extra space is allowed for mimo_old)
+      aNumNonSpcs = 0; // we can break here, new word starts 
+    }
     aString+=aFirstChar; // we have a value, add sep char first
     aNumNonSpcs++; // count it (assuming separator is never a space!)
-    if (aMimeMode==mimo_standard) aString+='\b'; // in MIME-DIR: show preferred break location
   }
   aString.append(outval);
   // done
@@ -2524,7 +2543,7 @@ bool TMimeDirProfileHandler::generateParams(
         //       same index as for the property itself)
         // Note: Escape commas if separator is a comma
         sInt32 numNoSpcs = aNumNonSpcs;
-        if (generateValue(aItem,&(paramP->convdef),aBaseOffset,aRepOffset,paramstr,sep,aMimeMode,true,false,sep==',',encoding,nonasc,0,numNoSpcs)>=GENVALUE_ELEMENT) {
+        if (generateValue(aItem,&(paramP->convdef),aBaseOffset,aRepOffset,paramstr,sep,aMimeMode,true,false,sep==',',encoding,nonasc,0,numNoSpcs,false)>=GENVALUE_ELEMENT) {
           // value generated, add parameter name/value (or separator/value for already started params)
           aString.append(paramstr);
           aNumNonSpcs = numNoSpcs; // actually added, count now
@@ -2762,7 +2781,8 @@ sInt16 TMimeDirProfileHandler::generateProperty(
         enc,
         na,
         v>0 ? aPropP->valuesep : 0, // separate with specified multi-value-delimiter if not first value
-        numNonSpcs // number of consecutive non-spaces, accumulated
+        numNonSpcs, // number of consecutive non-spaces, accumulated
+        aPropP->allowFoldAtSep
       );
       // check if something was generated
       if (genres>=GENVALUE_ELEMENT) {
@@ -2813,7 +2833,8 @@ sInt16 TMimeDirProfileHandler::generateProperty(
         enc, // will receive needed encoding (usually B64 for binary values)
         na,
         0, // no first char
-        numNonSpcs // number of consecutive non-spaces, accumulated
+        numNonSpcs, // number of consecutive non-spaces, accumulated
+        aPropP->allowFoldAtSep
       );
       //* %%% */ PDEBUGPRINTFX(DBG_EXOTIC,("generateValue #%hd for property '%s' returns genres==%hd",v,TCFG_CSTR(aPropP->propname),genres));
       // check if something was generated
@@ -2842,10 +2863,13 @@ sInt16 TMimeDirProfileHandler::generateProperty(
       v++;
       if (v>=aPropP->numValues) break; // done with all values
       // add delimiter for next value
+      if (aMimeMode==mimo_standard || aPropP->allowFoldAtSep) {
+	    	elemtext+='\b'; // preferred break location (or location where extra space is allowed for mimo_old)
+        numNonSpcs = 0; // can break here, new word starts
+      }
       elemtext+=aPropP->valuesep;
 	    numNonSpcs++; // count it (assuming separator is never a space!)
       // add break indicator
-    	if (aMimeMode==mimo_standard) elemtext+='\b'; // in MIME-DIR: show preferred break location
     } while(true);
     // if none of the data sources is an array, we can't be exhausted.
     if (!somearrays) arrayexhausted = false;
