@@ -807,8 +807,8 @@ protected:
   #ifdef BASED_ON_BINFILE_CLIENT
   bool fSyncSetLoaded; // set if sync set is currently loaded
   localstatus makeSyncSetLoaded(bool aNeedAll);
-	localstatus getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP);
   #endif // BASED_ON_BINFILE_CLIENT
+	localstatus getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP);
   bool fNoSingleItemRead; // if set, syncset list will also contain items
   bool fMultiFolderDB; // if set, we need the syncset list for finding container IDs later
   #ifdef SCRIPT_SUPPORT

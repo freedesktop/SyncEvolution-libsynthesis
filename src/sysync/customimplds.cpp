@@ -3153,6 +3153,38 @@ localstatus TCustomImplDS::zapSyncSetOneByOne(void)
 } // TCustomImplDS::zapSyncSetOneByOne
 
 
+// private helper: get item with data from sync set list. Retrieves item if not already
+// there from loading the sync set
+// Note: can be called with aSyncSetItemP==NULL, which causes directly loading from DB
+//       in all cases. 
+localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
+{
+  if (aSyncSetItemP && aSyncSetItemP->itemP) {
+    // already fetched - pass it to caller and remove link in syncsetitem
+    aItemP = aSyncSetItemP->itemP;
+    aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
+  }
+  else {
+    // item not yet fetched (or already retrieved once), fetch it now
+    // - create new empty TMultiFieldItem
+    aItemP =
+      (TMultiFieldItem *) newItemForRemote(ity_multifield);
+    if (!aItemP)
+      return 510;
+    // - assign local id, as it is required e.g. by DoDataSubstitutions
+    aItemP->setLocalID(aSyncSetItemP->localid.c_str());
+    // - set default operation
+    aItemP->setSyncOp(sop_replace);
+    // Now fetch item (read phase)
+    localstatus sta = apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
+    if (sta!=LOCERR_OK)
+      return sta; // error
+  }
+  // ok
+  return LOCERR_OK;
+} // TCustomImplDS::getItemFromSyncSetItem
+
+
 #ifndef BINFILE_ALWAYS_ACTIVE
 
 // - save status information required to possibly perform a resume (as passed to datastore with
@@ -3317,38 +3349,6 @@ localstatus TCustomImplDS::getItemByID(localid_t aLocalID, TSyncItem *&aItemP)
     return getItemFromSyncSetItem(*syncsetpos,aItemP);
   }
 } // TCustomImplDS::getItemByID
-
-
-// private helper: get item with data from sync set list. Retrieves item if not already
-// there from loading the sync set
-// Note: can be called with aSyncSetItemP==NULL, which causes directly loading from DB
-//       in all cases. 
-localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
-{
-  if (aSyncSetItemP && aSyncSetItemP->itemP) {
-    // already fetched - pass it to caller and remove link in syncsetitem
-    aItemP = aSyncSetItemP->itemP;
-    aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
-  }
-  else {
-    // item not yet fetched (or already retrieved once), fetch it now
-    // - create new empty TMultiFieldItem
-    aItemP =
-      (TMultiFieldItem *) newItemForRemote(ity_multifield);
-    if (!aItemP)
-      return 510;
-    // - assign local id, as it is required e.g. by DoDataSubstitutions
-    aItemP->setLocalID(aSyncSetItemP->localid.c_str());
-    // - set default operation
-    aItemP->setSyncOp(sop_replace);
-    // Now fetch item (read phase)
-    localstatus sta = apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
-    if (sta!=LOCERR_OK)
-      return sta; // error
-  }
-  // ok
-  return LOCERR_OK;
-} // TCustomImplDS::getItemFromSyncSetItem
 
 
 /// update item by local ID in the sync set. Caller retains ownership of aItemP
