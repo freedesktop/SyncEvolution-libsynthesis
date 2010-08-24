@@ -3116,7 +3116,7 @@ localstatus TCustomImplDS::zapSyncSetOneByOne(void)
   localstatus sta;
   TStatusCommand dummy(getSession());
   // check if we need to apply filters
-  bool filteredDelete = !fFilteringNeededForAll && !fFilteringNeeded;
+  bool filteredDelete = fFilteringNeededForAll || fFilteringNeeded;
   TSyncItem *delitemP = NULL;
   if (!filteredDelete) {
     PDEBUGPRINTFX(DBG_DATA,("Zapping datastore unfiltered: deleting %ld items from database",(long)fSyncSetList.size()));
