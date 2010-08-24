@@ -367,6 +367,9 @@ private:
   TDB_Api fDBApi_Admin; ///< access to admin
   // config pointer
   TPluginDSConfig *fPluginDSConfigP;
+  // filter testing
+	bool fAPICanFilter;
+	bool fAPIFiltersTested;  
 }; // TPluginApiDS
 
 

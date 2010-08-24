@@ -4673,10 +4673,10 @@ void TLocalEngineDS::initPostFetchFiltering(void)
     #ifdef SYNCML_TAF_SUPPORT
     if (!fTargetAddressFilter.empty()) PDEBUGPRINTFX(DBG_DATA,("using (dynamic, temporary) TAF expression from CGI : %s",fTargetAddressFilter.c_str()));
     if (!fIntTargetAddressFilter.empty()) PDEBUGPRINTFX(DBG_DATA,("using (dynamic, temporary) internally set TAF expression : %s",fIntTargetAddressFilter.c_str()));
-    #endif
+    #endif // SYNCML_TAF_SUPPORT
     if (!fSyncSetFilter.empty()) PDEBUGPRINTFX(DBG_DATA,("using (dynamic) sync set filter expression : %s",fSyncSetFilter.c_str()));
     if (!fLocalDBFilter.empty()) PDEBUGPRINTFX(DBG_DATA,("using (static) local db filter expression : %s",fLocalDBFilter.c_str()));
-    #endif
+    #endif // SYDEBUG
     // - if DB does the standard filters, we don't need to check them here again
     if (!engFilteredFetchesFromDB(true)) {
       // If DB does NOT do the standard filters, we have to do them here

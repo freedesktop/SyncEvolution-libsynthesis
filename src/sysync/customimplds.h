@@ -759,7 +759,7 @@ protected:
   // - get container ID for specified localid
   bool getContainerID(const char *aLocalID, string &aContainerID);
   // - delete sync set one by one
-  localstatus zapSyncSet(void);
+  localstatus zapSyncSetOneByOne(void);
   // - Queue the data needed for finalisation (usually - relational link updates)
   //   as a item copy with only finalisation-required fields
   void queueForFinalisation(TMultiFieldItem *aItemP);

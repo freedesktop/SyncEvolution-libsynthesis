@@ -3110,29 +3110,47 @@ bool TCustomImplDS::implEndDataWrite(void)
 
 
 // delete sync set one by one
-localstatus TCustomImplDS::zapSyncSet(void)
+localstatus TCustomImplDS::zapSyncSetOneByOne(void)
 {
   TSyncSetList::iterator pos;
   localstatus sta;
-  // - create dummy item
   TStatusCommand dummy(getSession());
-  TMultiFieldItem *delitemP =
-    static_cast<TMultiFieldItem *>(newItemForRemote(ity_multifield));
-  delitemP->setSyncOp(sop_delete);
-  PDEBUGPRINTFX(DBG_DATA,(
-    "Zapping datastore: deleting %ld items from database",
-    (long)fSyncSetList.size()
-  ));
+  // check if we need to apply filters
+  bool filteredDelete = !fFilteringNeededForAll && !fFilteringNeeded;
+  TSyncItem *delitemP = NULL;
+  if (!filteredDelete) {
+    PDEBUGPRINTFX(DBG_DATA,("Zapping datastore unfiltered: deleting %ld items from database",(long)fSyncSetList.size()));
+	}
+  else {
+    PDEBUGPRINTFX(DBG_DATA,("Zapping datastore with filter: deleting only filter passing items of max %ld items",(long)fSyncSetList.size()));  	
+  }
   for (pos=fSyncSetList.begin(); pos!=fSyncSetList.end(); ++pos) {
+    if (filteredDelete) {
+    	// we need to inspect further, as we may NOT delete the entire sync set
+      // - get the item with data (we become owner of it!)
+      getItemFromSyncSetItem(*pos,delitemP);
+      // - check filters
+      bool passes=postFetchFiltering(delitemP);
+			if (!passes)
+      	continue; // don't delete this one, it does not pass the filter
+      // - delete now
+	    PDEBUGPRINTFX(DBG_DATA,("- item '%s' passes filter -> deleting",delitemP->getLocalID()));
+    }
+    else {
+    	// all items loaded need to be deleted
+      // - create dummy item
+      delitemP = newItemForRemote(ity_multifield);
+	    delitemP->setLocalID((*pos)->localid.c_str());
+    }
     // delete
-    delitemP->setLocalID((*pos)->localid.c_str());
-    sta = apiDeleteItem(*delitemP);
+    sta = apiDeleteItem(*(static_cast<TMultiFieldItem *>(delitemP)));
+    // forget the item
+	  delete delitemP;
     // success or "211 - not deleted" is ok.
     if (sta!=LOCERR_OK && sta!=211) return sta;
   }
-  delete delitemP;
   return LOCERR_OK; // zapped ok
-} // TCustomImplDS::zapSyncSet
+} // TCustomImplDS::zapSyncSetOneByOne
 
 
 #ifndef BINFILE_ALWAYS_ACTIVE
@@ -3417,7 +3435,7 @@ localstatus TCustomImplDS::zapDatastore(void)
     if (sta!=LOCERR_OK)
     	return sta; // error
   }
-  // Zap the sync set in this datastore (will possibly call zapSyncSet)
+  // Zap the sync set in this datastore (will possibly call zapSyncSetOneByOne if there's no more efficient way to do it than one by one)
   return apiZapSyncSet();
 } // TCustomImplDS::zapDatastore
 

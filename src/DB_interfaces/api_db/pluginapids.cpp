@@ -313,8 +313,9 @@ void TPluginApiDS::announceAgentDestruction(void)
 /// @note must be safe to be called multiple times and even after announceAgentDestruction()
 void TPluginApiDS::InternalResetDataStore(void)
 {
-  // init some vars
-  /* nop for now */
+  // filtering capabilities need to be evaluated first
+	fAPICanFilter = false;
+  fAPIFiltersTested = false;
 } // TPluginApiDS::InternalResetDataStore
 
 
@@ -905,26 +906,32 @@ bool TPluginApiDS::dsFilteredFetchesFromDB(bool aFilterChanged)
 {
   #ifndef SDK_ONLY_SUPPORT
   // if we are not connected, let immediate ancestor check it (e.g. SQL/ODBC)
+  // Note that this can happen when dsFilteredFetchesFromDB() is called via Alertscript to resolve filter dependencies
+  //   before the DS is actually connected. In this case, the return value is not checked so that's ok.
+  //   Before actually laoding or zapping the sync set this is called once again with connected data plugin.
   if (!fDBApi_Data.Created()) return inherited::dsFilteredFetchesFromDB(aFilterChanged);
   #endif
-  // Anyway, let DBApi know (even if all filters are empty)
-  string filters;
-  // - local DB filter (=static filter, from config)
-  filters = "staticfilter:";
-  filters += fLocalDBFilter.c_str();
-  // - dynamic sync set filter
-  filters += "\r\ndynamicfilter:";
-  filters += fSyncSetFilter.c_str();
-  // - invisible filter (those that MATCH this filter should NOT be included)
-  filters += "\r\ninvisiblefilter:";
-  filters += fPluginDSConfigP->fInvisibleFilter.c_str();
-  // - let plugin know and check (we can filter at DBlevel if plugin understands both start/end)
-  filters += "\r\n";
-  bool canfilter =
-    (fDBApi_Data.FilterSupport(filters.c_str())>=3) ||
-    (fLocalDBFilter.empty() && fSyncSetFilter.empty() && fPluginDSConfigP->fInvisibleFilter.empty()); // no filter set = we can "filter"
+  if (aFilterChanged || !fAPIFiltersTested) {
+  	fAPIFiltersTested = true;
+    // Anyway, let DBApi know (even if all filters are empty)
+    string filters;
+    // - local DB filter (=static filter, from config)
+    filters = "staticfilter:";
+    filters += fLocalDBFilter.c_str();
+    // - dynamic sync set filter
+    filters += "\r\ndynamicfilter:";
+    filters += fSyncSetFilter.c_str();
+    // - invisible filter (those that MATCH this filter should NOT be included)
+    filters += "\r\ninvisiblefilter:";
+    filters += fPluginDSConfigP->fInvisibleFilter.c_str();
+    // - let plugin know and check (we can filter at DBlevel if plugin understands both start/end)
+    filters += "\r\n";
+    fAPICanFilter =
+      (fDBApi_Data.FilterSupport(filters.c_str())>=3) ||
+      (fLocalDBFilter.empty() && fSyncSetFilter.empty() && fPluginDSConfigP->fInvisibleFilter.empty()); // no filter set = we can "filter"
+  }
   // if we can filter, that's sufficient
-  if (canfilter) return true;
+  if (fAPICanFilter) return true;
   // otherwise, let implementation test (not immediate anchestor, which might be a different API like ODBC)
   return TCustomImplDS::dsFilteredFetchesFromDB(aFilterChanged);
 } // TPluginApiDS::dsFilteredFetchesFromDB
@@ -956,6 +963,12 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
           "singleuser", // no real user key
           NULL // no associated session level // fPluginAgentP->getDBApiSession()
         );
+        if (dberr==LOCERR_OK) {
+        	// make sure plugin now sees filters before starting to read sync set
+          // Note: due to late instantiation of the data plugin, previous calls to engFilteredFetchesFromDB() were not
+          //   evaluated by the plugin, so we need to do that here explicitly once again
+          engFilteredFetchesFromDB(false);
+        }
       }
     }
     else if (dberr==LOCERR_NOTIMP)
@@ -1175,12 +1188,18 @@ localstatus TPluginApiDS::apiZapSyncSet(void)
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created()) return inherited::apiZapSyncSet();
   #endif
-
-  // try to use plugin's specialized implementation
-  TSyError dberr = fDBApi_Data.DeleteSyncSet();
-  // do it one by one if DeleteAllItems() is not implemented
-  if (dberr==LOCERR_NOTIMP) {
-		dberr = zapSyncSet();
+  TSyError dberr = LOCERR_OK;
+	// API must be able to process current filters in order to execute a zap - otherwise we would delete
+  // more than the sync set defined by local filters.
+  bool apiCanZap = engFilteredFetchesFromDB(false); 
+  if (apiCanZap) {
+    // try to use plugin's specialized implementation
+    dberr = fDBApi_Data.DeleteSyncSet();
+    apiCanZap = dberr!=LOCERR_NOTIMP; // API claims to be able to zap (but still might have failed with a DBerr in this case!)
+  }
+  // do it one by one if DeleteAllItems() is not implemented or plugin cannot apply current filters 
+  if (!apiCanZap) {
+		dberr = zapSyncSetOneByOne();
   }
   // return status
   return dberr;
@@ -1552,6 +1571,9 @@ void TPluginApiDS::dsThreadMayChangeNow(void)
 TSyError TPluginApiDS::connectDataPlugin(void)
 {
 	TSyError err = LOCERR_NOTIMP;
+  // filtering capabilities need to be reevaluated anyway
+	fAPICanFilter = false;
+  fAPIFiltersTested = false;
   // only connect if we have plugin data support
   if (fPluginDSConfigP->fDBApiConfig_Data.Connected()) {
     err = LOCERR_OK;
