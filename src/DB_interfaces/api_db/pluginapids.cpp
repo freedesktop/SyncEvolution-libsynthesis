@@ -1025,8 +1025,9 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
     goto endread;
   }
   // we don't need to load the syncset if we are only refreshing from remote
-  // but we also must load it if we can't zap without it on slow refresh
-  if (!fRefreshOnly || (fSlowSync && apiNeedSyncSetToZap()) || implNeedSyncSetToRetrieve()) {
+  // but we also must load it if we can't zap without it on slow refresh, or when we can't retrieve items on non-slow refresh
+  // (we won't retrieve anything in case of slow refresh, because after zapping there's nothing left by definition)
+  if (!fRefreshOnly || (fSlowSync && apiNeedSyncSetToZap()) || (!fSlowSync && implNeedSyncSetToRetrieve())) {
     SYSYNC_TRY {
       // read the items
       #if defined(DBAPI_ASKEYITEMS) && defined(ENGINEINTERFACE_SUPPORT)
@@ -1176,8 +1177,10 @@ bool TPluginApiDS::apiNeedSyncSetToZap(void)
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created()) return inherited::apiNeedSyncSetToZap();
   #endif
-  // we might need the sync set to zap it (because DBApi's a DeleteSyncSet() might not be implemented or might not apply)
-  return true;
+  // only if we have deleteSyncSet on API level AND api can also apply all filters, we don't need the syncset to zap the datastore
+  // TODO: enabled this once we have a reliable test for deleteSyncSet() presence AND function (i.e. not returning LOCERR_UNIMPL for sure)
+  //return !(%%%_we_REALLY_have_deletesyncset_in_the_API_%%% && engFilteredFetchesFromDB(false));
+  return true; // %%% for now, we assume we need the sync set to zap
 } // TPluginApiDS::apiNeedSyncSetToZap
 
 
