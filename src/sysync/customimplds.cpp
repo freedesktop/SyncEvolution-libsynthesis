@@ -3253,7 +3253,7 @@ bool TCustomImplDS::getNextItem(TSyncItem *&aItemP)
 
 #ifdef CHANGEDETECTION_AVAILABLE
 
-/// get first item from the sync set, including data
+/// get item's ID and modification status from the sync set, not including data
 /// @return false if no item found
 bool TCustomImplDS::getFirstItemInfo(localid_out_t &aLocalID, bool &aItemHasChanged)
 {
@@ -3265,7 +3265,7 @@ bool TCustomImplDS::getFirstItemInfo(localid_out_t &aLocalID, bool &aItemHasChan
 
 
 
-/// get next item's ID and modification status from the sync set.
+/// get next item's ID and modification status from the sync set, not including data
 /// @return false if no item found
 bool TCustomImplDS::getNextItemInfo(localid_out_t &aLocalID, bool &aItemHasChanged)
 {

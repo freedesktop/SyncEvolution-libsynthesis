@@ -175,6 +175,7 @@ void TBinfileDSConfig::clear(void)
   // change detection by CRC is enabled by default only for builds that CAN'T have DB-side detection
 	#ifdef CHANGEDETECTION_AVAILABLE
   fCRCChangeDetection = false; // normally, DB can report changes. CRC checking can be enabled as an option
+  fCRCPseudoChangeDetection = false; // normally, DB reports changes correctly. Verifying changes can be enabled as an option
   #endif
   // init defaults
   fLocalDBPath.erase();
@@ -207,6 +208,8 @@ bool TBinfileDSConfig::localStartElement(const char *aElementName, const char **
 	#ifdef CHANGEDETECTION_AVAILABLE
   else if (strucmp(aElementName,"crcchangedetection")==0)
     expectBool(fCRCChangeDetection);
+  else if (strucmp(aElementName,"pseudochangedetection")==0)
+    expectBool(fCRCPseudoChangeDetection);
   #endif
   // - none known here
   else
@@ -222,7 +225,10 @@ void TBinfileDSConfig::localResolve(bool aLastPass)
 {
   if (aLastPass) {
     // check for required settings
-    // %%% tbd
+    #ifdef CHANGEDETECTION_AVAILABLE
+    // - pseudochange detection would interfere with regular CRC based change detection and is also completely useless then
+    if (fCRCChangeDetection) fCRCPseudoChangeDetection = false; // just switch it off, makes no sense
+    #endif	
   }
   // resolve inherited
   inherited::localResolve(aLastPass);
@@ -1483,7 +1489,7 @@ localstatus TBinfileImplDS::implGetItem(
   localstatus sta=LOCERR_OK;
   TSyncItem *myitemP=NULL;
   TChangeLogEntry *chglogP;
-  bool aOnlyChanged = aChanged;
+  bool onlyChanged = aChanged;
 
   aEof=true;
 
@@ -1602,7 +1608,7 @@ localstatus TBinfileImplDS::implGetItem(
         // clear resend flag now - it is processed
         chglogP->flags &= ~chgl_resend;
         // skip unchanged ones if only changed ones are to be reported
-        if (!hasChanged && aOnlyChanged)
+        if (!hasChanged && onlyChanged)
           continue; // unchanged, do not report
         // always report changed status in aChanged
         aChanged=hasChanged;
@@ -1645,9 +1651,42 @@ localstatus TBinfileImplDS::implGetItem(
         }
         // detect wheter the item is new added or changed
         if(chglogP->modcount_created > fPreviousToRemoteModCount) {
+        	// Added
           myitemP->setSyncOp(sop_add);
         }
         else {
+        	// Not added (changed or just reported because we want all records reported)
+          // - if enabled, also verify change by checking CRC before reporting it (unless this is a slow sync)
+	        if (CRC_DETECT_PSEUDOCHANGES && aChanged) {
+          	// check if really changed using CRC, but only...
+            // ...if not slow sync (all items must be reported)
+            // ...if change was detected in this session's preflight. If the change was detected earlier and is still
+            //    pending (i.e. newer than the last sync), this means that this change might have failed to be applied
+            //    in a previous sync and thus must be reported again (but as CRC was updated in the last run,
+            //    it would be suppressed). This is a compromise that minimizes pseudochanges normally, but cannot
+            //    entirely prevent them. In other words: the first attempt to report a pseudo-change is
+            //    suppressed, but in case this sync fails, subsequent syncs will report it.
+            uInt16 newDataCRC = myitemP->getDataCRC(0,true);
+          	if (chglogP->dataCRC==newDataCRC && !fSlowSync && chglogP->modcount==fCurrentModCount) {
+            	// none of the relevant fields have changed -> don't report the item
+              PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Not reporting localID='%s' as changed because CRC detected this as a pseudo-change.",myitemP->getLocalID()));
+              aChanged = false; // even if it gets reported, it does not count as changed any more
+              if (onlyChanged) {
+              	// we don't need to report this at all, as we only report changed ones
+                delete myitemP; // delete the item
+                continue; // don't report, try next
+              }
+              // report as unchanged
+            }
+            else {
+            	// change will now be reported, so update CRC to what we report now
+              // Note: the problem with this is that in case the sync does not succeed now, the CRC is already updated and would
+              //   trigger pseudo-change detection in the next session. Therefore, pseudo-change detection is only active for
+              //   changes newly detected during this sync.
+              chglogP->dataCRC = newDataCRC;
+            }
+          } // CRC_DETECT_PSEUDOCHANGES
+          // - report as replace (changed or not)
           myitemP->setSyncOp(sop_replace);
         }
         // make sure item has the localid which was used to retrieve it
@@ -1906,8 +1945,8 @@ bool TBinfileImplDS::implProcessItem(
         goto error;
     } // switch(sop)
     // update changelog
-    uInt16 crc=0;
-    if (CRC_CHANGE_DETECTION) {
+    uInt16 crc=0; // none unless we need it
+    if (CRC_CHANGE_DETECTION || CRC_DETECT_PSEUDOCHANGES) {
       // - calc new data CRC if not deleted record
       if (sop!=sop_delete) {
         // - get new CRC. Note: to avoid differences in written and readback
@@ -1923,7 +1962,7 @@ bool TBinfileImplDS::implProcessItem(
           //   will also find a new item (this one under new localid) and add
           //   this to the server.
           crc=0;
-          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed it's localid during replace, CRC gets invalid"));
+          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed its localid during replace, CRC gets invalid"));
         }
         #else
         TSyncItem *readbackItemP=NULL;
@@ -1936,7 +1975,7 @@ bool TBinfileImplDS::implProcessItem(
           //   will also find a new item (this one under new localid) and add
           //   this to the server.
           crc=0;
-          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed it's localid during replace, CRC gets invalid"));
+          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed its localid during replace, CRC gets invalid"));
         }
         else {
           // Note: we don't need to set localID in item as it is not used in the CRC
