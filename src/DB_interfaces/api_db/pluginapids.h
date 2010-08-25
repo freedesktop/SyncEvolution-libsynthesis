@@ -116,7 +116,8 @@ public:
   uInt16 fPluginDbgMask_Data;
   uInt16 fPluginDbgMask_Admin;
   // capabilities of connected plugin
-  bool fItemAsKey;
+  bool fItemAsKey; // supports items as key
+  bool fHasDeleteSyncSet; // implements deleting sync set using DeleteSyncSet()
   // public methods
   // - create appropriate datastore from config, calls addTypeSupport as well
   virtual TLocalEngineDS *newLocalDataStore(TSyncSession *aSessionP);

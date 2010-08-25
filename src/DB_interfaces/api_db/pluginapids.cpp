@@ -112,6 +112,7 @@ void TPluginDSConfig::clear(void)
   fPluginParams_Data.clear();
   // - clear capabilities
   fItemAsKey = false;
+  fHasDeleteSyncSet = false;
   // clear inherited
   inherited::clear();
 } // TPluginDSConfig::clear
@@ -186,10 +187,13 @@ void TPluginDSConfig::localResolve(bool aLastPass)
       // now pass plugin-specific config
       if (fDBApiConfig_Data.PluginParams(fPluginParams_Data.fConfigString.c_str())!=LOCERR_OK)
         SYSYNC_THROW(TConfigParseException("Module does not understand params passed in <plugin_params>"));
-      // Check for new method for data access (as keys instead of as text items)
+			// Check module capabilities
       TDB_Api_Str capa;
       fDBApiConfig_Data.Capabilities(capa);
       string capaStr = capa.c_str();
+      // - check existence of DeleteSyncSet()
+      fHasDeleteSyncSet = FlagOK(capaStr,CA_DeleteSyncSet,true);
+      // - Check for new method for data access (as keys instead of as text items)
       fItemAsKey = FlagOK(capaStr,CA_ItemAsKey,true);
       // Check if engine is compatible
       #ifndef DBAPI_TEXTITEMS
@@ -197,7 +201,7 @@ void TPluginDSConfig::localResolve(bool aLastPass)
       #endif
       #if !defined(DBAPI_ASKEYITEMS) || !defined(ENGINEINTERFACE_SUPPORT)
       if (fItemAsKey) SYSYNC_THROW(TConfigParseException("This engine does not support data items passed as key handles"));
-      #endif
+      #endif      
     }
     // connect module for handling admin access
     // - use same module and params as data if no separate module specified and plugin_datastoreadmin is set
@@ -1178,9 +1182,7 @@ bool TPluginApiDS::apiNeedSyncSetToZap(void)
   if (!fDBApi_Data.Created()) return inherited::apiNeedSyncSetToZap();
   #endif
   // only if we have deleteSyncSet on API level AND api can also apply all filters, we don't need the syncset to zap the datastore
-  // TODO: enabled this once we have a reliable test for deleteSyncSet() presence AND function (i.e. not returning LOCERR_UNIMPL for sure)
-  //return !(%%%_we_REALLY_have_deletesyncset_in_the_API_%%% && engFilteredFetchesFromDB(false));
-  return true; // %%% for now, we assume we need the sync set to zap
+  return !(fPluginDSConfigP->fHasDeleteSyncSet && engFilteredFetchesFromDB(false));
 } // TPluginApiDS::apiNeedSyncSetToZap
 
 
