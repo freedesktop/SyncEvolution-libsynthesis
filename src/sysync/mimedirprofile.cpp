@@ -485,6 +485,10 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
         return fail("bad boolean value");
       // - add parameter
       fOpenParameter = fOpenProperty->addParam(nam,defparam,positional,shownonempty,showinctcap,modeDep);
+#ifndef NO_REMOTE_RULES
+      const char *depRuleName = getAttr(aAttributes,"rule");
+      TCFG_ASSIGN(fOpenParameter->dependencyRuleName,depRuleName); // save name for later resolving
+#endif
       startNestedParsing();
     }
     else if (strucmp(aElementName,"position")==0) {
@@ -705,6 +709,30 @@ static void resolveRemoteRuleDeps(TProfileDefinition *aProfileP, TAgentConfig *a
           }
         } // rule specified
       }
+
+      // also fix rule-dependent parameters
+      TParameterDefinition *paramP = propP->parameterDefs;
+      while (paramP) {
+        if (!TCFG_ISEMPTY(paramP->dependencyRuleName)) {
+          TRemoteRulesList::iterator pos;
+          for(pos=aSessionConfigP->fRemoteRulesList.begin();pos!=aSessionConfigP->fRemoteRulesList.end();pos++) {
+            if (strucmp(TCFG_CSTR(paramP->dependencyRuleName),(*pos)->getName())==0) {
+              paramP->ruleDependency=(*pos);
+              break;
+            }
+          }
+          if (paramP->ruleDependency==NULL) {
+            string s;
+            StringObjPrintf(s,"parameter '%s' in property '%s' depends on unknown rule '%s'",
+                            TCFG_CSTR(paramP->paramname),
+                            TCFG_CSTR(propP->propname),
+                            TCFG_CSTR(propP->dependencyRuleName));
+            SYSYNC_THROW(TConfigParseException(s.c_str()));
+          }
+        }
+        paramP = paramP->next;
+      }
+
       // next
       propP=propP->next;
     }
@@ -885,6 +913,10 @@ TParameterDefinition::TParameterDefinition(
   shownonempty=aShowNonEmpty;
   showInCTCap=aShowInCTCap;
   modeDependency=aModeDep;
+#ifndef NO_REMOTE_RULES
+  ruleDependency=NULL;
+  TCFG_CLEAR(dependencyRuleName);
+#endif
 } // TParameterDefinition::TParameterDefinition
 
 
