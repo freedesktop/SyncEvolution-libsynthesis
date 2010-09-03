@@ -5155,9 +5155,13 @@ void TMimeDirProfileHandler::setRemoteRule(const string &aRemoteRuleName)
   TRemoteRulesList::iterator pos;
   for(pos=scP->fRemoteRulesList.begin();pos!=scP->fRemoteRulesList.end();pos++) {
     if((*pos)->fElementName == aRemoteRuleName) {
-    	// only this rule must be active
+      // only this rule and all rules included by it rule must be active
       fActiveRemoteRules.clear();
       fActiveRemoteRules.push_back(*pos);
+      TRemoteRulesList::iterator spos;
+      for(spos=(*pos)->fSubRulesList.begin();spos!=(*pos)->fSubRulesList.end();spos++) {
+        fActiveRemoteRules.push_back(*spos);
+      }
       break;
     }
   }
