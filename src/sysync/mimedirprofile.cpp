@@ -3763,6 +3763,9 @@ bool TMimeDirProfileHandler::parseProperty(
         // check for match
         if (
           mimeModeMatch(paramP->modeDependency) &&
+#ifndef NO_REMOTE_RULES
+          (!paramP->ruleDependency || isActiveRule(paramP->ruleDependency)) &&
+#endif
           ((defaultparam && paramP->defaultparam) || strucmp(pname.c_str(),TCFG_CSTR(paramP->paramname))==0)
         ) {
           // param name found
