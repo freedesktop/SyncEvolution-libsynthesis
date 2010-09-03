@@ -2448,8 +2448,12 @@ bool TMimeDirProfileHandler::generateParams(
   while (paramP) {
     // parameter not started yet
     paramstarted=false;
-    // process param only if matching mode
-    if (mimeModeMatch(paramP->modeDependency)) {
+    // process param only if matching mode and active rules
+    if (mimeModeMatch(paramP->modeDependency)
+#ifndef NO_REMOTE_RULES
+        && (!paramP->ruleDependency || isActiveRule(paramP->ruleDependency))
+#endif
+        ) {
       // first append extendsname param values
       if (paramP->extendsname && aPropNameExt) {
         const TEnumerationDef *enumP = paramP->convdef.enumdefs;
