@@ -1667,6 +1667,10 @@ localstatus TBinfileImplDS::implGetItem(
             //    entirely prevent them. In other words: the first attempt to report a pseudo-change is
             //    suppressed, but in case this sync fails, subsequent syncs will report it.
             uInt16 newDataCRC = myitemP->getDataCRC(0,true);
+            PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+            	"CRC comparison for pseudo-change detection: old CRC=0x%hX, new CRC=0x%hX, recordModCount=%u, currentModCount=%u",
+              chglogP->dataCRC, newDataCRC, chglogP->modcount, fCurrentModCount
+            ));
           	if (chglogP->dataCRC==newDataCRC && !fSlowSync && chglogP->modcount==fCurrentModCount) {
             	// none of the relevant fields have changed -> don't report the item
               PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Not reporting localID='%s' as changed because CRC detected this as a pseudo-change.",myitemP->getLocalID()));
@@ -1787,7 +1791,7 @@ localstatus TBinfileImplDS::implStartDataWrite(void)
     // find and update (if not refreshing) changelog for this database
     bool normal=false;
     changeLogPreflight(normal);
-    if (!normal) return false; // failure
+    if (!normal) return LOCERR_UNDEFINED; // failure
   }
   // let api layer do it's stuff
   sta = apiStartDataWrite();
@@ -2022,19 +2026,21 @@ bool TBinfileImplDS::implProcessItem(
       // save it
       #ifdef NUMERIC_LOCALIDS
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID=%ld, flags=0x%X, modcount=modcount_created=%ld",
+        "new entry %ld : localID=%ld, flags=0x%X, modcount=modcount_created=%ld, new dataCRC=0x%hX",
         (long)fChangeLog.getNumRecords(),
         affectedentryP->dbrecordid,
         (int)affectedentryP->flags,
-        (long)affectedentryP->modcount
+        (long)affectedentryP->modcount,
+        affectedentryP->dataCRC
       ));
       #else
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID='%s', flags=0x%X, modcount=modcount_created=%ld",
+        "new entry %ld : localID='%s', flags=0x%X, modcount=modcount_created=%ld, new dataCRC=0x%hX",
         (long)fChangeLog.getNumRecords(),
         affectedentryP->dbrecordid,
         (int)affectedentryP->flags,
-        (long)affectedentryP->modcount
+        (long)affectedentryP->modcount,
+        affectedentryP->dataCRC
       ));
       #endif
       // Note: changeLogPostflight() will check these for temporary localids and finalize them when needed
