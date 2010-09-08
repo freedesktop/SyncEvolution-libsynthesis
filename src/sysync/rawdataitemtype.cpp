@@ -4,7 +4,7 @@
  *  Author:       Lukas Zeller (luz@synthesis.ch)
  *
  *  TRawDataItemType
- *    Item type for 1:1 raw items (SyncML payload is exchanged 1:1 with database backend)
+ *    Item type for 1:1 raw items (SyncML payload is exchanged 1:1 with database backend) 
  *
  *  Copyright (c) 2010 by Synthesis AG (www.synthesis.ch)
  *
@@ -67,7 +67,7 @@ void TRawDataTypeConfig::localResolve(bool aLastPass)
   inherited::localResolve(aLastPass);
   return;
 missingfield:
-	SYSYNC_THROW(TConfigParseException("fieldlist for RawDataItem must contain certain predefined fields (like ITEMDATA)!"));
+	SYSYNC_THROW(TConfigParseException("fieldlist for RawDataItem must contain certain predefined fields (like ITEMDATA)!"));	
 } // TRawDataTypeConfig::localResolve
 
 

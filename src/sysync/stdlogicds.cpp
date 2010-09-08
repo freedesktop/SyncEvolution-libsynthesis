@@ -152,7 +152,7 @@ localstatus TStdLogicDS::startDataWrite()
   localstatus sta = LOCERR_OK;
 
   if (!fWriteStarted) {
-    sta=implStartDataWrite();
+    sta = implStartDataWrite();
     fWriteStarted = sta==LOCERR_OK; // must be here to prevent recursion as startDataWrite might be called implicitly below
     if (HAS_SERVER_DB) {
     	#ifdef USES_SERVER_DB
@@ -162,7 +162,7 @@ localstatus TStdLogicDS::startDataWrite()
         // Now allow post-processing of all reported items
         for (pos=fItems.begin(); pos!=fItems.end(); ++pos) {
           localstatus sta2 = implReviewReadItem(**pos);
-          if (sta2!=LOCERR_OK) sta=sta2;
+          if (sta2!=LOCERR_OK) sta = sta2;
         }
       }
       #endif
