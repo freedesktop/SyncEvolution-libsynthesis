@@ -631,9 +631,11 @@ TSyncAgent::TSyncAgent(
   // - issue session start event here (in non-engine case this is done in TSyncSession constructor)
   SESSION_PROGRESS_EVENT(this,pev_sessionstart,NULL,0,0,0);
   #endif // ENGINE_LIBRARY
+  #ifdef SYSYNC_SERVER
   // reset data counts
   fIncomingBytes = 0;
   fOutgoingBytes = 0;
+  #endif
 
   // Specific for Client or Server
 	if (IS_CLIENT) {
