@@ -2018,8 +2018,8 @@ bool TBinfileClientConfig::getTargetLastSyncTime(TBinfileDBSyncTarget &aTarget, 
 {
   // returns info even if not enabled
   // Note: if suspended, zapping has already occurred (and has been confirmed, so don't report it here)
-  aZapsServer=aTarget.syncmode==smo_fromclient && aTarget.forceSlowSync && aTarget.resumeAlertCode==0;
-  aZapsClient=aTarget.syncmode==smo_fromserver && aTarget.forceSlowSync && aTarget.resumeAlertCode==0;
+  aZapsServer=aTarget.syncmode==smo_fromclient && (aTarget.forceSlowSync || *(aTarget.remoteAnchor)==0) && aTarget.resumeAlertCode==0;
+  aZapsClient=aTarget.syncmode==smo_fromserver && (aTarget.forceSlowSync || *(aTarget.remoteAnchor)==0) && aTarget.resumeAlertCode==0;
   // return info anyway
   aLastSync=aTarget.lastSync;
   aDBID=aTarget.localDBTypeID;
