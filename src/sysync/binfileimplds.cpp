@@ -642,7 +642,7 @@ bool TBinfileImplDS::openPendingMaps(void)
   PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("openPendingMaps: file name='%s'",pendingmapsname.c_str()));
   if (fPendingMaps.open(sizeof(TPendingMapHeader),&fPendingMapHeader)!=BFE_OK) {
     // create new pending maps or overwrite incompatible one
-    // - bind to remote party (we have a single pendingmap file, and it is valid only for ONE remote party)
+    // - bind to remote party (in case of combined changelog, we only have a single pendingmap file, and it is valid only for ONE remote party)
     fPendingMapHeader.remotepartyID = static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID;
     // - create new changelog
     fPendingMaps.create(sizeof(TPendingMapEntry),sizeof(TPendingMapHeader),&fPendingMapHeader,true);
@@ -1808,28 +1808,32 @@ localstatus TBinfileImplDS::implStartDataWrite(void)
     // now, either zap the changelog and set this datastore to slowsync in all
     // other profiles or flag all entries as deleted during this sync.
     #ifdef ZAP_FORCES_SLOWSYNC
-    // zap the changelog as well
+    // we force a slowsync, zap the changelog
     fChangeLog.truncate(0);
-    // zap the anchors in all profiles for this datastore
-    // because we have deleted the changelog. Note that this also resets our own
-    // target's anchor
-    fTarget.remoteAnchor[0]=0; // make sure. If sync completes successfully, this will be updated anyway in SaveAnchor
-    // get target DB
-    TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
-    TBinfileDBSyncTarget target;
-    // - loop trough all targets
-    for (uInt32 ti=0; ti<targetsBinFileP->getNumRecords(); ti++) {
-      targetsBinFileP->readRecord(ti,&target);
-      if (
-        (target.localDBTypeID == fTarget.localDBTypeID) && // same datastoreID
-        (strucmp(target.localDBPath,fTarget.localDBPath)==0) // ..and name
-      ) {
-        // this is a target of this datastore, remove saved anchor
-        // to irreversibely force a slowsync next time
-        target.remoteAnchor[0]=0;
-        targetsBinFileP->updateRecord(ti,&target);
+		// forget the anchor to force a slow sync anyway
+    fTarget.remoteAnchor[0]=0; // (only to make sure. If sync completes successfully, this will be updated anyway in SaveAnchor)
+		// for combined changelog, we need to take care of other profiles  
+    if (!static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
+	    // zap the anchors in all other profiles for this datastore
+    	// because we have deleted the (common) changelog. Note that this also resets our own
+    	// target's anchor (again)
+      // get target DB
+      TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
+      TBinfileDBSyncTarget target;
+      // - loop trough all targets
+      for (uInt32 ti=0; ti<targetsBinFileP->getNumRecords(); ti++) {
+        targetsBinFileP->readRecord(ti,&target);
+        if (
+          (target.localDBTypeID == fTarget.localDBTypeID) && // same datastoreID
+          (strucmp(target.localDBPath,fTarget.localDBPath)==0) // ..and name
+        ) {
+          // this is a target of this datastore, remove saved anchor
+          // to irreversibely force a slowsync next time
+          target.remoteAnchor[0]=0;
+          targetsBinFileP->updateRecord(ti,&target);
+        }
       }
-    }
+    } // if combined changelog
     #endif
   }
   // Load changelog as we need quick access
@@ -1839,6 +1843,8 @@ localstatus TBinfileImplDS::implStartDataWrite(void)
     if (fSlowSync && fRefreshOnly) {
       // database was zapped, all existing changelog entries must be set to deleted
       // by this sync session.
+      // (This is important for combined changelog, for separate changelog these entries
+      // get obsolete anyway after this sync, but updating them for consistency is still good)
       for (uInt32 k=0; k<fLoadedChangeLogEntries; k++) {
         fLoadedChangeLog[k].modcount=fCurrentModCount;
         fLoadedChangeLog[k].dataCRC=0;
@@ -2314,24 +2320,26 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   else {
     /// @note: lastSuspendModCount is the same target field that previously was called "lastModCount"
     fTarget.lastSuspendModCount = fPreviousSuspendModCount;
-    // make sure that resume alert codes of all other profile's targets for this datastore are erased
-    // (because we have only a single changelog (markforresume flags!) and single pendingmap+pendingitem files)
-    TBinfileDBSyncTarget otherTarget;
-    memset(&otherTarget, 0, sizeof(otherTarget));
-    for (sInt32 ti=0; ti<sInt32(targetsBinFileP->getNumRecords()); ti++) {
-      if (ti!=fTargetIndex) {
-        // get that target
-        targetsBinFileP->readRecord(ti,&otherTarget);
-        if (
-          (otherTarget.localDBTypeID == fTarget.localDBTypeID) && // same datastoreID
-          (strucmp(otherTarget.localDBPath,fTarget.localDBPath)==0) && // ..and name
-          (otherTarget.resumeAlertCode!=0) // ..and has a saved suspend state
-        ) {
-          // same datastore, but different profile is also suspended -> new suspend cancels old one
-          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("SaveAdminData: cancelled resumeAlertCode in profile=%ld",(long)otherTarget.remotepartyID));
-          otherTarget.resumeAlertCode=0;
-          otherTarget.lastSuspendModCount=0;
-          targetsBinFileP->updateRecord(ti,&otherTarget);
+    if (!static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
+    	// Combined changelogs: make sure that resume alert codes of all other profile's targets for this datastore are erased
+      // (because in a single changelog there is only one set of markforresume flags and single pendingmap+pendingitem files)
+      TBinfileDBSyncTarget otherTarget;
+      memset(&otherTarget, 0, sizeof(otherTarget));
+      for (sInt32 ti=0; ti<sInt32(targetsBinFileP->getNumRecords()); ti++) {
+        if (ti!=fTargetIndex) {
+          // get that target
+          targetsBinFileP->readRecord(ti,&otherTarget);
+          if (
+            (otherTarget.localDBTypeID == fTarget.localDBTypeID) && // same datastoreID
+            (strucmp(otherTarget.localDBPath,fTarget.localDBPath)==0) && // ..and name
+            (otherTarget.resumeAlertCode!=0) // ..and has a saved suspend state
+          ) {
+            // same datastore, but different profile is also suspended -> new suspend cancels old one
+            DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("SaveAdminData: cancelled resumeAlertCode in profile=%ld",(long)otherTarget.remotepartyID));
+            otherTarget.resumeAlertCode=0;
+            otherTarget.lastSuspendModCount=0;
+            targetsBinFileP->updateRecord(ti,&otherTarget);
+          }
         }
       }
     }
