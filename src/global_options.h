@@ -46,10 +46,15 @@
 // Release date (date relevant for licenses that are valid only up to a certain release date)
 #if !defined(RELEASE_YEAR) || !defined(RELEASE_MONTH)
   // define one globally in case target or product does not specify it's own date
-  #define RELEASE_YEAR        2008
-  #define RELEASE_YEAR_TXT   "2008"
-  #define RELEASE_MONTH       1
-  #define RELEASE_MONTH_TXT  "1"
+  #define RELEASE_YEAR        	2008
+  #define RELEASE_YEAR_TXT   		"2008"
+  #define RELEASE_MONTH       	1
+  #define RELEASE_MONTH_TXT  		"1"
+#endif
+// Real Release date (shown in some texts)
+#if !defined(REAL_RELEASE_YEAR)
+  #define REAL_RELEASE_YEAR     2010
+  #define REAL_RELEASE_YEAR_TXT "2010"
 #endif
 
 
