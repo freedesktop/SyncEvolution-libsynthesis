@@ -1197,6 +1197,9 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fLastSessionMaps.clear();
   #endif
   #ifdef SYSYNC_SERVER
+  PDEBUGPRINTFX(DBG_DATA,(
+    "fTempGUIDMap: removing %ld items", (long)fTempGUIDMap.size()
+  ));
   fTempGUIDMap.clear();
   #endif
 
@@ -1564,6 +1567,12 @@ void TLocalEngineDS::dsLocalIdHasChanged(const char *aOldID, const char *aNewID)
     for (pos=fTempGUIDMap.begin(); pos!=fTempGUIDMap.end(); pos++) {
       if (pos->second == aOldID) {
         // update ID
+        PDEBUGPRINTFX(DBG_DATA,(
+          "fTempGUIDMap: updating mapping of %s from %s to %s",
+          pos->first.c_str(),
+          aOldID,
+          aNewID
+        ));
         pos->second = aNewID;
         break;
       }
@@ -1605,10 +1614,22 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
     if (aLocalID.length()+prefixsize>(uInt32)maxguidsize) { //BCPPB needed unsigned cast
       // real GUID is too long, we need to create a temp
       string tempguid;
-      StringObjPrintf(tempguid,"#%ld",(long)fTempGUIDMap.size()+1); // as list only grows, we have unique tempuids for sure
+      long counter = fTempGUIDMap.size(); // as list only grows, we have unique tempuids for sure
+      while (true) {
+        counter++;
+        StringObjPrintf(tempguid,"#%ld",counter);
+        if (fTempGUIDMap.find(tempguid) != fTempGUIDMap.end()) {
+          PDEBUGPRINTFX(DBG_DATA,(
+            "fTempGUIDMap: '%s' not new?!",
+            tempguid.c_str()
+          ));
+        } else {
+          break;
+        }
+      }
       fTempGUIDMap[tempguid]=aLocalID;
       PDEBUGPRINTFX(DBG_DATA,(
-        "translated realLocalID='%s' to tempLocalID='%s'",
+        "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s'",
         aLocalID.c_str(),
         tempguid.c_str()
       ));
@@ -2414,6 +2435,9 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
       // server case: forget Temp GUID mapping
+      PDEBUGPRINTFX(DBG_DATA,(
+         "fTempGUIDMap: removing %ld items", (long)fTempGUIDMap.size()
+      ));
       fTempGUIDMap.clear(); // forget all previous temp GUID mappings
     }
     #endif
