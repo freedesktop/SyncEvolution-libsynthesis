@@ -1613,6 +1613,26 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
   if (maxguidsize>0) {
     if (aLocalID.length()+prefixsize>(uInt32)maxguidsize) { //BCPPB needed unsigned cast
       // real GUID is too long, we need to create a temp
+      
+      // first check if there is already a mapping for it,
+      // because on-disk storage can only hold one; also
+      // saves space
+      // TODO: implement this more efficiently than this O(N) search
+      for (TStringToStringMap::const_iterator it = fTempGUIDMap.begin();
+           it != fTempGUIDMap.end();
+           ++it) {
+        if (it->second == aLocalID) {
+          // found an existing mapping!
+          PDEBUGPRINTFX(DBG_DATA,(
+            "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s' (reused)",
+            aLocalID.c_str(),
+            it->first.c_str()
+          ));
+          aLocalID = it->first;
+          return;
+        }
+      }
+
       string tempguid;
       long counter = fTempGUIDMap.size(); // as list only grows, we have unique tempuids for sure
       while (true) {
