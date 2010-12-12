@@ -519,31 +519,12 @@ bool VTIMEZONEtoInternal( const char*    aText, // VTIMEZONE string to be parsed
   if (!VTIMEZONEtoTZEntry( aText, t, aLogP )) {
     PLOGDEBUGPRINTFX(aLogP, DBG_PARSE+DBG_ERROR, ("parsing VTIMEZONE failed:\n%s", aText));
   }
+  // Telling the caller about the original TZID is necessary because this
+  // code might match that TZID against an existing definition with a different
+  // TZID. Previously it was also necessary when importing the VTIMEZONE, because
+  // the original TZID was overwritten. Now imported definitions retain the
+  // original TZID in t.name.
   if (aTzidP) *aTzidP = t.name; // return the original TZID as found, needed to match with TZID occurences in rest of vCalendar
-
-  bool sC= !(t.stdName=="");
-  bool dC= !(t.dstName=="");
-
-  // This code here creates a new TZID by concatenating
-  // standard and daylight saving time. If a new tz_entry
-  // has to be created, then it will end up having this
-  // artificial TZID (t.name = tName below).
-  // Presumably this is done because the vCalendar 1.0 code
-  // needs these two names and they weren't stored
-  // elsewhere originally. This approach is dangerous (is it
-  // guaranteed that neither stdName nor dstName contains slashes -
-  // otherwise splitting the composed name will fail?)
-  // and confusing (well, it confused me - Patrick).
-  //
-  // As a result of this confusion, the Linux timezone importer
-  // code use the /org.softwarestudio/... TZID as name, which
-  // led to invalid vCalendar properties because splitting that
-  // name into two components failed.
-  string tName = t.name;
-  if  (sC || dC) tName = ""; // TZID will be replaced in case of unknown
-  if  (sC)       tName+= t.stdName;
-  if  (sC && dC) tName+= "/";
-  if        (dC) tName+= t.dstName;
 
   bool ok = true;
   bool okM= true;
@@ -581,11 +562,6 @@ bool VTIMEZONEtoInternal( const char*    aText, // VTIMEZONE string to be parsed
   // redundant here, but there is no other way to
   // add the entry
   string new_name;
-
-  // This assignment changes the TZID. The caller needs
-  // to maintain a mapping to deal with this. Perhaps
-  // keep the original name and avoid the mapping?
-  t.name = tName;
 
   if (!ok) ok= FoundTZ( t, new_name, aContext, g, true );
 
