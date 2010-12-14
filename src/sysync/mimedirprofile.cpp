@@ -1700,12 +1700,6 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
       // - until
       if (!(tsFldP = ITEMFIELD_DYNAMIC_CAST_PTR(TTimestampField,fty_timestamp,aItem.getArrayField(aFid,aArrIndex,true)))) return false;
       aFid++; // do NOT INCREMENT in macro, as it would get incremented twice
-      // - start time (according to comment for "recurrence rule block", this must
-      // follow the rule block, but wasn't used before, so let's be conservative
-      // and do not throw an error when we don't find a time stamp there)
-      TTimestampField *tsStartTime;
-      tsStartTime = ITEMFIELD_DYNAMIC_CAST_PTR(TTimestampField,fty_timestamp,aItem.getArrayField(aFid,aArrIndex,true));
-      aFid++; // do NOT INCREMENT in macro, as it would get incremented twice
       // Until
       // - UTC preferred as output format if basically possible and not actively disabled
       untilcontext=
@@ -1722,30 +1716,6 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
       // Now do the conversion
       bool ok;
       if (fMimeDirMode==mimo_old) {
-        // cannot encode rrule with an end date which has no time
-        if (TCTX_IS_DATEONLY(untilcontext)) {
-          // add real start time, if possible;
-          // if not, then encoding whatever time is in
-          // "until" is still better than not generating a time
-          // component in the RRULE
-          if (tsStartTime) {
-            // strip time (if any) from "until" and combine it with
-            // time from event "starttime", using UTC
-            // TODO: what if the device does not support UTC?
-            lineartime_t starttime = tsStartTime->getTimestampAs(TCTX_UTC);
-            sInt16 year, month, day, hour, min, sec, ms;
-            lineartime2date(until, &year, &month, &day);
-            lineartime2time(starttime, &hour, &min, &sec, &ms);
-            until = date2lineartime(year, month, day) +
-              time2lineartime(hour, min, sec, ms);
-            untilcontext = TCTX_UTC;
-            PDEBUGPRINTFX(DBG_GEN+DBG_EXOTIC,("combined until date and start time into new end date/time"));
-          } else {
-            untilcontext &= ~TCTX_DATEONLY;
-            PDEBUGPRINTFX(DBG_ERROR,("Warning: creating vCalendar 1.0 RRULE with unspecified end time, need start time of recurring event after recurrence rule block"));
-          }
-        }
-
         // vCalendar 1.0 type RRULE
         ok = internalToRRULE1(
           aString,
