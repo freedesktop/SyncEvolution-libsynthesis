@@ -93,7 +93,7 @@ public:
   virtual void setAsString(cAppCharP /* aString */) { fAssigned=true; }; // basic setter, this one must be derived for all non-string descendants
   virtual void setAsString(cAppCharP aString, size_t aLen);
   virtual void setAsString(const string &aString) { setAsString(aString.c_str(),aString.size()); };
-  virtual void getAsString(string &aString) { aString.erase(); };
+  virtual void getAsString(string &aString) { aString.erase(); }; // empty string by default
   virtual void appendToString(string &aString, size_t aMaxLen=0) { string s; getAsString(s); if (aMaxLen) aString.append(s,0,aMaxLen); else aString.append(s); }; // generic append
   virtual cAppCharP getCStr(void) { return NULL; } // only real strings can return CStr (used for PalmOS optimization)
   virtual void getAsNormalizedString(string &aString) { getAsString(aString); };

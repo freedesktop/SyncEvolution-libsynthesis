@@ -1985,16 +1985,17 @@ TSyError TItemFieldKey::GetValueInternal(
       memcpy(aBuffer,&valtype,aValSize); // copy valtype uInt16
     return LOCERR_OK;
   }
-  // Get actual data - we need the leaf field
+  // Get actual data - we need the leaf field (unless we pass <0 for aArrayIndex, which accesses the array base field)
   fieldP = getFieldFromFid(fid, aArrayIndex, true); // existing array elements only
   if (!fieldP) {
     // array instance does not exist
     return LOCERR_OUTOFRANGE;
   }
   else {
-    // leaf field exists
+    // leaf field (or explicitly requested array base field) exists
     if (!fieldP->isAssigned()) return DB_NotFound; // no content found because none assigned
     if (fieldP->isEmpty()) return DB_NoContent; // empty
+    if (fieldP->isArray()) return LOCERR_OUTOFRANGE; // no real access for array base field possible - if we get here it means non-empty
     // assigned and not empty, return actual value
     TItemFieldTypes fty = fieldP->getType();
     appPointer valPtr = NULL;
