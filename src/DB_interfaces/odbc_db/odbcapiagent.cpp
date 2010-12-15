@@ -989,6 +989,10 @@ HSTMT TODBCApiAgent::getScriptStatement(void)
 
 #if !defined(NO_AV_GUARDING) // && !__option(microsoft_exceptions)
 
+#ifndef _WIN32
+	#error "AV Guarding is only for Win32"
+#endif
+
 // SEH-aware versions of ODBC calls (to avoid that crashing drivers blame our server)
 // ==================================================================================
 
@@ -1211,7 +1215,7 @@ SQLRETURN SafeSQLGetData(
   SQLSMALLINT   TargetType,
   SQLPOINTER    TargetValuePtr,
   SQLINTEGER    BufferLength,
-  SQLINTEGER *    StrLen_or_IndPtr)
+  SQLLEN *    	StrLen_or_IndPtr)
 {
   __try {
     return SQLGetData(StatementHandle,ColumnNumber,TargetType,TargetValuePtr,BufferLength,StrLen_or_IndPtr);
@@ -2820,15 +2824,6 @@ void TODBCApiAgent::bindSQLParameters(
     // if this is an out param, create a buffer of BufferLength
     if (pos->parammode!=param_buffer) {
       if (pos->outparam || copyvalue) {
-        // determine needed size of buffer
-        /* %%% no longer needed as we calculate buffer size above now
-        if (!pos->outparam || pos->BufferLength<pos->StrLen_or_Ind+1) {
-          // adjust col size
-          colSiz=pos->StrLen_or_Ind;
-          // adapt buffer size to actual length of input param
-          pos->BufferLength=colSiz+1; // set buffer size to what we need for input parameter
-        }
-        */
         // create buffer
         void *bP = sysync_malloc(pos->BufferLength);
         pos->mybuffer=true; // this is now a buffer allocated by myself
@@ -2846,19 +2841,33 @@ void TODBCApiAgent::bindSQLParameters(
     }
     // now actually bind to parameter
     POBJDEBUGPRINTFX(aSessionP,DBG_DBAPI+DBG_EXOTIC,(
-      "SQLBind: paramNo=%hd, in=%d, out=%d, parammode=%hd, valuetype=%hd, paramtype=%hd, lenorind=%ld, valptr=%lX, bufsiz=%ld, maxcol=%ld, colsiz=%ld",
-      paramNo,
+      "SQLBind: sizeof(SQLLEN)=%d, sizeof(SQLINTEGER)=%d, paramNo=%hd, in=%d, out=%d, parammode=%hd, valuetype=%hd, paramtype=%hd, lenorind=%d, valptr=%X, bufsiz=%d, maxcol=%d, colsiz=%d",
+			sizeof(SQLLEN), sizeof(SQLINTEGER), // to debug, as there can be problematic 32bit/64bit mismatches between these
+      (uInt16)paramNo,
       (int)pos->inparam,
       (int)pos->outparam,
-      (uInt16) (pos->outparam ? (pos->inparam ? SQL_PARAM_INPUT_OUTPUT : SQL_PARAM_OUTPUT ) : SQL_PARAM_INPUT), // type of param
-      valueType,
-      paramType,
-      pos->StrLen_or_Ind,
+      (uInt16)(pos->outparam ? (pos->inparam ? SQL_PARAM_INPUT_OUTPUT : SQL_PARAM_OUTPUT ) : SQL_PARAM_INPUT), // type of param
+      (uInt16)valueType,
+      (uInt16)paramType,
+			(int)pos->StrLen_or_Ind,
       pos->ParameterValuePtr,
-      pos->BufferLength,
-      pos->maxSize,
-      colSiz
+      (int)pos->BufferLength,
+      (int)pos->maxSize,
+      (int)colSiz
     ));
+		/*
+		SQLRETURN SQL_API SQLBindParameter(
+				SQLHSTMT           hstmt,
+				SQLUSMALLINT       ipar,
+				SQLSMALLINT        fParamType,
+				SQLSMALLINT        fCType,
+				SQLSMALLINT        fSqlType,
+				SQLULEN            cbColDef,
+				SQLSMALLINT        ibScale,
+				SQLPOINTER         rgbValue,
+				SQLLEN             cbValueMax,
+				SQLLEN 		      	 *pcbValue);
+		*/
     SQLRETURN res=SQLBindParameter(
       aStatement,
       paramNo, // parameter number
@@ -2869,7 +2878,7 @@ void TODBCApiAgent::bindSQLParameters(
       0, // decimal digits
       pos->ParameterValuePtr, // parameter value
       pos->BufferLength, // value buffer size (for output params)
-      (SQLLEN*)&(pos->StrLen_or_Ind) // length or indicator
+      &(pos->StrLen_or_Ind) // length or indicator
     );
     checkStatementError(res,aStatement);
     // next param

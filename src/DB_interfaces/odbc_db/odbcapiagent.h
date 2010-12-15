@@ -95,8 +95,8 @@ typedef struct {
   bool mybuffer;
   #ifdef ODBCAPI_SUPPORT
   SQLPOINTER ParameterValuePtr;
-  SQLINTEGER BufferLength;
-  SQLINTEGER StrLen_or_Ind;
+  SQLLEN BufferLength;
+  SQLLEN StrLen_or_Ind;
   #elif defined(SQLITE_SUPPORT)
   appPointer ParameterValuePtr;
   memSize BufferLength;
@@ -227,7 +227,7 @@ SQLRETURN SafeSQLGetData(
   SQLSMALLINT   TargetType,
   SQLPOINTER    TargetValuePtr,
   SQLINTEGER    BufferLength,
-  SQLINTEGER *    StrLen_or_IndPtr);
+  SQLLEN * 			StrLen_or_IndPtr);
 
 SQLRETURN SafeSQLCloseCursor(
   SQLHSTMT  StatementHandle);

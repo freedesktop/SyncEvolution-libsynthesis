@@ -53,8 +53,8 @@
 #endif
 // Real Release date (shown in some texts)
 #if !defined(REAL_RELEASE_YEAR)
-  #define REAL_RELEASE_YEAR     2010
-  #define REAL_RELEASE_YEAR_TXT "2010"
+  #define REAL_RELEASE_YEAR     2011
+  #define REAL_RELEASE_YEAR_TXT "2011"
 #endif
 
 
