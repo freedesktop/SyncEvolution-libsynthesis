@@ -2424,8 +2424,11 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
     // if we process a sync alert now, we haven't started sync or map generation
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
-      // server case: forget Temp GUID mapping
-      fTempGUIDMap.clear(); // forget all previous temp GUID mappings
+      // make sure we are not carrying forward any left-overs. Last sessions's tempGUID mappings that are
+      // needed for "early map" resolution might be loaded by the call to engInitSyncAnchors below.
+    	// IMPORTANT NOTE: the tempGUIDs that might get loaded will become invalid as soon as <Sync>
+      // starts - so fTempGUIDMap needs to be cleared again as soon as the first <Sync> command arrives from the client.
+      fTempGUIDMap.clear();
     }
     #endif
     // save remote's next anchor for saving at end of session
@@ -3902,7 +3905,9 @@ bool TLocalEngineDS::engProcessSyncCmd(
     startingNow = true; // initiating start now
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
-      // - let local datastore (derived DB-specific class) prepare for sync
+      // at this point, all temporary GUIDs become invalid (no "early map" possible any more which might refer to last session's tempGUIDs)
+      fTempGUIDMap.clear(); // forget all previous session's temp GUID mappings
+      // let local datastore (derived DB-specific class) prepare for sync
       localstatus sta = changeState(dssta_dataaccessstarted);
       if (sta!=LOCERR_OK) {
         // abort session (old comment: %%% aborting datastore only does not work, will loop, why? %%%)
