@@ -4554,7 +4554,8 @@ void TLocalEngineDS::showStatistics(void)
 // create a new syncop command for sending to remote
 TSyncOpCommand *TLocalEngineDS::newSyncOpCommand(
   TSyncItem *aSyncItemP, // the sync item
-  TSyncItemType *aSyncItemTypeP  // the sync item type
+  TSyncItemType *aSyncItemTypeP,  // the sync item type
+  cAppCharP aLocalIDPrefix  
 )
 {
   // get operation
@@ -4582,6 +4583,18 @@ TSyncOpCommand *TLocalEngineDS::newSyncOpCommand(
   else {
     // Client: all commands only have local IDs
     aSyncItemP->clearRemoteID(); // no remote ID
+  }
+  // add the localID prefix if we do have a localID to send
+  if (aSyncItemP->hasLocalID()) {
+    if (IS_SERVER) {
+      #ifdef SYSYNC_SERVER
+		  // make sure GUID (plus prefixes) is not exceeding allowed size
+			adjustLocalIDforSize(aSyncItemP->fLocalID,getRemoteDatastore()->getMaxGUIDSize(),aLocalIDPrefix ? strlen(aLocalIDPrefix) : 0);
+      #endif
+    }
+    // add local ID prefix, if any
+    if (aLocalIDPrefix && *aLocalIDPrefix)
+      aSyncItemP->fLocalID.insert(0,aLocalIDPrefix);
   }
   #ifdef SYSYNC_TARGET_OPTIONS
   // init item generation variables

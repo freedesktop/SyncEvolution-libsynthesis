@@ -1131,7 +1131,8 @@ protected:
   /// helper for derived classes to generate sync op commands
   TSyncOpCommand *newSyncOpCommand(
     TSyncItem *aSyncItemP, // the sync item
-    TSyncItemType *aSyncItemTypeP // the sync item type
+    TSyncItemType *aSyncItemTypeP, // the sync item type
+    cAppCharP aLocalIDPrefix // prefix for localID (can be NULL for none)
   );
   /// return pure relative (item) URI (removes absolute part or ./ prefix)
   /// @note this one is virtual because it is defined in TSyncDataStore

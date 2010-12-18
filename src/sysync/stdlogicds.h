@@ -296,7 +296,7 @@ private:
   virtual bool logicGenerateSyncCommandsAsServer(
     TSmlCommandPContainer &aNextMessageCommands,
     TSmlCommand * &aInterruptedCommandP,
-    const char *aLocalIDPrefix
+	  cAppCharP aLocalIDPrefix
   );
   /// called for servers when receiving map from client
   /// @note aLocalID or aRemoteID can be NULL - which signifies deletion of a map entry
@@ -309,7 +309,7 @@ private:
   virtual bool logicGenerateSyncCommandsAsClient(
     TSmlCommandPContainer &aNextMessageCommands,
     TSmlCommand * &aInterruptedCommandP,
-    const char *aLocalIDPrefix
+	  cAppCharP aLocalIDPrefix
   );
   #endif // SYSYNC_CLIENT
   

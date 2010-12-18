@@ -746,7 +746,7 @@ bool TStdLogicDS::MapFinishAsServer(
 bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
   TSmlCommandPContainer &aNextMessageCommands,
   TSmlCommand * &aInterruptedCommandP,
-  const char *aLocalIDPrefix
+  cAppCharP aLocalIDPrefix
 )
 {
   bool alldone=false;
@@ -841,16 +841,8 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
       // test next
       continue;
     }
-    // add prefixes to ID
-    if (syncitemP->hasLocalID()) {
-      // make sure GUID (plus prefixes) is not exceeding allowed size
-      adjustLocalIDforSize(syncitemP->fLocalID,getRemoteDatastore()->getMaxGUIDSize(),aLocalIDPrefix ? strlen(aLocalIDPrefix) : 0);
-      // add local ID prefix, if any
-      if (aLocalIDPrefix && *aLocalIDPrefix)
-        syncitemP->fLocalID.insert(0,aLocalIDPrefix);
-    }
     // create sync op command (may return NULL in case command cannot be created, e.g. for MaxObjSize limitations)
-    TSyncOpCommand *syncopcmdP = newSyncOpCommand(syncitemP,itemtypeP);
+    TSyncOpCommand *syncopcmdP = newSyncOpCommand(syncitemP,itemtypeP,aLocalIDPrefix);
     // erase item from list
     delete syncitemP;
     pos = fItems.erase(pos);
@@ -936,7 +928,7 @@ localstatus TStdLogicDS::startDataAccessForClient(void)
 bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
   TSmlCommandPContainer &aNextMessageCommands,
   TSmlCommand * &aInterruptedCommandP,
-  const char *aLocalIDPrefix
+  cAppCharP aLocalIDPrefix
 )
 {
   localstatus sta = LOCERR_OK;
@@ -1004,11 +996,8 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
     }
     // set final syncop now
     syncitemP->setSyncOp(syncop);
-    // add local ID prefix, if any
-    if (aLocalIDPrefix && *aLocalIDPrefix && syncitemP->hasLocalID())
-      syncitemP->fLocalID.insert(0,aLocalIDPrefix);
     // create sync op command
-    TSyncOpCommand *syncopcmdP = newSyncOpCommand(syncitemP,itemtypeP);
+    TSyncOpCommand *syncopcmdP = newSyncOpCommand(syncitemP,itemtypeP,aLocalIDPrefix);
     #ifdef CLIENT_USES_SERVER_DB
     // save item, we need it later for post-processing and Map simulation
     fItems.push_back(syncitemP);
