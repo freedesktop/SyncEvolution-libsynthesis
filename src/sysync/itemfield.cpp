@@ -268,7 +268,7 @@ TArrayField::~TArrayField()
 
 bool TArrayField::elementsBasedOn(TItemFieldTypes aFieldType) const
 {
-	return fFirstField->isBasedOn(aFieldType);
+  return fFirstField->isBasedOn(aFieldType);
 } // TArrayField::elementsBasedOn
 
 
@@ -300,9 +300,9 @@ TItemField *TArrayField::getArrayField(sInt16 aArrIdx, bool aExistingOnly)
     if (fldP==NULL) {
       // but element does not exist yet, create field for it
       if (aArrIdx==0)
-      	fldP = fFirstField;
+        fldP = fFirstField;
       else
-      	fldP = newItemField(fLeafFieldType,fGZonesP,false);
+        fldP = newItemField(fLeafFieldType,fGZonesP,false);
       fArray[aArrIdx]=fldP;
     }
   }
@@ -345,8 +345,8 @@ void TArrayField::unAssign(void)
 {
   for (sInt16 idx=0; idx<arraySize(); idx++) {
     if (fArray[idx]) {
-    	if (idx==0)
-      	fArray[idx]->unAssign(); // first is always kept, it is the fFirstField, so only unassign to remove content
+      if (idx==0)
+        fArray[idx]->unAssign(); // first is always kept, it is the fFirstField, so only unassign to remove content
       else
         delete fArray[idx];
       fArray[idx]=NULL;
@@ -421,24 +421,24 @@ void TArrayField::appendString(cAppCharP aString, size_t aMaxChars)
 // contained somewhere in my own array)
 bool TArrayField::contains(TItemField &aItemField, bool aCaseInsensitive)
 {
-	bool contained = false;
+  bool contained = false;
   if (aItemField.isArray()) {
-		contained=true;
-  	// array: all array elements must be contained in at least one of my elements
+    contained=true;
+    // array: all array elements must be contained in at least one of my elements
     for (sInt16 idx=0; idx<aItemField.arraySize(); idx++) {
-    	if (!contains(*(aItemField.getArrayField(idx)),aCaseInsensitive)) {
-      	// one of the elements of aItemField is not contained in myself -> not contained
-      	contained = false;
+      if (!contains(*(aItemField.getArrayField(idx)),aCaseInsensitive)) {
+        // one of the elements of aItemField is not contained in myself -> not contained
+        contained = false;
         break;
       }
     }
   }
   else {
-  	// leaf element: must be contained in at least one of my elements
-		contained = false;
+    // leaf element: must be contained in at least one of my elements
+    contained = false;
     for (sInt16 idx=0; idx<arraySize(); idx++) {
       if (getArrayField(idx)->contains(aItemField,aCaseInsensitive)) {
-      	// the value of aItemField is contained in one of my elements -> contained
+        // the value of aItemField is contained in one of my elements -> contained
         contained = true;
         break;
       }
@@ -1027,10 +1027,10 @@ TURLField::~TURLField()
 
 void TURLField::stringWasAssigned(void)
 {
-	// post-process string that was just assigned
+  // post-process string that was just assigned
   string proto;
   if (!fString.empty()) {
-  	// make sure we have a URL with protocol
+    // make sure we have a URL with protocol
     splitURL(fString.c_str() ,&proto, NULL, NULL, NULL, NULL);
     if (proto.empty()) {
       // no protocol set, but string not empty --> assume http
@@ -1258,7 +1258,7 @@ void TTimestampField::makeFloating(void)
 /// @return true if context has TCTX_DURATION rendering flag set
 bool TTimestampField::isDuration(void)
 {
-  return TCTX_IS_DURATION(fTimecontext);	
+  return TCTX_IS_DURATION(fTimecontext);
 } // TTimestampField::isDuration
 
 
@@ -2006,7 +2006,7 @@ TSyError TItemFieldKey::GetValueInternal(
     sInt16 minOffs;
     TTimestampField *tsFldP;
     if (aID & VALID_FLAG_NORM) {
-    	// for all field types: get normalized string value
+      // for all field types: get normalized string value
       fieldP->getAsNormalizedString(sval);
       aValSize = sval.size();
       valPtr = (appPointer)sval.c_str();
@@ -2119,12 +2119,12 @@ TSyError TItemFieldKey::SetValueInternal(
     TTimestampField *tsFldP;
     // treat setting normalized value like setting as string
     if (aID & VALID_FLAG_NORM)
-    	fty = fty_string; // treat like string
+      fty = fty_string; // treat like string
     // handle NULL (empty) case
     if (aBuffer==0) {
-    	// buffer==NULL means NULL value
-    	fieldP->assignEmpty();
-    	return LOCERR_OK;
+      // buffer==NULL means NULL value
+      fieldP->assignEmpty();
+      return LOCERR_OK;
     }
     // now handle according to type
     switch (fty) {

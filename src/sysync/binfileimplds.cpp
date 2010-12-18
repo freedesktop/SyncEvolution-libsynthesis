@@ -21,7 +21,7 @@
 #include "binfileimplds.h"
 
 #if defined(BINFILE_ALWAYS_ACTIVE) && defined(SYSYNC_SERVER)
-	#error "BINFILE_ALWAYS_ACTIVE is not compatible with server-enabled builds"
+  #error "BINFILE_ALWAYS_ACTIVE is not compatible with server-enabled builds"
 #endif
 
 
@@ -37,37 +37,37 @@ namespace sysync {
 class TBFDSfuncs {
 public:
 
-	static TItemField *fieldFromStructField(cAppCharP aFieldName, const TStructFieldInfo *aStructFieldInfos, sInt32 aNumFields, uInt8P aStructAddr, TScriptContext *aFuncContextP)
+  static TItemField *fieldFromStructField(cAppCharP aFieldName, const TStructFieldInfo *aStructFieldInfos, sInt32 aNumFields, uInt8P aStructAddr, TScriptContext *aFuncContextP)
   {
-  	TItemField *fldP = NULL;
-  	// search for name
+    TItemField *fldP = NULL;
+    // search for name
     for (sInt32 i=0; i<aNumFields; i++) {
-    	const TStructFieldInfo *info = &aStructFieldInfos[i];
-    	if (strucmp(info->valName, aFieldName)==0 && info->valSiz>0) {
-      	// found field
+      const TStructFieldInfo *info = &aStructFieldInfos[i];
+      if (strucmp(info->valName, aFieldName)==0 && info->valSiz>0) {
+        // found field
         if (info->valType==VALTYPE_TEXT) {
-        	// text
-		      fldP = newItemField(fty_string, aFuncContextP->getSessionZones());
+          // text
+          fldP = newItemField(fty_string, aFuncContextP->getSessionZones());
           fldP->setAsString((cAppCharP)(aStructAddr+info->fieldOffs));
           return fldP;
         }
         else if (info->valType==VALTYPE_TIME64) {
-        	// timestamp
-		      fldP = newItemField(fty_timestamp, aFuncContextP->getSessionZones());
+          // timestamp
+          fldP = newItemField(fty_timestamp, aFuncContextP->getSessionZones());
           static_cast<TTimestampField *>(fldP)->setTimestampAndContext(
-          	*((lineartime_t *)(aStructAddr+info->fieldOffs)),
+            *((lineartime_t *)(aStructAddr+info->fieldOffs)),
             TCTX_UTC // internal timestamps are UTC
           );
           return fldP;
         }
         else {
-        	// all other types are treated as integers
+          // all other types are treated as integers
           fieldinteger_t fint = 0;
           switch(info->valSiz) {
-          	case 1 : fint = *((uInt8 *)(aStructAddr+info->fieldOffs)); break;
-          	case 2 : fint = *((uInt16 *)(aStructAddr+info->fieldOffs)); break;
-          	case 4 : fint = *((uInt32 *)(aStructAddr+info->fieldOffs)); break;
-          	case 8 : fint = *((uInt64 *)(aStructAddr+info->fieldOffs)); break;
+            case 1 : fint = *((uInt8 *)(aStructAddr+info->fieldOffs)); break;
+            case 2 : fint = *((uInt16 *)(aStructAddr+info->fieldOffs)); break;
+            case 4 : fint = *((uInt32 *)(aStructAddr+info->fieldOffs)); break;
+            case 8 : fint = *((uInt64 *)(aStructAddr+info->fieldOffs)); break;
           }
           fldP = newItemField(fty_integer, aFuncContextP->getSessionZones());
           fldP->setAsInteger(fint);
@@ -92,7 +92,7 @@ public:
     aFuncContextP->getLocalVar(0)->getAsString(varname);
     // get value
     aTermP = fieldFromStructField(
-    	varname.c_str(),
+      varname.c_str(),
       ProfileFieldInfos, numProfileFieldInfos,
       (uInt8P)&(static_cast<TBinfileImplClient *>(dsP->getSession())->fProfile),
       aFuncContextP
@@ -110,7 +110,7 @@ public:
     aFuncContextP->getLocalVar(0)->getAsString(varname);
     // get value
     aTermP = fieldFromStructField(
-    	varname.c_str(),
+      varname.c_str(),
       TargetFieldInfos, numTargetFieldInfos,
       (uInt8P)&(dsP->fTarget),
       aFuncContextP
@@ -170,10 +170,10 @@ TBinfileDSConfig::~TBinfileDSConfig()
 // init defaults
 void TBinfileDSConfig::clear(void)
 {
-	// Only active in clients by default
-	fBinfileDSActive = IS_CLIENT;
+  // Only active in clients by default
+  fBinfileDSActive = IS_CLIENT;
   // change detection by CRC is enabled by default only for builds that CAN'T have DB-side detection
-	#ifdef CHANGEDETECTION_AVAILABLE
+  #ifdef CHANGEDETECTION_AVAILABLE
   fCRCChangeDetection = false; // normally, DB can report changes. CRC checking can be enabled as an option
   fCRCPseudoChangeDetection = false; // normally, DB reports changes correctly. Verifying changes can be enabled as an option
   #endif
@@ -205,7 +205,7 @@ bool TBinfileDSConfig::localStartElement(const char *aElementName, const char **
     expectBool(fCmpRefTimeStampAtEnd);
   else if (strucmp(aElementName,"binfiledsactive")==0)
     expectBool(fBinfileDSActive);
-	#ifdef CHANGEDETECTION_AVAILABLE
+  #ifdef CHANGEDETECTION_AVAILABLE
   else if (strucmp(aElementName,"crcchangedetection")==0)
     expectBool(fCRCChangeDetection);
   else if (strucmp(aElementName,"pseudochangedetection")==0)
@@ -228,7 +228,7 @@ void TBinfileDSConfig::localResolve(bool aLastPass)
     #ifdef CHANGEDETECTION_AVAILABLE
     // - pseudochange detection would interfere with regular CRC based change detection and is also completely useless then
     if (fCRCChangeDetection) fCRCPseudoChangeDetection = false; // just switch it off, makes no sense
-    #endif	
+    #endif
   }
   // resolve inherited
   inherited::localResolve(aLastPass);
@@ -415,7 +415,7 @@ bool TBinfileImplDS::dsSetClientSyncParams(
   bool aFilterInclusive
 )
 {
-	if (binfileDSActive()) {
+  if (binfileDSActive()) {
     #ifdef AUTOSYNC_SUPPORT
     string s;
     bool cgi=false;
@@ -461,11 +461,11 @@ localstatus TBinfileImplDS::changeLogPostflight(uInt32 aOldestSyncModCount)
       fChangeLog.deleteRecord(logindex);
     }
     else {
-    	// no delete, finalize localid (possible only with string localIDs)
+      // no delete, finalize localid (possible only with string localIDs)
       #ifndef NUMERIC_LOCALIDS
       localid_out_t locID = logentry.dbrecordid;
       if (dsFinalizeLocalID(locID)) {
-      	// update log entry
+        // update log entry
         ASSIGN_LOCALID_TO_FLD(logentry.dbrecordid,LOCALID_OUT_TO_IN(locID));
         fChangeLog.updateRecord(logindex, &logentry);
       }
@@ -509,12 +509,12 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
   if (aNewVersion!=CHANGELOG_DB_VERSION) return 0; // cannot update to other version than current
   // create default values for profile
   if (aOldRecordData && aNewRecordData) {
-  	// update records
+    // update records
     TChangeLogEntry *chglogEntryP = (TChangeLogEntry *)aNewRecordData;
     // check for special case that old record is V2 or V3 and was compiled without CHANGEDETECTION_AVAILABLE
     uInt16 crc = 0;
     if ((aOldVersion==2 || aOldVersion==3) && aOldSize!=offsetof(TChangeLogEntry,modcount_created)) {
-    	// this means that the records were compiled without CHANGEDETECTION_AVAILABLE and had a
+      // this means that the records were compiled without CHANGEDETECTION_AVAILABLE and had a
       // dataCRC field between modcount and flags
       //#if defined(WINCE) ||
       #if defined(__PALM_OS__)
@@ -523,7 +523,7 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
       // - offset of the CRC field we already have
       int o = offsetof(TChangeLogEntry,flags);
       // - copy up to the CRC which is already there
-	    memcpy(aNewRecordData,aOldRecordData,o);
+      memcpy(aNewRecordData,aOldRecordData,o);
       // - get the CRC which is already there to init the new V5 DB field below
       crc = *((uInt16 *)((uInt8 *)aOldRecordData+o));
       // - also copy the flags
@@ -540,22 +540,22 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
       chglogEntryP->modcount_created = 0; // assume created before changelogging history started
     }
     if (aOldVersion<5) {
-    	// init new V5 dataCRC; if we are updating from V2 or V3 (which is handled above) we'll assign the previous CRC here, 0 otherwise
+      // init new V5 dataCRC; if we are updating from V2 or V3 (which is handled above) we'll assign the previous CRC here, 0 otherwise
       chglogEntryP->dataCRC = crc;
     }
   }
   else if (aNewRecordData) {
-  	// update extra header
+    // update extra header
     TChangeLogHeader *extraHeaderP = (TChangeLogHeader *)aNewRecordData;
     if (aOldVersion<3) {
-    	// header has got new fields between v2 and v3
+      // header has got new fields between v2 and v3
       // Note: these will be updated with data from target fields after actually opening the changelog
       //       Just init them now
       extraHeaderP->lastChangeCheckIdentifier[0] = 0;
       extraHeaderP->lastChangeCheck = noLinearTime;
     }
     // updated header ok
-	  return sizeof(TChangeLogHeader);
+    return sizeof(TChangeLogHeader);
   }
   // updated ok (or updateable ok if no data pointers provided)
   // - return size of new record
@@ -575,41 +575,41 @@ bool TBinfileImplDS::openChangeLog(void)
   changelogname += CHANGELOG_DB_SUFFIX;
   fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
   if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) {
-  	// can't open changelog - check if we might need need migration from united changelogs to separated
+    // can't open changelog - check if we might need need migration from united changelogs to separated
     if (bfcfgP->fSeparateChangelogs) {
-    	// check if we have the old united changelog and migrate everything if so
+      // check if we have the old united changelog and migrate everything if so
       string unitedchangelogname = bfcfgP->relatedDBNameBase(getName(), -1); // united name
       unitedchangelogname += CHANGELOG_DB_SUFFIX;
       fChangeLog.setFileInfo(unitedchangelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
-		  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)==BFE_OK) {
-      	// the old unified changelog is there - we need to do a full migration now
+      if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)==BFE_OK) {
+        // the old unified changelog is there - we need to do a full migration now
         // - close it
         fChangeLog.close();
         // - perform migration for this DB
-		    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: auto-migrating from common to profile-separated changelog for this datastore"));
+        PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: auto-migrating from common to profile-separated changelog for this datastore"));
         bfcfgP->separateChangeLogsAndRelated(getName());
         // - recursively call myself, now the profile specific log should be there
         return openChangeLog();
       }
       // we're not migrating (we could not open the changelog because this is a new profile!)
       // - restore the per-profile name for creation of new log below
-		  fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
+      fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
     }
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
     //set all bytes to zero to avoid memory warnings
     memset(fChgLogHeader.lastChangeCheckIdentifier, 0, changeIndentifierMaxLen);
-  	fChgLogHeader.lastChangeCheck = noLinearTime;
+    fChgLogHeader.lastChangeCheck = noLinearTime;
     // - create new changelog
     fChangeLog.create(sizeof(TChangeLogEntry),sizeof(TChangeLogHeader),&fChgLogHeader,true);
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: changelog did not exist (or bad version) -> created new"));
     return false; // changelog is new, so we need a slow sync
   }
   else {
-  	// check if opening was an upgrade from version 2
+    // check if opening was an upgrade from version 2
     if (fChangeLog.getFoundVersion()<3) {
-    	// version 3 has introduced saving the last-check date/identifiers in the changelog header,
+      // version 3 has introduced saving the last-check date/identifiers in the changelog header,
       // before that the identifiers used where (wrongly) those of the target. So copy
       // the target info to the new header now. This gives perfect results only for single
       // profile use, but existing products before update to v3 were single profile so we can
@@ -617,14 +617,14 @@ bool TBinfileImplDS::openChangeLog(void)
       #if TARGETS_DB_VERSION>5
       // - dummyIdentifier1 is the former lastSyncIdentifier and contains the token from the
       //   last change check towards the DB (in case sync identifiers are available at all)
-	  	AssignCString(fChgLogHeader.lastChangeCheckIdentifier,fTarget.dummyIdentifier1,changeIndentifierMaxLen);
+      AssignCString(fChgLogHeader.lastChangeCheckIdentifier,fTarget.dummyIdentifier1,changeIndentifierMaxLen);
       #endif
       // - lastChangeCheck is the former lastTwoWaySync and contains the timestamp of the last change check towards the DB
-  		fChgLogHeader.lastChangeCheck = fTarget.lastChangeCheck;
+      fChgLogHeader.lastChangeCheck = fTarget.lastChangeCheck;
       // - make sure it gets written back
       fChangeLog.setExtraHeaderDirty();
       fChangeLog.flushHeader();
-	    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: upgraded changelog from V2 to V4 (new header, new modcount_created)"));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: upgraded changelog from V2 to V4 (new header, new modcount_created)"));
     }
   }
   return true; // changelog already existed, so we assume it's up-to-date
@@ -757,7 +757,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
   // Now update the changelog using CRC checks
   // loop through entire database
   if (CRC_CHANGE_DETECTION) {
-  	// we do change detection via CRC comparison
+    // we do change detection via CRC comparison
     #ifdef RECORDHASH_FROM_DBAPI
     // - DB can deliver CRC directly
     foundone = getFirstItemCRC(itemLocalID,dataCRC);
@@ -767,7 +767,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     #endif
   }
   else {
-  	#ifdef CHANGEDETECTION_AVAILABLE
+    #ifdef CHANGEDETECTION_AVAILABLE
     // - the DB layer can report changes directly
     foundone = getFirstItemInfo(itemLocalID,itemIsModified);
     #else
@@ -785,10 +785,10 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     #ifdef RECORDHASH_FROM_DBAPI
     // with or without CRC, we have got the ID into itemLocalID already
     localid=LOCALID_OUT_TO_IN(itemLocalID);
-		#else
-		if (CRC_CHANGE_DETECTION) {
-    	// with CRC, we have got the entire item, so we need to get the ID out of that
-	    STR_TO_LOCALID(itemP->getLocalID(),localid);
+    #else
+    if (CRC_CHANGE_DETECTION) {
+      // with CRC, we have got the entire item, so we need to get the ID out of that
+      STR_TO_LOCALID(itemP->getLocalID(),localid);
     }
     else {
       // without CRC, we have got the ID into itemLocalID already
@@ -817,7 +817,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     // - search for already existing changelog entry for this uniqueID
     //   (prevent searching those that we have created in this preflight)
     bool chgentryexists=false; // none found yet
-	  TChangeLogEntry *currentEntryP = NULL; // no entry yet
+    TChangeLogEntry *currentEntryP = NULL; // no entry yet
     for (logindex=0; logindex<numexistinglogentries; logindex++) {
       if (LOCALID_EQUAL(existingentries[logindex].dbrecordid,localid)) {
         // found
@@ -828,7 +828,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
           currentEntryP->flags &= ~chgl_delete_candidate; // remove candidate flag
         }
         // found
-		    if (CRC_CHANGE_DETECTION) {
+        if (CRC_CHANGE_DETECTION) {
           PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
             "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, modcount_created=%ld, saved CRC=0x%04hX",
             (long)logindex,
@@ -837,7 +837,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
             (long)currentEntryP->modcount_created,
             currentEntryP->dataCRC
           ));
-				}
+        }
         else {
           PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
             "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, modcount_created=%ld",
@@ -865,9 +865,9 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     }
     // now check what to do
     if (CRC_CHANGE_DETECTION) {
-    	#ifndef RECORDHASH_FROM_DBAPI
-	    // we need a CRC but don't have it precalculated from the DB layer
-  	  dataCRC=itemP->getDataCRC(0,true); // start new CRC, do not include eqm_none fields
+      #ifndef RECORDHASH_FROM_DBAPI
+      // we need a CRC but don't have it precalculated from the DB layer
+      dataCRC=itemP->getDataCRC(0,true); // start new CRC, do not include eqm_none fields
       #endif // not RECORDHASH_FROM_DBAPI
     }
     // - check if new or changed
@@ -910,7 +910,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
           fNumberOfLocalChanges++; // for suspend: those that detect a change here were modified AFTER last suspend, so always count them
         }
       }
-			if (!itemIsModified) {
+      if (!itemIsModified) {
         // no change detected since last preflight (but still, this could be a change to report to the server)
         if (isResuming()) {
           // if resuming - only those count that are marked for resume
@@ -933,27 +933,27 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       currentEntryP->modcount_created = fCurrentModCount;
       // - no flags set
       currentEntryP->flags = 0;
-			// - update CRC to current value if CRC is in use
-	   	if (CRC_CHANGE_DETECTION) {
-	      currentEntryP->dataCRC = dataCRC;
+      // - update CRC to current value if CRC is in use
+      if (CRC_CHANGE_DETECTION) {
+        currentEntryP->dataCRC = dataCRC;
       }
       else {
-				currentEntryP->dataCRC = 0; // clean it for cosmetic reasons only
+        currentEntryP->dataCRC = 0; // clean it for cosmetic reasons only
       }
-			// create if entry is new
+      // create if entry is new
       if (!chgentryexists) {
-      	// this is a new, additional entry (and not a resurrected deleted one)
-	      fChangeLog.newRecord(currentEntryP);
-	      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item was newly added (no entry existed in changelog before)"));
+        // this is a new, additional entry (and not a resurrected deleted one)
+        fChangeLog.newRecord(currentEntryP);
+        PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item was newly added (no entry existed in changelog before)"));
       }
       else {
-      	// the entry itself existed, but was a deleted entry. We're now re-using that one
-	      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item has re-appeared (i.e. item with same local uniqueID that was once before deleted is now here again)"));
+        // the entry itself existed, but was a deleted entry. We're now re-using that one
+        PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item has re-appeared (i.e. item with same local uniqueID that was once before deleted is now here again)"));
       }
       // this is a local change for this session (even for resume - we need to add newly added ones in resume!)
       fNumberOfLocalChanges++;
     }
-		// Next item
+    // Next item
     if (CRC_CHANGE_DETECTION) {
       #ifdef RECORDHASH_FROM_DBAPI
       foundone = getNextItemCRC(itemLocalID,dataCRC);
@@ -965,8 +965,8 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       #endif
     }
     else {
-    	#ifdef CHANGEDETECTION_AVAILABLE
-	    foundone = getNextItemInfo(itemLocalID,itemIsModified);
+      #ifdef CHANGEDETECTION_AVAILABLE
+      foundone = getNextItemInfo(itemLocalID,itemIsModified);
       #endif
     }
   } // while all records in DB
@@ -1070,7 +1070,7 @@ localstatus TBinfileImplDS::loadTarget(bool aCreateIfMissing, cAppCharP aRemoteD
         }
       }
     }
-	  // target not found
+    // target not found
     if (aCreateIfMissing) {
       // create new target record
       // - init with defaults
@@ -1096,12 +1096,12 @@ localstatus TBinfileImplDS::loadTarget(bool aCreateIfMissing, cAppCharP aRemoteD
 //   in client case.
 sInt32 TBinfileImplDS::getNumberOfChanges(void)
 {
-	if (binfileDSActive() && IS_CLIENT) {
-  	// for client case with active binfile, we return the locally computed count
+  if (binfileDSActive() && IS_CLIENT) {
+    // for client case with active binfile, we return the locally computed count
     // (for server, the entire list of changes is loaded by the baseclass
     // before NOC is needed, so the baseclass has the more accurate count
     // which takes filtering etc. into account).
-		return fNumberOfLocalChanges;
+    return fNumberOfLocalChanges;
   }
   // otherwise, let base class handle it (server and client w/o binfile)
   return inherited::getNumberOfChanges();
@@ -1122,7 +1122,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
   cAppCharP aRemoteDBID  // database ID of remote device
 )
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localstatus sta=LOCERR_OK; // assume ok
 
@@ -1135,12 +1135,12 @@ localstatus TBinfileImplDS::implMakeAdminReady(
 
   #if !defined(PRECONFIGURED_SYNCREQUESTS)
   // when sync params are in binfiles, target must be present by now - make sure it is loaded
-	sta=loadTarget(false);
+  sta=loadTarget(false);
   // target info must already be present by now (loaded at session's SelectProfile)
   if (sta!=LOCERR_OK || fTargetIndex<0) {
-  	// problem loading target record
-  	sta = sta ? sta : 404;
-	  PDEBUGPRINTFX(DBG_ERROR,("Error %d loading target record",sta));
+    // problem loading target record
+    sta = sta ? sta : 404;
+    PDEBUGPRINTFX(DBG_ERROR,("Error %d loading target record",sta));
     PDEBUGENDBLOCK("implMakeAdminReady");
     return sta;
   }
@@ -1202,22 +1202,22 @@ localstatus TBinfileImplDS::implMakeAdminReady(
       #ifdef SYDEBUG
       string lsd;
       StringObjTimestamp(lsd,fPreviousToRemoteSyncCmpRef);
-	    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- last preflight update (fPreviousToRemoteSyncCmpRef) at %s",lsd.c_str()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- last preflight update (fPreviousToRemoteSyncCmpRef) at %s",lsd.c_str()));
       #endif // SYDEBUG
       #if TARGETS_DB_VERSION>=6
       // - DB api level change detection identifiers
       fPreviousToRemoteSyncIdentifier.assign(fChgLogHeader.lastChangeCheckIdentifier);
       fPreviousSuspendIdentifier = fPreviousToRemoteSyncIdentifier; // DB on top of binfile only needs one reference time, which is the last changelog check time.
-	    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- last preflight update (fPreviousToRemoteSyncIdentifier) is '%s'",fPreviousToRemoteSyncIdentifier.c_str()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- last preflight update (fPreviousToRemoteSyncIdentifier) is '%s'",fPreviousToRemoteSyncIdentifier.c_str()));
       #endif // TARGETS_DB_VERSION>=6
-  	}
+    }
   }
   // get pending maps anyway (even if not resuming there might be pending maps)
   if(openPendingMaps()) {
     // there is a pending map file, check if these are really our maps
     // Note: with separated changelogs, this should be always the case!
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-	    "implMakeAdminReady: remotePartyID of pendingmaps=%ld, current profile's remotepartyID=%ld",
+      "implMakeAdminReady: remotePartyID of pendingmaps=%ld, current profile's remotepartyID=%ld",
       (long)fPendingMapHeader.remotepartyID,
       (long)static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID
     ));
@@ -1289,7 +1289,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
 
 localstatus TBinfileImplDS::implStartDataRead()
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // init reading of all records
   // - start at beginning of log
@@ -1324,7 +1324,7 @@ bool TBinfileImplDS::testFilters(TMultiFieldItem *aItemP)
 /// @brief called to have all non-yet-generated sync commands as "to-be-resumed"
 void TBinfileImplDS::implMarkOnlyUngeneratedForResume(void)
 {
-	if (!binfileDSActive()) return; // must be active when called at all
+  if (!binfileDSActive()) return; // must be active when called at all
 
   TChangeLogEntry *chglogP;
 
@@ -1410,7 +1410,7 @@ void TBinfileImplDS::implMarkOnlyUngeneratedForResume(void)
 // as "to-be-resumed", by localID or remoteID (latter only in server case).
 void TBinfileImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemoteID, bool aUnSent)
 {
-	if (!binfileDSActive()) return; // must be active when called at all
+  if (!binfileDSActive()) return; // must be active when called at all
 
   // make sure we have the changelog in memory
   loadChangeLog();
@@ -1445,7 +1445,7 @@ void TBinfileImplDS::implMarkItemForResume(cAppCharP aLocalID, cAppCharP aRemote
 // error status conditions, by localID or remoteID (latter only in server case).
 void TBinfileImplDS::implMarkItemForResend(cAppCharP aLocalID, cAppCharP aRemoteID)
 {
-	if (!binfileDSActive()) return; // must be active when called at all
+  if (!binfileDSActive()) return; // must be active when called at all
 
   // make sure we have the changelog in memory
   loadChangeLog();
@@ -1484,7 +1484,7 @@ localstatus TBinfileImplDS::implGetItem(
   TSyncItem* &aSyncItemP
 )
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localstatus sta=LOCERR_OK;
   TSyncItem *myitemP=NULL;
@@ -1616,13 +1616,13 @@ localstatus TBinfileImplDS::implGetItem(
       // this entry is to be reported
       // - now check how to report
       if (chglogP->flags & chgl_deleted) {
-      	// deleted: only report if it is also changed (i.e. delete detected since last sync)
+        // deleted: only report if it is also changed (i.e. delete detected since last sync)
         // Note: this can only happen when caller requests to see all records, not only changed,
         //       which usually only occurs in slowsync where deletes are NOT reported anyway.
         //       However: when caller must dynamically filter the syncset, it will request all records
         //       even in normal syncs and then this can happen.
         if (!aChanged)
-        	continue; // delete was reported earlier, don't report it again
+          continue; // delete was reported earlier, don't report it again
         // deleted, we cannot get it from the DB, create a empty item
         myitemP = new TSyncItem();
         // add ID
@@ -1651,14 +1651,14 @@ localstatus TBinfileImplDS::implGetItem(
         }
         // detect wheter the item is new added or changed
         if(chglogP->modcount_created > fPreviousToRemoteModCount) {
-        	// Added
+          // Added
           myitemP->setSyncOp(sop_add);
         }
         else {
-        	// Not added (changed or just reported because we want all records reported)
+          // Not added (changed or just reported because we want all records reported)
           // - if enabled, also verify change by checking CRC before reporting it (unless this is a slow sync)
-	        if (CRC_DETECT_PSEUDOCHANGES && aChanged) {
-          	// check if really changed using CRC, but only...
+          if (CRC_DETECT_PSEUDOCHANGES && aChanged) {
+            // check if really changed using CRC, but only...
             // ...if not slow sync (all items must be reported)
             // ...if change was detected in this session's preflight. If the change was detected earlier and is still
             //    pending (i.e. newer than the last sync), this means that this change might have failed to be applied
@@ -1668,22 +1668,22 @@ localstatus TBinfileImplDS::implGetItem(
             //    suppressed, but in case this sync fails, subsequent syncs will report it.
             uInt16 newDataCRC = myitemP->getDataCRC(0,true);
             PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-            	"CRC comparison for pseudo-change detection: old CRC=0x%hX, new CRC=0x%hX, recordModCount=%u, currentModCount=%u",
+              "CRC comparison for pseudo-change detection: old CRC=0x%hX, new CRC=0x%hX, recordModCount=%u, currentModCount=%u",
               chglogP->dataCRC, newDataCRC, chglogP->modcount, fCurrentModCount
             ));
-          	if (chglogP->dataCRC==newDataCRC && !fSlowSync && chglogP->modcount==fCurrentModCount) {
-            	// none of the relevant fields have changed -> don't report the item
+            if (chglogP->dataCRC==newDataCRC && !fSlowSync && chglogP->modcount==fCurrentModCount) {
+              // none of the relevant fields have changed -> don't report the item
               PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Not reporting localID='%s' as changed because CRC detected this as a pseudo-change.",myitemP->getLocalID()));
               aChanged = false; // even if it gets reported, it does not count as changed any more
               if (onlyChanged) {
-              	// we don't need to report this at all, as we only report changed ones
+                // we don't need to report this at all, as we only report changed ones
                 delete myitemP; // delete the item
                 continue; // don't report, try next
               }
               // report as unchanged
             }
             else {
-            	// change will now be reported, so update CRC to what we report now
+              // change will now be reported, so update CRC to what we report now
               // Note: the problem with this is that in case the sync does not succeed now, the CRC is already updated and would
               //   trigger pseudo-change detection in the next session. Therefore, pseudo-change detection is only active for
               //   changes newly detected during this sync.
@@ -1726,7 +1726,7 @@ error:
 // end of read
 localstatus TBinfileImplDS::implEndDataRead(void)
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // pass it on to the DB api (usually dummy for traditional binfile derivates, but
   // needed for customimplds)
@@ -1781,7 +1781,7 @@ void TBinfileImplDS::loadChangeLog(void)
 // start of write
 localstatus TBinfileImplDS::implStartDataWrite(void)
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localstatus sta = LOCERR_OK;
 
@@ -1810,13 +1810,13 @@ localstatus TBinfileImplDS::implStartDataWrite(void)
     #ifdef ZAP_FORCES_SLOWSYNC
     // we force a slowsync, zap the changelog
     fChangeLog.truncate(0);
-		// forget the anchor to force a slow sync anyway
+    // forget the anchor to force a slow sync anyway
     fTarget.remoteAnchor[0]=0; // (only to make sure. If sync completes successfully, this will be updated anyway in SaveAnchor)
-		// for combined changelog, we need to take care of other profiles  
+    // for combined changelog, we need to take care of other profiles
     if (!static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
-	    // zap the anchors in all other profiles for this datastore
-    	// because we have deleted the (common) changelog. Note that this also resets our own
-    	// target's anchor (again)
+      // zap the anchors in all other profiles for this datastore
+      // because we have deleted the (common) changelog. Note that this also resets our own
+      // target's anchor (again)
       // get target DB
       TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
       TBinfileDBSyncTarget target;
@@ -1864,7 +1864,7 @@ bool TBinfileImplDS::implRetrieveItemByID(
   TStatusCommand &aStatusCommand
 )
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
   // %%% not so nice as we need to copy it once
   TSyncItem *itemP=NULL;
   // read item by local ID
@@ -1898,7 +1898,7 @@ bool TBinfileImplDS::implProcessItem(
   TStatusCommand &aStatusCommand
 )
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   localid_out_t newid;
   TSyError statuscode;
@@ -2028,7 +2028,7 @@ bool TBinfileImplDS::implProcessItem(
       // new added item
       ASSIGN_LOCALID_TO_FLD(affectedentryP->dbrecordid,localid);
       // also record the time this entry was created
-	    affectedentryP->modcount_created=fCurrentModCount;
+      affectedentryP->modcount_created=fCurrentModCount;
       // save it
       #ifdef NUMERIC_LOCALIDS
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
@@ -2083,7 +2083,7 @@ done:
 // @note aSyncOp passed not necessarily reflects what was sent to remote, but what actually happened
 void TBinfileImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID, cAppCharP aRemoteID, bool aSuccess, localstatus aErrorStatus)
 {
-	if (binfileDSActive()) {
+  if (binfileDSActive()) {
     // Nothing to do here, even successful deletes must not delete changelog entry (this will be done
     // by changeLogPostFlight() for those enties that have been reported as deleted in all profiles!)
   }
@@ -2097,7 +2097,7 @@ void TBinfileImplDS::dsConfirmItemOp(TSyncOperation aSyncOp, cAppCharP aLocalID,
 //   (or, in case the session is really complete, make sure that no resume state is left)
 localstatus TBinfileImplDS::implSaveResumeMarks(void)
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // update modcount reference of last suspend
   fPreviousSuspendModCount = fCurrentModCount;
@@ -2111,10 +2111,10 @@ localstatus TBinfileImplDS::implSaveResumeMarks(void)
 // - Called at end of sync with this datastore
 void TBinfileImplDS::dsLogSyncResult(void)
 {
-	// Note: binfile logs can be active even if binfiles layer otherwise is not active
-	TBinfileClientConfig *clientCfgP = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig());
-	if (clientCfgP->fBinFileLog) {
-  	// writing binfile logs enabled
+  // Note: binfile logs can be active even if binfiles layer otherwise is not active
+  TBinfileClientConfig *clientCfgP = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig());
+  if (clientCfgP->fBinFileLog) {
+    // writing binfile logs enabled
     TBinFile logFile;
     // Open logfile
     // - get base path
@@ -2133,7 +2133,7 @@ void TBinfileImplDS::dsLogSyncResult(void)
     logInfo.time = fCurrentSyncTime; // current sync's time
     logInfo.status = getAbortStatusCode(); // reason for abort (0 if ok)
     logInfo.mode =
-	    (fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0) +
+      (fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0) +
       (fResuming ? 10 : 0);
     logInfo.dirmode = fSyncMode; // sync direction mode
     logInfo.infoID = 0; // none
@@ -2162,7 +2162,7 @@ void TBinfileImplDS::dsLogSyncResult(void)
 // be called by the derivate after doing customimpl specific stuff.
 localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // update TCustomImplDS dsSavedAdmin variables (other levels have already updated their variables
   if (aUpdateAnchors) {
@@ -2182,16 +2182,16 @@ localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
     uInt32 oldestmodcount=0xFFFFFFFF;
     // do a postFlight to remove unused entries from the changelog
     if (static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
-    	// Each profile has it's own changelog, so just delete entries that are older than this profile's last sync or resume
+      // Each profile has it's own changelog, so just delete entries that are older than this profile's last sync or resume
       if (fTarget.lastSuspendModCount!=0)
-	      oldestmodcount = fTarget.lastSuspendModCount;
+        oldestmodcount = fTarget.lastSuspendModCount;
       if (fTarget.lastTwoWayModCount!=0 && fTarget.lastTwoWayModCount<oldestmodcount)
-	      oldestmodcount = fTarget.lastTwoWayModCount;
+        oldestmodcount = fTarget.lastTwoWayModCount;
     }
     else {
-    	// Combined changelog for all profiles, need to keep deleted markers for other profiles
+      // Combined changelog for all profiles, need to keep deleted markers for other profiles
       // - find oldest sync modcount
-	    TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
+      TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
       uInt32 maxidx = targetsBinFileP->getNumRecords();
       uInt32 idx;
       TBinfileDBSyncTarget target;
@@ -2221,7 +2221,7 @@ localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
 // - end write with commit
 bool TBinfileImplDS::implEndDataWrite(void)
 {
-	if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
 
   // Call apiEndDataWrite variant which is possibly implemented in
   // datastores which were designed as direct derivates of binfileds.
@@ -2277,7 +2277,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   //   Note: preflight has already set fChgLogHeader.lastChangeCheck to the beginning of the sync
   //         Update it here only if synctime must be end of session.
   if (fConfigP->fCmpRefTimeStampAtEnd) {
-	  fChgLogHeader.lastChangeCheck = getSession()->getSystemNowAs(TCTX_UTC); // NOW ! (again);
+    fChgLogHeader.lastChangeCheck = getSession()->getSystemNowAs(TCTX_UTC); // NOW ! (again);
   }
   fChangeLog.setExtraHeaderDirty();
   fChangeLog.flushHeader();
@@ -2321,7 +2321,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
     /// @note: lastSuspendModCount is the same target field that previously was called "lastModCount"
     fTarget.lastSuspendModCount = fPreviousSuspendModCount;
     if (!static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
-    	// Combined changelogs: make sure that resume alert codes of all other profile's targets for this datastore are erased
+      // Combined changelogs: make sure that resume alert codes of all other profile's targets for this datastore are erased
       // (because in a single changelog there is only one set of markforresume flags and single pendingmap+pendingitem files)
       TBinfileDBSyncTarget otherTarget;
       memset(&otherTarget, 0, sizeof(otherTarget));
@@ -2358,7 +2358,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   // - now pending maps (unsent ones)
   DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_DETAILS,("SaveAdminData: saving %ld entries from fPendingAddMap to fPendingMaps binfile",(long)fPendingAddMaps.size()));
   for (spos=fPendingAddMaps.begin();spos!=fPendingAddMaps.end();spos++) {
-  	string locID = (*spos).first;
+    string locID = (*spos).first;
     dsFinalizeLocalID(locID); // pending maps might have non-final ID, so give datastore implementation to return finalized version
     STR_TO_LOCALID(locID.c_str(),localid); ASSIGN_LOCALID_TO_FLD(pme.dbrecordid,localid);
     AssignCString(pme.remoteID,(*spos).second.c_str(),BINFILE_MAXGUIDSIZE+1);

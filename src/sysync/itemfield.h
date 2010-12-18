@@ -319,7 +319,7 @@ public:
   virtual size_t StringObjFieldAppend(string &s, uInt16 aMaxStrLen);
   #endif
 protected:
-	virtual void stringWasAssigned(void) { fAssigned=true; }; // post-process string that was just assigned
+  virtual void stringWasAssigned(void) { fAssigned=true; }; // post-process string that was just assigned
   #ifdef STREAMFIELD_SUPPORT
   TBlobProxy *fBlobProxyP;
   #endif
@@ -678,8 +678,8 @@ private:
 #endif // ENGINEINTERFACE_SUPPORT
 
 
-}	// namespace sysync
+} // namespace sysync
 
-#endif	// ItemField_H
+#endif  // ItemField_H
 
 // eof

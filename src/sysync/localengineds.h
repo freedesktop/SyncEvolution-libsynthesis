@@ -206,9 +206,9 @@ public:
   // - reset config to defaults
   virtual void clear();
   // - check for alias names
-	uInt16 isDatastoreAlias(cAppCharP aDatastoreURI);
+  uInt16 isDatastoreAlias(cAppCharP aDatastoreURI);
   // - returns true for datastores that are abstract, i.e. don't have a backend implementation (like superdatastores, or non-derived localengineds)
-  virtual bool isAbstractDatastore(void) { return true; }; // pure localengineds is abstract. First derivate towards backend (stdlogicds) will override this with "false". 
+  virtual bool isAbstractDatastore(void) { return true; }; // pure localengineds is abstract. First derivate towards backend (stdlogicds) will override this with "false".
 protected:
   // check config elements
   #ifndef HARDCODED_CONFIG
@@ -315,7 +315,7 @@ protected:
   /// @{
   TLocalEngineDSState fLocalDSState;  ///< internal state of the datastore sync process
   localstatus fAbortStatusCode;       ///< status code when engAbortDatastoreSync() was called
-  bool fLocalAbortCause;							///< flag signalling if abort cause was local or remote
+  bool fLocalAbortCause;              ///< flag signalling if abort cause was local or remote
   bool fRemoteAddingStopped;          ///< set when no more add commands should be sent to remote (e.g. device full)
   localstatus fAlertCode;             ///< alert code in use by this datastore (for scripts and for suspend)
   /// @}
@@ -606,8 +606,8 @@ public:
   /// datastore options
   fieldinteger_t getItemSizeLimit(void) { return fItemSizeLimit; };
   bool getNoAttachments(void) {
-	  #ifdef SYSYNC_TARGET_OPTIONS
-  	return fNoAttachments;
+    #ifdef SYSYNC_TARGET_OPTIONS
+    return fNoAttachments;
     #else
     return false;
     #endif
@@ -679,7 +679,7 @@ public:
   // - make sync set ready
   SUPERDS_VIRTUAL localstatus engInitForClientSync(void);
   // - non-superdatastore aware base functionality
-	localstatus engInitDSForClientSync(void);
+  localstatus engInitDSForClientSync(void);
   #endif
   /// Internal events during sync for derived classes
   /// @note local DB authorisation must be established already before calling these
@@ -918,7 +918,7 @@ public:
   virtual TSyError TunnelReadItemAsKey(cItemID aID, KeyH aItemKey) { return LOCERR_NOTIMP; };
   virtual TSyError TunnelInsertItemAsKey(KeyH aItemKey, ItemID aID) { return LOCERR_NOTIMP; };
   virtual TSyError TunnelUpdateItemAsKey(KeyH aItemKey, cItemID aID, ItemID aUpdID) { return LOCERR_NOTIMP; };
-  
+
   virtual TSettingsKeyImpl *newTunnelKey(TEngineInterface *) { return NULL; };
 
   /// @}

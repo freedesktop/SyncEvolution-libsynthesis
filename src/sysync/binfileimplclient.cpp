@@ -359,7 +359,7 @@ TSyError TBinfileTargetsKey::OpenSubkey(
       // - find related datastore config (by dbtypeid)
       TBinfileDSConfig *dsCfgP = static_cast<TBinfileDSConfig *>(
         fBinfileClientConfigP->getLocalDS(NULL,targetP->localDBTypeID)
-      );      
+      );
       if (dsCfgP==NULL) {
         // this target entry is not configured in the config -> skip it while iterating,
         // or return "DB error" if explicitly addressed
@@ -910,7 +910,7 @@ static TSyError readMayLooseOldConfig(
   appPointer aBuffer, memSize aBufSize, memSize &aValSize
 )
 {
-	return TStructFieldsKey::returnInt(static_cast<TBinfileProfilesKey *>(aStructFieldsKeyP)->fMayLooseOldCfg, 1, aBuffer, aBufSize, aValSize);
+  return TStructFieldsKey::returnInt(static_cast<TBinfileProfilesKey *>(aStructFieldsKeyP)->fMayLooseOldCfg, 1, aBuffer, aBufSize, aValSize);
 } // readMayLooseOldConfig
 
 
@@ -922,7 +922,7 @@ static TSyError writeMayLooseOldConfig(
 {
   // set flag
   static_cast<TBinfileProfilesKey *>(aStructFieldsKeyP)->fMayLooseOldCfg =
-  	*((uInt8 *)aBuffer);
+    *((uInt8 *)aBuffer);
   return LOCERR_OK;
 } // writeMayLooseOldConfig
 
@@ -1250,8 +1250,8 @@ TBinfileClientConfig::~TBinfileClientConfig()
 // init defaults
 void TBinfileClientConfig::clear(void)
 {
-	// Only active in clients by default
-	fBinfilesActive = IS_CLIENT;
+  // Only active in clients by default
+  fBinfilesActive = IS_CLIENT;
   #ifndef HARDCODED_CONFIG
   // init defaults
   fSeparateChangelogs = true; // for engine libraries with full config, use separated changelogs by default (auto-migration w/o side effects is built-in)
@@ -1435,9 +1435,9 @@ void TBinfileClientConfig::getBinFilesPath(string &aPath)
 // open settings databases
 localstatus TBinfileClientConfig::openSettingsDatabases(bool aDoLoose)
 {
-	if (!fBinfilesActive) {
-  	// databases can be opened only with active binfiles layer
-  	return LOCERR_WRONGUSAGE;
+  if (!fBinfilesActive) {
+    // databases can be opened only with active binfiles layer
+    return LOCERR_WRONGUSAGE;
   }
   else {
     // safe for calling more than once
@@ -1480,7 +1480,7 @@ localstatus TBinfileClientConfig::openSettingsDatabases(bool aDoLoose)
         return LOCERR_CFGPARSE; // this is kind of a config parsing error
       }
     }
-	  return err;
+    return err;
   }
 } // TBinfileClientConfig::openSettingsDatabases
 
@@ -1526,7 +1526,7 @@ localstatus TBinfileClientConfig::loadVarConfig(bool aDoLoose)
 // save app state (such as settings in datastore configs etc.)
 void TBinfileClientConfig::saveAppState(void)
 {
-	if (fBinfilesActive) {
+  if (fBinfilesActive) {
     // close and re-open the settings binfiles to make sure their
     // contents is permanently saved
     closeSettingsDatabases();
@@ -2319,7 +2319,7 @@ void TBinfileClientConfig::cleanChangeLogForDBname(cAppCharP aDBName, sInt32 aPr
   string basefilename = relatedDBNameBase(aDBName, aProfileID);
   string filename;
   TBinFile binfile;
-	// delete changelog
+  // delete changelog
   filename = basefilename + CHANGELOG_DB_SUFFIX;
   binfile.setFileInfo(filename.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,0);
   binfile.closeAndDelete();
@@ -2337,7 +2337,7 @@ void TBinfileClientConfig::cleanChangeLogForDBname(cAppCharP aDBName, sInt32 aPr
 
 void TBinfileClientConfig::separateDBFile(cAppCharP aDBName, cAppCharP aDBSuffix, sInt32 aProfileID)
 {
-	TBinFile sourceFile;
+  TBinFile sourceFile;
   TBinFile targetFile;
   string sourceName = relatedDBNameBase(aDBName, -1) + aDBSuffix; // without profile ID in name
   string targetName = relatedDBNameBase(aDBName, aProfileID) + aDBSuffix; // with profile ID in name
@@ -2350,7 +2350,7 @@ void TBinfileClientConfig::separateDBFile(cAppCharP aDBName, cAppCharP aDBSuffix
 // separate changelogs and other related files into separate files for each profile
 void TBinfileClientConfig::separateChangeLogsAndRelated(cAppCharP aDBName)
 {
-	// iterate over all profiles
+  // iterate over all profiles
   TBinfileDBSyncProfile profile;
   sInt32 idx = 0;
   // set up original basename
@@ -2464,7 +2464,7 @@ void TBinfileImplClient::InternalResetSession(void)
 // Virtual version
 void TBinfileImplClient::ResetSession(void)
 {
-	if (fConfigP->fBinfilesActive) {
+  if (fConfigP->fBinfilesActive) {
     // do my own stuff
     InternalResetSession();
   }
@@ -2585,7 +2585,7 @@ localstatus TBinfileImplClient::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevIn
 // generates custom PUT in case IPP/DMU is enabled to request settings
 void TBinfileImplClient::issueCustomGetPut(bool aGotDevInf, bool aSentDevInf)
 {
-	if (fConfigP->fBinfilesActive) {
+  if (fConfigP->fBinfilesActive) {
     // get autosync PUT req string
     string req;
     fConfigP->autosync_get_putrequest(req);
@@ -2610,7 +2610,7 @@ void TBinfileImplClient::issueCustomGetPut(bool aGotDevInf, bool aSentDevInf)
 // handler of custom IPP/DMU put and result commands
 void TBinfileImplClient::processPutResultItem(bool aIsPut, const char *aLocUri, TSmlCommand *aPutResultsCommandP, SmlItemPtr_t aPutResultsItemP, TStatusCommand &aStatusCommand)
 {
-	if (fConfigP->fBinfilesActive) {
+  if (fConfigP->fBinfilesActive) {
     #ifdef IPP_SUPPORT
     // check for DMU specials
     if (strucmp(relativeURI(aLocUri),relativeURI(IPP_PARAMS_LOCURI_CFG))==0) {
@@ -2694,8 +2694,8 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
   uInt32 recidx,maxidx;
   // detect special tunnel session's selection
   bool tunnel = aProfileSelector==TUNNEL_PROFILE_ID;
-	// select profile if active
-	if (fConfigP->fBinfilesActive) {
+  // select profile if active
+  if (fConfigP->fBinfilesActive) {
     if (tunnel) {
       aProfileSelector=DEFAULT_PROFILE_ID;
     }
