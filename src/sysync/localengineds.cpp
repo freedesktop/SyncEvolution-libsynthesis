@@ -1623,8 +1623,8 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
            ++it) {
         if (it->second == aLocalID) {
           // found an existing mapping!
-          PDEBUGPRINTFX(DBG_DATA,(
-            "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s' (reused)",
+          PDEBUGPRINTFX(DBG_ERROR,(
+            "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s' (reused?!)",
             aLocalID.c_str(),
             it->first.c_str()
           ));
@@ -1639,7 +1639,7 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
         counter++;
         StringObjPrintf(tempguid,"#%ld",counter);
         if (fTempGUIDMap.find(tempguid) != fTempGUIDMap.end()) {
-          PDEBUGPRINTFX(DBG_DATA,(
+          PDEBUGPRINTFX(DBG_ERROR,(
             "fTempGUIDMap: '%s' not new?!",
             tempguid.c_str()
           ));
