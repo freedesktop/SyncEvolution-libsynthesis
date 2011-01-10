@@ -759,7 +759,7 @@ protected:
   // - get container ID for specified localid
   bool getContainerID(const char *aLocalID, string &aContainerID);
   // - delete sync set one by one
-  localstatus zapSyncSet(void);
+  localstatus zapSyncSetOneByOne(void);
   // - Queue the data needed for finalisation (usually - relational link updates)
   //   as a item copy with only finalisation-required fields
   void queueForFinalisation(TMultiFieldItem *aItemP);
@@ -806,9 +806,9 @@ protected:
   #endif // BINFILE_ALWAYS_ACTIVE
   #ifdef BASED_ON_BINFILE_CLIENT
   bool fSyncSetLoaded; // set if sync set is currently loaded
-  bool makeSyncSetLoaded(bool aNeedAll);
-	localstatus getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP);
+  localstatus makeSyncSetLoaded(bool aNeedAll);
   #endif // BASED_ON_BINFILE_CLIENT
+	localstatus getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP);
   bool fNoSingleItemRead; // if set, syncset list will also contain items
   bool fMultiFolderDB; // if set, we need the syncset list for finding container IDs later
   #ifdef SCRIPT_SUPPORT

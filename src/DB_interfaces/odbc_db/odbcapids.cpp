@@ -3138,7 +3138,7 @@ localstatus TODBCApiDS::apiZapSyncSet(void)
     if (sql.empty()) {
       // we have no statement that can zap everything at once, so we'll have to do
       // use generic one by one syncset deletion
-      sta = zapSyncSet();
+      sta = zapSyncSetOneByOne();
     }
     else {
       // we have SQL statement(s) for zapping, use it

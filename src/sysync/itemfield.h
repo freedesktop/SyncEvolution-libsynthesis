@@ -75,6 +75,7 @@ public:
   virtual TItemFieldTypes getType(void) const { return fty_none; } // no real type
   virtual TItemFieldTypes getCalcType(void) const { return getType(); };
   virtual bool isBasedOn(TItemFieldTypes aFieldType) const { return aFieldType==fty_none; };
+  virtual bool elementsBasedOn(TItemFieldTypes aFieldType) const { return isBasedOn(aFieldType); };
   // dependency on a local ID
   virtual void setParentLocalID(cAppCharP /* aParentLocalID */) { /* nop */ };
   // access to field contents
@@ -165,7 +166,7 @@ class TArrayField : public TItemField
 {
   typedef TItemField inherited;
 public:
-  TArrayField(TItemFieldTypes aLeafFieldType);
+  TArrayField(TItemFieldTypes aLeafFieldType, GZones *aGZonesP);
   virtual ~TArrayField();
   // check array
   virtual bool isArray(void) const { return true; }
@@ -178,6 +179,7 @@ public:
   // access to type
   virtual TItemFieldTypes getType(void) const { return fty_none; } // array has no type
   virtual TItemFieldTypes getElementType(void) const { return fLeafFieldType; } // type of leaf fields (accessible even if array is empty)
+  virtual bool elementsBasedOn(TItemFieldTypes aFieldType) const;
   // some string operations
   // - assignment
   virtual bool isAssigned(void) { return !isEmpty() || fAssigned; }; // empty, but explicitly assigned so is assigned as well
@@ -206,6 +208,10 @@ public:
 protected:
   // type of contained leaf fields
   TItemFieldTypes fLeafFieldType;
+  // first field, is instantiated with array to allow type comparisons
+  TItemField *fFirstField;
+  // Zones for fields
+  GZones *fGZonesP;
   // actual field vector
   TFieldArray fArray;
 }; // TArrayField

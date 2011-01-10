@@ -118,46 +118,6 @@ public:
   }; // func_TargetSetting
 
 
-	/* %%% replaced by generic implementation above
-  // variant TARGETSETTING(string settingsfieldname)
-  // returns data from target settings (like /profiles/n/targets/dbid/settingsfieldname does)
-  static void func_TargetSetting(TItemField *&aTermP, TScriptContext *aFuncContextP)
-  {
-    string varname;
-
-    TBinfileImplDS *dsP = static_cast<TBinfileImplDS *>(aFuncContextP->getCallerContext());
-    // get name
-    aFuncContextP->getLocalVar(0)->getAsString(varname);
-    // %%% simple implementation for now, only limit1, limit2, extras and remoteFilters are supported
-    // %%% later: add generic way to access target settings fields, and
-    //            probably profile settings as well.
-    if (strucmp(varname.c_str(),"extras")==0) {
-      aTermP = newItemField(fty_integer, aFuncContextP->getSessionZones());
-      aTermP->setAsInteger(dsP->fTarget.extras);
-    }
-    else if (strucmp(varname.c_str(),"limit1")==0) {
-      aTermP = newItemField(fty_integer, aFuncContextP->getSessionZones());
-      aTermP->setAsInteger(dsP->fTarget.limit1);
-    }
-    else if (strucmp(varname.c_str(),"limit2")==0) {
-      aTermP = newItemField(fty_integer, aFuncContextP->getSessionZones());
-      aTermP->setAsInteger(dsP->fTarget.limit2);
-    }
-    #if TARGETS_DB_VERSION>5
-    else if (strucmp(varname.c_str(),"remoteFilters")==0) {
-      aTermP = newItemField(fty_string, aFuncContextP->getSessionZones());
-      aTermP->setAsString(dsP->fTarget.remoteFilters);
-    }
-    #endif
-    else {
-      aTermP=newItemField(fty_none, aFuncContextP->getSessionZones());
-      aTermP->unAssign(); // make it (already is...) unassigned
-    }
-  }; // func_TargetSetting
-	*/
-
-
-
 }; // TBFDSfuncs
 
 
@@ -215,6 +175,7 @@ void TBinfileDSConfig::clear(void)
   // change detection by CRC is enabled by default only for builds that CAN'T have DB-side detection
 	#ifdef CHANGEDETECTION_AVAILABLE
   fCRCChangeDetection = false; // normally, DB can report changes. CRC checking can be enabled as an option
+  fCRCPseudoChangeDetection = false; // normally, DB reports changes correctly. Verifying changes can be enabled as an option
   #endif
   // init defaults
   fLocalDBPath.erase();
@@ -247,6 +208,8 @@ bool TBinfileDSConfig::localStartElement(const char *aElementName, const char **
 	#ifdef CHANGEDETECTION_AVAILABLE
   else if (strucmp(aElementName,"crcchangedetection")==0)
     expectBool(fCRCChangeDetection);
+  else if (strucmp(aElementName,"pseudochangedetection")==0)
+    expectBool(fCRCPseudoChangeDetection);
   #endif
   // - none known here
   else
@@ -262,7 +225,10 @@ void TBinfileDSConfig::localResolve(bool aLastPass)
 {
   if (aLastPass) {
     // check for required settings
-    // %%% tbd
+    #ifdef CHANGEDETECTION_AVAILABLE
+    // - pseudochange detection would interfere with regular CRC based change detection and is also completely useless then
+    if (fCRCChangeDetection) fCRCPseudoChangeDetection = false; // just switch it off, makes no sense
+    #endif	
   }
   // resolve inherited
   inherited::localResolve(aLastPass);
@@ -489,7 +455,8 @@ localstatus TBinfileImplDS::changeLogPostflight(uInt32 aOldestSyncModCount)
       (logentry.flags & chgl_deleted) &&
       (logentry.modcount<=aOldestSyncModCount)
     ) {
-      // all targets have seen this delete already, so this one should be deleted
+      // all peers (in all profiles related to this changelog, which is only one with the separated changelogs!)
+      // have seen this delete already, so this one should be deleted
       // - delete the record, another one will appear at this index
       fChangeLog.deleteRecord(logindex);
     }
@@ -600,14 +567,34 @@ static uInt32 changelogUpdateFunc(uInt32 aOldVersion, uInt32 aNewVersion, void *
 bool TBinfileImplDS::openChangeLog(void)
 {
   if (fChangeLog.isOpen()) return true; // was already open
+  // open and possibly migrate the changelog
+  TBinfileImplClient *bfcP = static_cast<TBinfileImplClient *>(fSessionP);
+  TBinfileClientConfig *bfcfgP = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig());
   // open changelog. Name is datastore name with _clg.bfi suffix
-  string changelogname;
-  static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-    getBinFilesPath(changelogname);
-  changelogname += getName();
+  string changelogname = bfcfgP->relatedDBNameBase(getName(), bfcP->fRemotepartyID);
   changelogname += CHANGELOG_DB_SUFFIX;
   fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
   if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)!=BFE_OK) {
+  	// can't open changelog - check if we might need need migration from united changelogs to separated
+    if (bfcfgP->fSeparateChangelogs) {
+    	// check if we have the old united changelog and migrate everything if so
+      string unitedchangelogname = bfcfgP->relatedDBNameBase(getName(), -1); // united name
+      unitedchangelogname += CHANGELOG_DB_SUFFIX;
+      fChangeLog.setFileInfo(unitedchangelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
+		  if (fChangeLog.open(sizeof(TChangeLogHeader),&fChgLogHeader,changelogUpdateFunc)==BFE_OK) {
+      	// the old unified changelog is there - we need to do a full migration now
+        // - close it
+        fChangeLog.close();
+        // - perform migration for this DB
+		    PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("openChangeLog: auto-migrating from common to profile-separated changelog for this datastore"));
+        bfcfgP->separateChangeLogsAndRelated(getName());
+        // - recursively call myself, now the profile specific log should be there
+        return openChangeLog();
+      }
+      // we're not migrating (we could not open the changelog because this is a new profile!)
+      // - restore the per-profile name for creation of new log below
+		  fChangeLog.setFileInfo(changelogname.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,sizeof(TChangeLogEntry));
+    }
     // create new change log or overwrite incompatible one
     // - init changelog header fields
     fChgLogHeader.modcount=0;
@@ -648,15 +635,13 @@ bool TBinfileImplDS::openChangeLog(void)
 bool TBinfileImplDS::openPendingMaps(void)
 {
   if (fPendingMaps.isOpen()) return true; // was already open
-  string pendingmapsname;
-  static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-    getBinFilesPath(pendingmapsname);
-  pendingmapsname += getName();
+  openChangeLog(); // must be open, because it checks for migration of pendingmaps as well
+  string pendingmapsname = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->relatedDBNameBase(getName(), fTarget.remotepartyID);
   pendingmapsname += PENDINGMAP_DB_SUFFIX;
   fPendingMaps.setFileInfo(pendingmapsname.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID, sizeof(TPendingMapEntry));
   PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("openPendingMaps: file name='%s'",pendingmapsname.c_str()));
   if (fPendingMaps.open(sizeof(TPendingMapHeader),&fPendingMapHeader)!=BFE_OK) {
-    // create new change log or overwrite incompatible one
+    // create new pending maps or overwrite incompatible one
     // - bind to remote party (we have a single pendingmap file, and it is valid only for ONE remote party)
     fPendingMapHeader.remotepartyID = static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID;
     // - create new changelog
@@ -705,13 +690,13 @@ lineartime_t TBinfileImplDS::getLastSyncModRefTime(void)
 // Note: Don't call before types are ok (we need TSyncItems)
 localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
 {
-  localstatus sta=LOCERR_OK;
-  aValidChangelog=false;
-  bferr err=BFE_OK;
+  localstatus sta = LOCERR_OK;
+  aValidChangelog = false;
+  bferr err = BFE_OK;
   TChangeLogEntry *existingentries = NULL; // none yet
   uInt32 numexistinglogentries;
   bool foundone;
-  uInt32 seen=0;
+  uInt32 seen = 0;
   uInt32 logindex;
   TChangeLogEntry newentry;
   //set zeros to avoid memory warnings
@@ -748,7 +733,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
   ));
   #endif
   // - save header
-  err=fChangeLog.flushHeader();
+  err = fChangeLog.flushHeader();
   if (err!=BFE_OK) goto done;
   // - we don't need the changelog to be updated when all we do is refresh from server
   if (isRefreshOnly()) goto done; // done ok
@@ -795,7 +780,6 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     ++seen;
     DB_PROGRESS_EVENT(this,pev_preparing,seen,numexistinglogentries,0);
     // process now
-    bool chgentryexists=false; // none found yet
     // - get local ID
     localid_t localid;
     #ifdef RECORDHASH_FROM_DBAPI
@@ -817,9 +801,9 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     LOCALID_TO_STRING(localid,sl);
     if (CRC_CHANGE_DETECTION) {
       #ifdef RECORDHASH_FROM_DBAPI
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: seen=%ld, NOC=%ld : localid=%s, dataCRC=0x%04hX",(long)seen,(long)fNumberOfLocalChanges,sl.c_str(),dataCRC));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("changeLogPreflight: item #%ld : localid=%s, dataCRC=0x%04hX, NOC=%ld ",(long)seen,sl.c_str(),(long)fNumberOfLocalChanges,dataCRC));
       #else
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: seen=%ld, NOC=%ld : localid=%s",(long)seen,(long)fNumberOfLocalChanges,sl.c_str()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("changeLogPreflight: item #%ld : localid=%s, NOC=%ld ",(long)seen,sl.c_str(),(long)fNumberOfLocalChanges));
       #endif
     }
     else {
@@ -832,32 +816,35 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     #endif // SYDEBUG
     // - search for already existing changelog entry for this uniqueID
     //   (prevent searching those that we have created in this preflight)
+    bool chgentryexists=false; // none found yet
+	  TChangeLogEntry *currentEntryP = NULL; // no entry yet
     for (logindex=0; logindex<numexistinglogentries; logindex++) {
       if (LOCALID_EQUAL(existingentries[logindex].dbrecordid,localid)) {
         // found
-        chgentryexists=true;
+        chgentryexists = true;
+        currentEntryP = &(existingentries[logindex]);
         // - remove the deletion candidate flag if it was set
-        if (existingentries[logindex].flags & chgl_delete_candidate) {
-          existingentries[logindex].flags &= ~chgl_delete_candidate; // remove candidate flag
+        if (currentEntryP->flags & chgl_delete_candidate) {
+          currentEntryP->flags &= ~chgl_delete_candidate; // remove candidate flag
         }
         // found
 		    if (CRC_CHANGE_DETECTION) {
           PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
             "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, modcount_created=%ld, saved CRC=0x%04hX",
             (long)logindex,
-            (uInt16)existingentries[logindex].flags,
-            (long)existingentries[logindex].modcount,
-            (long)existingentries[logindex].modcount_created,
-            existingentries[logindex].dataCRC
+            (uInt16)currentEntryP->flags,
+            (long)currentEntryP->modcount,
+            (long)currentEntryP->modcount_created,
+            currentEntryP->dataCRC
           ));
 				}
         else {
           PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
             "- found in changelog at index=%ld, flags=0x%02hX, modcount=%ld, modcount_created=%ld",
             (long)logindex,
-            (uInt16)existingentries[logindex].flags,
-            (long)existingentries[logindex].modcount,
-            (long)existingentries[logindex].modcount_created
+            (uInt16)currentEntryP->flags,
+            (long)currentEntryP->modcount,
+            (long)currentEntryP->modcount_created
           ));
         }
         break;
@@ -865,16 +852,16 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     }
     // - create new record
     if (!chgentryexists) {
-      // set unique ID, all flags cleared
+      // set unique ID, init other fields
       ASSIGN_LOCALID_TO_FLD(newentry.dbrecordid,localid);
-      newentry.flags=0;
-      // modified now
-      newentry.modcount=fCurrentModCount;
-      // set the creation modcount, this is used to detect a client-side newly added item
-      newentry.modcount_created=fCurrentModCount;
-      // no CRC yet
-      newentry.dataCRC=0;
+      // - just init these, will be updated with real values below
+      newentry.flags = 0;
+      newentry.dataCRC = 0;
+      newentry.modcount = 0;
+      newentry.modcount_created = 0;
       PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("- does not yet exist in changelog, created new"));
+      // new entry is now current entry
+      currentEntryP = &newentry;
     }
     // now check what to do
     if (CRC_CHANGE_DETECTION) {
@@ -884,8 +871,8 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
       #endif // not RECORDHASH_FROM_DBAPI
     }
     // - check if new or changed
-    if (chgentryexists) {
-      // entry exists, could be changed
+    if (chgentryexists && !(currentEntryP->flags & chgl_deleted)) {
+      // entry exists (and is not a deleted one), could be changed
       if (CRC_CHANGE_DETECTION) {
         // - check CRC to calculate itemIsModified
         itemIsModified = existingentries[logindex].dataCRC!=dataCRC;
@@ -893,16 +880,16 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
           PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
             "- item has changed (current CRC=0x%04hX, old CRC=0x%04hX)",
             dataCRC,
-            existingentries[logindex].dataCRC
+            currentEntryP->dataCRC
           ));
           // has changed since last time checked by preflight (but only those! There might be more items
           // changed since last sync or resume, but these ALREADY have a modcount in the changelog that
           // flags them such).
           // So this is the place to reset chgl_modbysync (which marks items changed by a sync and not from outside)
-          existingentries[logindex].flags &= ~chgl_modbysync; // detecting a real change here cancels the mod-by-sync flag set for sync-added/changed entries
+          currentEntryP->flags &= ~chgl_modbysync; // detecting a real change here cancels the mod-by-sync flag set for sync-added/changed entries
           // update CRC and modification count
-          existingentries[logindex].dataCRC=dataCRC;
-          existingentries[logindex].modcount=fCurrentModCount; // update modification count
+          currentEntryP->dataCRC=dataCRC;
+          currentEntryP->modcount=fCurrentModCount; // update modification count
           // this is a local change for this session
           fNumberOfLocalChanges++; // for suspend: those that detect a change here were modified AFTER last suspend, so always count them
 
@@ -916,9 +903,9 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
           // changed since last sync or resume, but these ALREADY have a modcount in the changelog that
           // flags them such).
           // So this is the place to reset chgl_modbysync (which marks items changed by a sync and not from outside)
-          existingentries[logindex].flags &= ~chgl_modbysync; // detecting a real change here cancels the mod-by-sync flag set for sync-added/changed entries
+          currentEntryP->flags &= ~chgl_modbysync; // detecting a real change here cancels the mod-by-sync flag set for sync-added/changed entries
           // update modification count
-          existingentries[logindex].modcount=fCurrentModCount;
+          currentEntryP->modcount=fCurrentModCount;
           // this is a local change for this session
           fNumberOfLocalChanges++; // for suspend: those that detect a change here were modified AFTER last suspend, so always count them
         }
@@ -927,41 +914,59 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
         // no change detected since last preflight (but still, this could be a change to report to the server)
         if (isResuming()) {
           // if resuming - only those count that are marked for resume
-          if (existingentries[logindex].flags & chgl_markedforresume)
+          if (currentEntryP->flags & chgl_markedforresume)
             fNumberOfLocalChanges++; // in resumes: only count those that are actually marked for resume
         }
         else {
           // not resuming - all existing ones count if this is a slow sync,
           // otherwise, those modified since last to-remote-sync count as well (although not modified since last preflight!)
-          if (fSlowSync || existingentries[logindex].modcount>fPreviousToRemoteModCount) fNumberOfLocalChanges++;
+          if (fSlowSync || currentEntryP->modcount>fPreviousToRemoteModCount) fNumberOfLocalChanges++;
         }
       }
     }
     else {
-      // entry does not exists, means that this record was added new (since last preflight,
-      // which always means also AFTER last suspend!)
+      // entry does not exist (or existed as deleted entry) -> means that this record was (maybe: re-)added new
+      // (since last preflight, which always means also AFTER last suspend!)
+      // - is modified now
+      currentEntryP->modcount = fCurrentModCount;
+      // - is (re)created now: set the creation modcount, this is used to detect a client-side newly added item
+      currentEntryP->modcount_created = fCurrentModCount;
+      // - no flags set
+      currentEntryP->flags = 0;
+			// - update CRC to current value if CRC is in use
 	   	if (CRC_CHANGE_DETECTION) {
-	      newentry.dataCRC=dataCRC;
+	      currentEntryP->dataCRC = dataCRC;
       }
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item was newly added (no entry existed in changelog before)"));
-      fChangeLog.newRecord(&newentry);
+      else {
+				currentEntryP->dataCRC = 0; // clean it for cosmetic reasons only
+      }
+			// create if entry is new
+      if (!chgentryexists) {
+      	// this is a new, additional entry (and not a resurrected deleted one)
+	      fChangeLog.newRecord(currentEntryP);
+	      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item was newly added (no entry existed in changelog before)"));
+      }
+      else {
+      	// the entry itself existed, but was a deleted entry. We're now re-using that one
+	      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("- item has re-appeared (i.e. item with same local uniqueID that was once before deleted is now here again)"));
+      }
       // this is a local change for this session (even for resume - we need to add newly added ones in resume!)
       fNumberOfLocalChanges++;
     }
 		// Next item
     if (CRC_CHANGE_DETECTION) {
       #ifdef RECORDHASH_FROM_DBAPI
-      foundone=getNextItemCRC(itemLocalID,dataCRC);
+      foundone = getNextItemCRC(itemLocalID,dataCRC);
       #else
       // forget this one
       delete itemP;
       // check next
-      foundone=getNextItem(itemP);
+      foundone = getNextItem(itemP);
       #endif
     }
     else {
     	#ifdef CHANGEDETECTION_AVAILABLE
-	    foundone=getNextItemInfo(itemLocalID,itemIsModified);
+	    foundone = getNextItemInfo(itemLocalID,itemIsModified);
       #endif
     }
   } // while all records in DB
@@ -991,6 +996,7 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     }
   }
   // successfully updated in memory, now write changed entries back to binfile
+  // Note: entries created during this preflight are already saved. Only in-memory modifications to pre-existing ones need to be saved.
   #ifdef SYDEBUG
   DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: saving %ld existing entries",(long)numexistinglogentries));
   if (DEBUGTEST(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC)) {
@@ -1017,7 +1023,9 @@ localstatus TBinfileImplDS::changeLogPreflight(bool &aValidChangelog)
     }
   }
   #endif
+  // - write back all existing entries
   fChangeLog.updateRecord(0,existingentries,numexistinglogentries);
+  // - now we can confirm we have a valid changelog
   aValidChangelog=true;
   DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("changeLogPreflight: seen=%ld, fNumberOfLocalChanges=%ld",(long)seen,(long)fNumberOfLocalChanges));
 done:
@@ -1207,6 +1215,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
   // get pending maps anyway (even if not resuming there might be pending maps)
   if(openPendingMaps()) {
     // there is a pending map file, check if these are really our maps
+    // Note: with separated changelogs, this should be always the case!
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
 	    "implMakeAdminReady: remotePartyID of pendingmaps=%ld, current profile's remotepartyID=%ld",
       (long)fPendingMapHeader.remotepartyID,
@@ -1230,10 +1239,7 @@ localstatus TBinfileImplDS::implMakeAdminReady(
     // - prep file
     TBinFile pendingItemFile;
     TPendingItemHeader pendingItemHeader;
-    string fname;
-    static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-      getBinFilesPath(fname);
-    fname += getName();
+    string fname = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->relatedDBNameBase(getName(), fTarget.remotepartyID);
     fname += PENDINGITEM_DB_SUFFIX;
     pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0); // no expected record size
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
@@ -1483,7 +1489,7 @@ localstatus TBinfileImplDS::implGetItem(
   localstatus sta=LOCERR_OK;
   TSyncItem *myitemP=NULL;
   TChangeLogEntry *chglogP;
-  bool aOnlyChanged = aChanged;
+  bool onlyChanged = aChanged;
 
   aEof=true;
 
@@ -1580,7 +1586,7 @@ localstatus TBinfileImplDS::implGetItem(
           continue; // check next
         }
       }
-      if (!fSlowSync) {
+      else {
         // prevent ANY reporting of items marked as receiveOnly in normal sync (but send them in slow sync!)
         if (chglogP->flags & chgl_receive_only) {
           // skip receive-only items in normal sync. So deleting or changing them locally will not send them
@@ -1602,7 +1608,7 @@ localstatus TBinfileImplDS::implGetItem(
         // clear resend flag now - it is processed
         chglogP->flags &= ~chgl_resend;
         // skip unchanged ones if only changed ones are to be reported
-        if (!hasChanged && aOnlyChanged)
+        if (!hasChanged && onlyChanged)
           continue; // unchanged, do not report
         // always report changed status in aChanged
         aChanged=hasChanged;
@@ -1610,6 +1616,13 @@ localstatus TBinfileImplDS::implGetItem(
       // this entry is to be reported
       // - now check how to report
       if (chglogP->flags & chgl_deleted) {
+      	// deleted: only report if it is also changed (i.e. delete detected since last sync)
+        // Note: this can only happen when caller requests to see all records, not only changed,
+        //       which usually only occurs in slowsync where deletes are NOT reported anyway.
+        //       However: when caller must dynamically filter the syncset, it will request all records
+        //       even in normal syncs and then this can happen.
+        if (!aChanged)
+        	continue; // delete was reported earlier, don't report it again
         // deleted, we cannot get it from the DB, create a empty item
         myitemP = new TSyncItem();
         // add ID
@@ -1638,9 +1651,46 @@ localstatus TBinfileImplDS::implGetItem(
         }
         // detect wheter the item is new added or changed
         if(chglogP->modcount_created > fPreviousToRemoteModCount) {
+        	// Added
           myitemP->setSyncOp(sop_add);
         }
         else {
+        	// Not added (changed or just reported because we want all records reported)
+          // - if enabled, also verify change by checking CRC before reporting it (unless this is a slow sync)
+	        if (CRC_DETECT_PSEUDOCHANGES && aChanged) {
+          	// check if really changed using CRC, but only...
+            // ...if not slow sync (all items must be reported)
+            // ...if change was detected in this session's preflight. If the change was detected earlier and is still
+            //    pending (i.e. newer than the last sync), this means that this change might have failed to be applied
+            //    in a previous sync and thus must be reported again (but as CRC was updated in the last run,
+            //    it would be suppressed). This is a compromise that minimizes pseudochanges normally, but cannot
+            //    entirely prevent them. In other words: the first attempt to report a pseudo-change is
+            //    suppressed, but in case this sync fails, subsequent syncs will report it.
+            uInt16 newDataCRC = myitemP->getDataCRC(0,true);
+            PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+            	"CRC comparison for pseudo-change detection: old CRC=0x%hX, new CRC=0x%hX, recordModCount=%u, currentModCount=%u",
+              chglogP->dataCRC, newDataCRC, chglogP->modcount, fCurrentModCount
+            ));
+          	if (chglogP->dataCRC==newDataCRC && !fSlowSync && chglogP->modcount==fCurrentModCount) {
+            	// none of the relevant fields have changed -> don't report the item
+              PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Not reporting localID='%s' as changed because CRC detected this as a pseudo-change.",myitemP->getLocalID()));
+              aChanged = false; // even if it gets reported, it does not count as changed any more
+              if (onlyChanged) {
+              	// we don't need to report this at all, as we only report changed ones
+                delete myitemP; // delete the item
+                continue; // don't report, try next
+              }
+              // report as unchanged
+            }
+            else {
+            	// change will now be reported, so update CRC to what we report now
+              // Note: the problem with this is that in case the sync does not succeed now, the CRC is already updated and would
+              //   trigger pseudo-change detection in the next session. Therefore, pseudo-change detection is only active for
+              //   changes newly detected during this sync.
+              chglogP->dataCRC = newDataCRC;
+            }
+          } // CRC_DETECT_PSEUDOCHANGES
+          // - report as replace (changed or not)
           myitemP->setSyncOp(sop_replace);
         }
         // make sure item has the localid which was used to retrieve it
@@ -1741,7 +1791,7 @@ localstatus TBinfileImplDS::implStartDataWrite(void)
     // find and update (if not refreshing) changelog for this database
     bool normal=false;
     changeLogPreflight(normal);
-    if (!normal) return false; // failure
+    if (!normal) return LOCERR_UNDEFINED; // failure
   }
   // let api layer do it's stuff
   sta = apiStartDataWrite();
@@ -1899,8 +1949,8 @@ bool TBinfileImplDS::implProcessItem(
         goto error;
     } // switch(sop)
     // update changelog
-    uInt16 crc=0;
-    if (CRC_CHANGE_DETECTION) {
+    uInt16 crc=0; // none unless we need it
+    if (CRC_CHANGE_DETECTION || CRC_DETECT_PSEUDOCHANGES) {
       // - calc new data CRC if not deleted record
       if (sop!=sop_delete) {
         // - get new CRC. Note: to avoid differences in written and readback
@@ -1916,7 +1966,7 @@ bool TBinfileImplDS::implProcessItem(
           //   will also find a new item (this one under new localid) and add
           //   this to the server.
           crc=0;
-          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed it's localid during replace, CRC gets invalid"));
+          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed its localid during replace, CRC gets invalid"));
         }
         #else
         TSyncItem *readbackItemP=NULL;
@@ -1929,7 +1979,7 @@ bool TBinfileImplDS::implProcessItem(
           //   will also find a new item (this one under new localid) and add
           //   this to the server.
           crc=0;
-          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed it's localid during replace, CRC gets invalid"));
+          DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI,("Item has probably changed its localid during replace, CRC gets invalid"));
         }
         else {
           // Note: we don't need to set localID in item as it is not used in the CRC
@@ -1976,19 +2026,21 @@ bool TBinfileImplDS::implProcessItem(
       // save it
       #ifdef NUMERIC_LOCALIDS
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID=%ld, flags=0x%X, modcount=modcount_created=%ld",
+        "new entry %ld : localID=%ld, flags=0x%X, modcount=modcount_created=%ld, new dataCRC=0x%hX",
         (long)fChangeLog.getNumRecords(),
         affectedentryP->dbrecordid,
         (int)affectedentryP->flags,
-        (long)affectedentryP->modcount
+        (long)affectedentryP->modcount,
+        affectedentryP->dataCRC
       ));
       #else
       DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
-        "new entry %ld : localID='%s', flags=0x%X, modcount=modcount_created=%ld",
+        "new entry %ld : localID='%s', flags=0x%X, modcount=modcount_created=%ld, new dataCRC=0x%hX",
         (long)fChangeLog.getNumRecords(),
         affectedentryP->dbrecordid,
         (int)affectedentryP->flags,
-        (long)affectedentryP->modcount
+        (long)affectedentryP->modcount,
+        affectedentryP->dataCRC
       ));
       #endif
       // Note: changeLogPostflight() will check these for temporary localids and finalize them when needed
@@ -2073,7 +2125,7 @@ void TBinfileImplDS::dsLogSyncResult(void)
     // - create record
     TLogFileEntry logInfo;
     logInfo.time = fCurrentSyncTime; // current sync's time
-    logInfo.status = fAbortStatusCode; // reason for abort (0 if ok)
+    logInfo.status = getAbortStatusCode(); // reason for abort (0 if ok)
     logInfo.mode =
 	    (fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0) +
       (fResuming ? 10 : 0);
@@ -2121,28 +2173,38 @@ localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
   localstatus sta=SaveAdminData(true,aUpdateAnchors); // end of session
   if (sta==LOCERR_OK) {
     // finalize admin data stuff now
-    TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
-    // do a postFlight to remove unused entries from the changelog
-    // - find oldest sync modcount
-    uInt32 maxidx = targetsBinFileP->getNumRecords();
-    uInt32 idx;
     uInt32 oldestmodcount=0xFFFFFFFF;
-    TBinfileDBSyncTarget target;
-    for (idx=0; idx<maxidx; idx++) {
-      targetsBinFileP->readRecord(idx,&target);
-      if (
-        // Note: %%% this is same mechanism as for changelog filenames
-        //       Not ok if multiple databases go with the same datastore.getName()
-        strucmp(target.dbname,getName())==0
-      ) {
-        // target for this database found, check if modcount is older
-        if (target.lastSuspendModCount!=0 && target.lastSuspendModCount<oldestmodcount)
-          oldestmodcount=target.lastSuspendModCount; // older one found
-        if (target.lastTwoWayModCount!=0 && target.lastTwoWayModCount<oldestmodcount)
-          oldestmodcount=target.lastTwoWayModCount; // older one found
-      }
+    // do a postFlight to remove unused entries from the changelog
+    if (static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->fSeparateChangelogs) {
+    	// Each profile has it's own changelog, so just delete entries that are older than this profile's last sync or resume
+      if (fTarget.lastSuspendModCount!=0)
+	      oldestmodcount = fTarget.lastSuspendModCount;
+      if (fTarget.lastTwoWayModCount!=0 && fTarget.lastTwoWayModCount<oldestmodcount)
+	      oldestmodcount = fTarget.lastTwoWayModCount;
     }
-    // Now do cleanup of all deleted entries that are same age or older as oldest target
+    else {
+    	// Combined changelog for all profiles, need to keep deleted markers for other profiles
+      // - find oldest sync modcount
+	    TBinFile *targetsBinFileP = &(static_cast<TBinfileImplClient *>(fSessionP)->fConfigP->fTargetsBinFile);
+      uInt32 maxidx = targetsBinFileP->getNumRecords();
+      uInt32 idx;
+      TBinfileDBSyncTarget target;
+      for (idx=0; idx<maxidx; idx++) {
+        targetsBinFileP->readRecord(idx,&target);
+        if (
+          // Note: %%% this is same mechanism as for changelog filenames
+          //       Not ok if multiple databases go with the same datastore.getName()
+          strucmp(target.dbname,getName())==0
+        ) {
+          // target for this database found, check if modcount is older
+          if (target.lastSuspendModCount!=0 && target.lastSuspendModCount<oldestmodcount)
+            oldestmodcount=target.lastSuspendModCount; // older one found
+          if (target.lastTwoWayModCount!=0 && target.lastTwoWayModCount<oldestmodcount)
+            oldestmodcount=target.lastTwoWayModCount; // older one found
+        }
+      }
+    } // combined changelog
+    // For both types: Now do cleanup of all deleted entries that we don't need any more
     sta=changeLogPostflight(oldestmodcount);
   }
   // done
@@ -2282,6 +2344,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   TPendingMapEntry pme;
   localid_t localid;
   // - pending maps now belong to us!
+  //   Note: they always do with separated changelogs
   fPendingMapHeader.remotepartyID = static_cast<TBinfileImplClient *>(fSessionP)->fRemotepartyID;
   fPendingMaps.setExtraHeaderDirty();
   // - now pending maps (unsent ones)
@@ -2338,10 +2401,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
   }
   if (saveit) {
     TBinFile pendingItemFile;
-    string fname;
-    static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->
-      getBinFilesPath(fname);
-    fname += getName();
+    string fname = static_cast<TBinfileClientConfig *>(fSessionP->getSessionConfig())->relatedDBNameBase(getName(), fTarget.remotepartyID);
     fname += PENDINGITEM_DB_SUFFIX;
     pendingItemFile.setFileInfo(fname.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0);
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(

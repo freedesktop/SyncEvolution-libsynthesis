@@ -233,7 +233,7 @@ public:
 class TPropertyDefinition {
 public:
   // constructor/destructor
-  TPropertyDefinition(const char* aName, sInt16 aNumVals, bool aMandatory, bool aShowInCTCap, bool aSuppressEmpty, uInt16 aDelayedProcessing, char aValuesep, char aAltValuesep, uInt16 aPropertyGroupID, bool aCanFilter, TMimeDirMode aModeDep, sInt16 aGroupFieldID);
+  TPropertyDefinition(const char* aName, sInt16 aNumVals, bool aMandatory, bool aShowInCTCap, bool aSuppressEmpty, uInt16 aDelayedProcessing, char aValuesep, char aAltValuesep, uInt16 aPropertyGroupID, bool aCanFilter, TMimeDirMode aModeDep, sInt16 aGroupFieldID, bool aAllowFoldAtSep);
   ~TPropertyDefinition();
   // tools
   TParameterDefinition *addParam(const char *aName, bool aDefault, bool aExtendsName, bool aShowNonEmpty=false, bool aShowInCTCap=false, TMimeDirMode aModeDep=numMimeModes);
@@ -269,6 +269,7 @@ public:
   // char to separate value list items (defaults to semicolon)
   char valuesep;
   char altvaluesep; // second value separator to respect when parsing (generating always uses valuesep)
+  bool allowFoldAtSep; // allow folding at value separators (for mimo_old, even if it inserts an extra space)
   // parameter listm
   TParameterDefinition *parameterDefs;
   // mandatory
@@ -344,7 +345,8 @@ public:
     bool aCanFilter=false, // can be filtered -> show in filter cap
     TMimeDirMode aModeDep=numMimeModes, // property valid only for specific MIME mode
     char aAltValuesep=0, // no alternate separator
-		sInt16 aGroupFieldID=FID_NOT_SUPPORTED // no group field
+		sInt16 aGroupFieldID=FID_NOT_SUPPORTED, // no group field
+    bool aAllowFoldAtSep=false // do not fold at separators when it would insert extra spaces
   );
   void usePropertiesOf(TProfileDefinition *aProfile);
   TPropertyDefinition *getPropertyDef(const char *aPropName);
@@ -594,7 +596,9 @@ private:
 	  bool aCommaEscape,          // set if "," content escaping is needed (for values in valuelists like TYPE=TEL,WORK etc.)
     TEncodingTypes &aEncoding,  // modified if special value encoding is required
     bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
-    char aFirstChar=0           // will be appended before value if there is any value
+    char aFirstChar,            // will be appended before value if there is any value
+		sInt32 &aNumNonSpcs,				// how many non-spaces are already in the value
+	  bool aFoldAtSeparators			// if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
   );
   // - recursive expansion of properties
   void expandProperty(
@@ -625,7 +629,8 @@ private:
     TMimeDirMode aMimeMode, // MIME mode (older or newer vXXX format compatibility)
     sInt16 aBaseOffset,
     sInt16 aRepOffset,
-    TPropNameExtension *aPropNameExt // propname extension for generating musthave param values
+    TPropNameExtension *aPropNameExt, // propname extension for generating musthave param values
+		sInt32 &aNumNonSpcs // how many non-spaces are already in the value
   );
   // - recursively generate levels
   void generateLevels(

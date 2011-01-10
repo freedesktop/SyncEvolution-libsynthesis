@@ -1658,14 +1658,13 @@ localstatus TCustomImplDS::implStartDataRead()
     sta = inherited::implStartDataRead();
     if (sta==LOCERR_OK) {
       // now make sure the syncset is loaded
-      if (!makeSyncSetLoaded(
+			sta = makeSyncSetLoaded(
         fSlowSync // all items with data needed for slow sync
         #ifdef OBJECT_FILTERING
         || fFilteringNeededForAll // all item data needed for dynamic filtering
         #endif
         || CRC_CHANGE_DETECTION // all item data needed when binfile must detect changes using CRC
-      ))
-        sta = 510; // error
+      );
     }
   }
   else
@@ -3111,29 +3110,79 @@ bool TCustomImplDS::implEndDataWrite(void)
 
 
 // delete sync set one by one
-localstatus TCustomImplDS::zapSyncSet(void)
+localstatus TCustomImplDS::zapSyncSetOneByOne(void)
 {
   TSyncSetList::iterator pos;
   localstatus sta;
-  // - create dummy item
   TStatusCommand dummy(getSession());
-  TMultiFieldItem *delitemP =
-    static_cast<TMultiFieldItem *>(newItemForRemote(ity_multifield));
-  delitemP->setSyncOp(sop_delete);
-  PDEBUGPRINTFX(DBG_DATA,(
-    "Zapping datastore: deleting %ld items from database",
-    (long)fSyncSetList.size()
-  ));
+  // check if we need to apply filters
+  bool filteredDelete = fFilteringNeededForAll || fFilteringNeeded;
+  TSyncItem *delitemP = NULL;
+  if (!filteredDelete) {
+    PDEBUGPRINTFX(DBG_DATA,("Zapping datastore unfiltered: deleting %ld items from database",(long)fSyncSetList.size()));
+	}
+  else {
+    PDEBUGPRINTFX(DBG_DATA,("Zapping datastore with filter: deleting only filter passing items of max %ld items",(long)fSyncSetList.size()));  	
+  }
   for (pos=fSyncSetList.begin(); pos!=fSyncSetList.end(); ++pos) {
+    if (filteredDelete) {
+    	// we need to inspect further, as we may NOT delete the entire sync set
+      // - get the item with data (we become owner of it!)
+      getItemFromSyncSetItem(*pos,delitemP);
+      // - check filters
+      bool passes=postFetchFiltering(delitemP);
+			if (!passes)
+      	continue; // don't delete this one, it does not pass the filter
+      // - delete now
+	    PDEBUGPRINTFX(DBG_DATA,("- item '%s' passes filter -> deleting",delitemP->getLocalID()));
+    }
+    else {
+    	// all items loaded need to be deleted
+      // - create dummy item
+      delitemP = newItemForRemote(ity_multifield);
+	    delitemP->setLocalID((*pos)->localid.c_str());
+    }
     // delete
-    delitemP->setLocalID((*pos)->localid.c_str());
-    sta = apiDeleteItem(*delitemP);
+    sta = apiDeleteItem(*(static_cast<TMultiFieldItem *>(delitemP)));
+    // forget the item
+	  delete delitemP;
     // success or "211 - not deleted" is ok.
     if (sta!=LOCERR_OK && sta!=211) return sta;
   }
-  delete delitemP;
   return LOCERR_OK; // zapped ok
-} // TCustomImplDS::zapSyncSet
+} // TCustomImplDS::zapSyncSetOneByOne
+
+
+// private helper: get item with data from sync set list. Retrieves item if not already
+// there from loading the sync set
+// Note: can be called with aSyncSetItemP==NULL, which causes directly loading from DB
+//       in all cases. 
+localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
+{
+  if (aSyncSetItemP && aSyncSetItemP->itemP) {
+    // already fetched - pass it to caller and remove link in syncsetitem
+    aItemP = aSyncSetItemP->itemP;
+    aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
+  }
+  else {
+    // item not yet fetched (or already retrieved once), fetch it now
+    // - create new empty TMultiFieldItem
+    aItemP =
+      (TMultiFieldItem *) newItemForRemote(ity_multifield);
+    if (!aItemP)
+      return 510;
+    // - assign local id, as it is required e.g. by DoDataSubstitutions
+    aItemP->setLocalID(aSyncSetItemP->localid.c_str());
+    // - set default operation
+    aItemP->setSyncOp(sop_replace);
+    // Now fetch item (read phase)
+    localstatus sta = apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
+    if (sta!=LOCERR_OK)
+      return sta; // error
+  }
+  // ok
+  return LOCERR_OK;
+} // TCustomImplDS::getItemFromSyncSetItem
 
 
 #ifndef BINFILE_ALWAYS_ACTIVE
@@ -3178,11 +3227,11 @@ localstatus TCustomImplDS::implSaveResumeMarks(void)
 //       these routines are never called and can't harm
 
 // private helper
-bool TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
+localstatus TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
 {
-  localstatus sta = LOCERR_OK;
-
+  localstatus sta = LOCERR_OK; // assume loaded ok
   if (!fSyncSetLoaded) {
+  	// not yet loaded, try to load
     PDEBUGBLOCKFMTCOLL(("ReadSyncSet","Reading Sync Set from Database","datastore=%s",getName()));
     SYSYNC_TRY {
       sta = apiReadSyncSet(aNeedAll);
@@ -3197,7 +3246,7 @@ bool TCustomImplDS::makeSyncSetLoaded(bool aNeedAll)
     if (sta==LOCERR_OK)
       fSyncSetLoaded=true; // is now loaded
   }
-  return fSyncSetLoaded; // ok only if now loaded
+  return sta; // ok only if now loaded
 } // TCustomImplDS::makeSyncSetLoaded
 
 
@@ -3236,7 +3285,7 @@ bool TCustomImplDS::getNextItem(TSyncItem *&aItemP)
 
 #ifdef CHANGEDETECTION_AVAILABLE
 
-/// get first item from the sync set, including data
+/// get item's ID and modification status from the sync set, not including data
 /// @return false if no item found
 bool TCustomImplDS::getFirstItemInfo(localid_out_t &aLocalID, bool &aItemHasChanged)
 {
@@ -3248,7 +3297,7 @@ bool TCustomImplDS::getFirstItemInfo(localid_out_t &aLocalID, bool &aItemHasChan
 
 
 
-/// get next item's ID and modification status from the sync set.
+/// get next item's ID and modification status from the sync set, not including data
 /// @return false if no item found
 bool TCustomImplDS::getNextItemInfo(localid_out_t &aLocalID, bool &aItemHasChanged)
 {
@@ -3300,38 +3349,6 @@ localstatus TCustomImplDS::getItemByID(localid_t aLocalID, TSyncItem *&aItemP)
     return getItemFromSyncSetItem(*syncsetpos,aItemP);
   }
 } // TCustomImplDS::getItemByID
-
-
-// private helper: get item with data from sync set list. Retrieves item if not already
-// there from loading the sync set
-// Note: can be called with aSyncSetItemP==NULL, which causes directly loading from DB
-//       in all cases. 
-localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
-{
-  if (aSyncSetItemP && aSyncSetItemP->itemP) {
-    // already fetched - pass it to caller and remove link in syncsetitem
-    aItemP = aSyncSetItemP->itemP;
-    aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
-  }
-  else {
-    // item not yet fetched (or already retrieved once), fetch it now
-    // - create new empty TMultiFieldItem
-    aItemP =
-      (TMultiFieldItem *) newItemForRemote(ity_multifield);
-    if (!aItemP)
-      return 510;
-    // - assign local id, as it is required e.g. by DoDataSubstitutions
-    aItemP->setLocalID(aSyncSetItemP->localid.c_str());
-    // - set default operation
-    aItemP->setSyncOp(sop_replace);
-    // Now fetch item (read phase)
-    localstatus sta = apiFetchItem(*((TMultiFieldItem *)aItemP),true,aSyncSetItemP);
-    if (sta!=LOCERR_OK)
-      return sta; // error
-  }
-  // ok
-  return LOCERR_OK;
-} // TCustomImplDS::getItemFromSyncSetItem
 
 
 /// update item by local ID in the sync set. Caller retains ownership of aItemP
@@ -3414,9 +3431,11 @@ localstatus TCustomImplDS::zapDatastore(void)
   // make sure we have the sync set if we need it to zap it
   if (apiNeedSyncSetToZap()) {
     // make sure we have the sync set
-    if (!makeSyncSetLoaded(false)) return 510; // error
+    localstatus sta = makeSyncSetLoaded(false); 
+    if (sta!=LOCERR_OK)
+    	return sta; // error
   }
-  // Zap the sync set in this datastore (will possibly call zapSyncSet)
+  // Zap the sync set in this datastore (will possibly call zapSyncSetOneByOne if there's no more efficient way to do it than one by one)
   return apiZapSyncSet();
 } // TCustomImplDS::zapDatastore
 
@@ -3643,7 +3662,7 @@ bool TCustomImplDS::generateItemFieldData(
       StringObjAppendPrintf(aDataFields,"[%d]",arrayIndex);
     #endif
     // append value
-    if (aBasefieldP->isBasedOn(fty_blob)) {
+    if (aBasefieldP->elementsBasedOn(fty_blob)) {
       // - for blobs we use a BlobID and send the data later
       aDataFields += ";BLOBID=";
       aDataFields += aBaseFieldName;

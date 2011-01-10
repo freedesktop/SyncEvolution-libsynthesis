@@ -134,7 +134,7 @@ const char * const SyncMLDevInfFPI[SML_NUM_VERS] = {
 };
 const int SyncMLWBXMLPublicID[SML_NUM_VERS] = {
   0,
-  0,
+  0, // we use the string ID, not the binary value (altough it seems to be defined as 0x0FD1
   0x0FD3,
   0x1201
 };

@@ -634,8 +634,10 @@ typedef struct {
 
 #ifndef CHANGEDETECTION_AVAILABLE
 #define CRC_CHANGE_DETECTION true
+#define CRC_DETECT_PSEUDOCHANGES false
 #else
 #define CRC_CHANGE_DETECTION (fConfigP->fCRCChangeDetection)
+#define CRC_DETECT_PSEUDOCHANGES (fConfigP->fCRCPseudoChangeDetection)
 #endif
 
 
@@ -657,8 +659,10 @@ public:
   // - activtion switch (for making it inactive e.g. in server case)
   bool fBinfileDSActive;
 	#ifdef CHANGEDETECTION_AVAILABLE
-  // - we have change detection, but we can be set to enable change detection by CRC
+  // - we have change detection, but we can be set to enable change detection by CRC,
+  //   or verifying DB reported changes by CRC to avoid pseudo-changes (only touched, but not modified records).
   bool fCRCChangeDetection;
+  bool fCRCPseudoChangeDetection;
   #endif
   // - identifies local Database related to this datastore
   string fLocalDBPath;

@@ -246,18 +246,31 @@ size_t TItemField::writeStream(void *aBuffer, size_t aNumBytes)
 
 
 // constructor
-TArrayField::TArrayField(TItemFieldTypes aLeafFieldType)
+TArrayField::TArrayField(TItemFieldTypes aLeafFieldType, GZones *aGZonesP)
 {
   fLeafFieldType=aLeafFieldType;
+  fGZonesP = aGZonesP;
+  // field for index==0 always exists
+  fFirstField = newItemField(fLeafFieldType,fGZonesP,false);
 } // TArrayField::TArrayField
 
 
 // destructor
 TArrayField::~TArrayField()
 {
-  // make sure leaf fields are all gone
+  // make sure leaf fields (except idx==0) are gone
   unAssign();
+  // and kill firstfield
+  delete fFirstField;
 } // TArrayField::~TArrayField
+
+
+
+bool TArrayField::elementsBasedOn(TItemFieldTypes aFieldType) const
+{
+	return fFirstField->isBasedOn(aFieldType);
+} // TArrayField::elementsBasedOn
+
 
 
 #ifdef SYDEBUG
@@ -286,7 +299,10 @@ TItemField *TArrayField::getArrayField(sInt16 aArrIdx, bool aExistingOnly)
     fldP = fArray[aArrIdx];
     if (fldP==NULL) {
       // but element does not exist yet, create field for it
-      fldP=newItemField(fLeafFieldType,NULL,false);
+      if (aArrIdx==0)
+      	fldP = fFirstField;
+      else
+      	fldP = newItemField(fLeafFieldType,fGZonesP,false);
       fArray[aArrIdx]=fldP;
     }
   }
@@ -300,8 +316,11 @@ TItemField *TArrayField::getArrayField(sInt16 aArrIdx, bool aExistingOnly)
     for (sInt16 idx=arraySize(); idx<=aArrIdx; idx++) {
       fArray.push_back(NULL);
     }
-    // actually create last field only
-    fldP=newItemField(fLeafFieldType,NULL,false);
+    // actually create last field only (and use firstField if that happens to be idx==0)
+    if (aArrIdx==0)
+      fldP = fFirstField;
+    else
+      fldP = newItemField(fLeafFieldType,fGZonesP,false);
     fArray[aArrIdx]=fldP;
   }
   // return field
@@ -326,7 +345,10 @@ void TArrayField::unAssign(void)
 {
   for (sInt16 idx=0; idx<arraySize(); idx++) {
     if (fArray[idx]) {
-      delete fArray[idx];
+    	if (idx==0)
+      	fArray[idx]->unAssign(); // first is always kept, it is the fFirstField, so only unassign to remove content
+      else
+        delete fArray[idx];
       fArray[idx]=NULL;
     }
   }
@@ -1018,31 +1040,6 @@ void TURLField::stringWasAssigned(void)
   inherited::stringWasAssigned();
 } // TURLField::stringWasAssigned
 
-
-/*%%% old, was not called with all variants of setAsString()
-// must check and update URL on write
-void TURLField::setAsString(cAppCharP aString)
-{
-  string proto;
-
-  if (!aString) {
-    fString.erase();
-  }
-  else {
-    splitURL(aString,&proto,NULL,NULL,NULL,NULL);
-    if (proto.empty() && *aString!=0) {
-      // no protocol set, but string not empty --> assume http
-      fString="http://";
-      fString+=aString;
-    }
-    else {
-      // protocol is there (or empty string), assume ok
-      fString=aString;
-    }
-  }
-  fAssigned=true;
-} // TURLField::setAsString
-*/
 
 /* end of TURLField implementation */
 
@@ -1785,7 +1782,7 @@ TItemField *newItemField(const TItemFieldTypes aType, GZones *aGZonesP, bool aAs
 {
   #ifdef ARRAYFIELD_SUPPORT
   if (aAsArray) {
-    return new TArrayField(aType);
+    return new TArrayField(aType,aGZonesP);
   }
   else
   #endif

@@ -229,6 +229,7 @@ static const TBinfileDBSyncTarget *dP_tg=NULL;
 const TStructFieldInfo TargetFieldInfos[] =
 {
   // valName, valType, writable, fieldOffs, valSiz
+  { "profileID", VALTYPE_INT32, false, OFFS_SZ_TG(remotepartyID) }, // read-only profile ID
   { "enabled", VALTYPE_ENUM, true, OFFS_SZ_TG(enabled) },
   { "forceslow", VALTYPE_ENUM, true, OFFS_SZ_TG(forceSlowSync) },
   { "syncmode", VALTYPE_ENUM, true, OFFS_SZ_TG(syncmode) },
@@ -349,10 +350,16 @@ TSyError TBinfileTargetsKey::OpenSubkey(
     }
     if (sta==LOCERR_OK && targetIndex>=0) {
       // we have loaded a target, create subkey handler and pass data
+      /* %%% old: search by name
       // - find related datastore config (by dbname)
       TBinfileDSConfig *dsCfgP = static_cast<TBinfileDSConfig *>(
         fBinfileClientConfigP->getLocalDS(targetP->dbname)
       );
+      */
+      // - find related datastore config (by dbtypeid)
+      TBinfileDSConfig *dsCfgP = static_cast<TBinfileDSConfig *>(
+        fBinfileClientConfigP->getLocalDS(NULL,targetP->localDBTypeID)
+      );      
       if (dsCfgP==NULL) {
         // this target entry is not configured in the config -> skip it while iterating,
         // or return "DB error" if explicitly addressed
@@ -1247,7 +1254,10 @@ void TBinfileClientConfig::clear(void)
 	fBinfilesActive = IS_CLIENT;
   #ifndef HARDCODED_CONFIG
   // init defaults
+  fSeparateChangelogs = true; // for engine libraries with full config, use separated changelogs by default (auto-migration w/o side effects is built-in)
   fBinFilesPath.erase();
+  #else
+  fSeparateChangelogs = false; // for traditional hard-coded clients like WinMobile and PalmOS, use pre 3.4.0.10 behaviour (uses less memory)
   #endif
   fBinFileLog=false;
   // - clear inherited
@@ -1268,6 +1278,8 @@ bool TBinfileClientConfig::localStartElement(const char *aElementName, const cha
     expectBool(fBinFileLog);
   else if (strucmp(aElementName,"binfilesactive")==0)
     expectBool(fBinfilesActive);
+  else if (strucmp(aElementName,"separatechangelogs")==0)
+    expectBool(fSeparateChangelogs);
   // - none known here
   else
     return inherited::localStartElement(aElementName,aAttributes,aLine);
@@ -1864,10 +1876,10 @@ bool TBinfileClientConfig::deleteProfile(sInt32 aProfileIndex)
     // find first (still existing) target for this profile
     idx = findTargetIndex(profileID,0);
     if (idx<0) break; // no more targets
-    // if this is the last profile, also delete targets' changelogs
-    if (fProfileBinFile.getNumRecords()<=1) {
+    // if we have separate changelogs or this is the last profile, also delete targets' changelogs
+    if (fSeparateChangelogs || fProfileBinFile.getNumRecords()<=1) {
       // clean related changelogs
-      cleanChangeLogForTarget(idx);
+      cleanChangeLogForTarget(idx,profileID);
     }
     // delete target
     deleteTarget(idx);
@@ -2277,40 +2289,89 @@ sInt32 TBinfileClientConfig::getTarget(
 } // TBinfileClientConfig::getTarget
 
 
+// get base name for profile-dependent names
+string TBinfileClientConfig::relatedDBNameBase(cAppCharP aDBName, sInt32 aProfileID)
+{
+  string basefilename;
+  // prepare base name
+  getBinFilesPath(basefilename);
+  basefilename += aDBName;
+  if (fSeparateChangelogs && aProfileID>=0) {
+    StringObjAppendPrintf(basefilename, "_%d",aProfileID);
+  }
+  return basefilename;
+}
+
+
 // completely clear changelog and pending maps for specified target
-void TBinfileClientConfig::cleanChangeLogForTarget(sInt32 aTargetIndex)
+void TBinfileClientConfig::cleanChangeLogForTarget(sInt32 aTargetIndex, sInt32 aProfileID)
 {
   TBinfileDBSyncTarget target;
   getTarget(aTargetIndex,target);
-  cleanChangeLogForDBname(target.dbname);
+  cleanChangeLogForDBname(target.dbname, aProfileID);
 } // TBinfileClientConfig::cleanChangeLogForTarget
 
 
-// completely clear changelog and pending maps for specified database name
-void TBinfileClientConfig::cleanChangeLogForDBname(cAppCharP aDBName)
+// completely clear changelog and pending maps for specified database name and profile
+void TBinfileClientConfig::cleanChangeLogForDBname(cAppCharP aDBName, sInt32 aProfileID)
 {
-  // open changelog. Name is datastore name with _clg.bfi suffix
+  // open changelog. Name is datastore name with _XXX_clg.bfi suffix (XXX=profileID, if negative, combined changelog/maps/pendingitem will be deleted)
+  string basefilename = relatedDBNameBase(aDBName, aProfileID);
   string filename;
   TBinFile binfile;
-  // delete changelog
-  getBinFilesPath(filename);
-  filename += aDBName;
-  filename += CHANGELOG_DB_SUFFIX;
+	// delete changelog
+  filename = basefilename + CHANGELOG_DB_SUFFIX;
   binfile.setFileInfo(filename.c_str(),CHANGELOG_DB_VERSION,CHANGELOG_DB_ID,0);
   binfile.closeAndDelete();
   // delete pending maps
-  getBinFilesPath(filename);
-  filename += aDBName;
-  filename += PENDINGMAP_DB_SUFFIX;
+  filename = basefilename + PENDINGMAP_DB_SUFFIX;
   binfile.setFileInfo(filename.c_str(),PENDINGMAP_DB_VERSION,PENDINGMAP_DB_ID,0);
   binfile.closeAndDelete();
   // delete pending item
-  getBinFilesPath(filename);
-  filename += aDBName;
-  filename += PENDINGITEM_DB_SUFFIX;
+  filename = basefilename + PENDINGITEM_DB_SUFFIX;
   binfile.setFileInfo(filename.c_str(),PENDINGITEM_DB_VERSION,PENDINGITEM_DB_ID,0);
   binfile.closeAndDelete();
 } // TBinfileClientConfig::cleanChangeLogForDBname
+
+
+
+void TBinfileClientConfig::separateDBFile(cAppCharP aDBName, cAppCharP aDBSuffix, sInt32 aProfileID)
+{
+	TBinFile sourceFile;
+  TBinFile targetFile;
+  string sourceName = relatedDBNameBase(aDBName, -1) + aDBSuffix; // without profile ID in name
+  string targetName = relatedDBNameBase(aDBName, aProfileID) + aDBSuffix; // with profile ID in name
+  sourceFile.setFileInfo(sourceName.c_str(), 0, 0, 0);
+  targetFile.setFileInfo(targetName.c_str(), 0, 0, 0);
+  targetFile.createAsCopyFrom(sourceFile);
+}
+
+
+// separate changelogs and other related files into separate files for each profile
+void TBinfileClientConfig::separateChangeLogsAndRelated(cAppCharP aDBName)
+{
+	// iterate over all profiles
+  TBinfileDBSyncProfile profile;
+  sInt32 idx = 0;
+  // set up original basename
+  while (true) {
+    idx = getProfile(idx,profile);
+    if (idx<0) break; // no more profiles
+    // copy all dependent files of that profile and the given database
+    // - copy changelog
+    separateDBFile(aDBName,CHANGELOG_DB_SUFFIX,profile.profileID);
+    // - copy pendingmaps
+    separateDBFile(aDBName,PENDINGMAP_DB_SUFFIX,profile.profileID);
+    // - copy pendingitem
+    separateDBFile(aDBName,PENDINGITEM_DB_SUFFIX,profile.profileID);
+    // next profile
+    idx++;
+  }
+  // - delete original files that were shared between profiles
+  cleanChangeLogForDBname(aDBName,-1);
+}
+
+
 
 
 // remote provisioning (using generic code in include file)
@@ -2755,9 +2816,17 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
         if (target.remotepartyID == fRemotepartyID)
         {
           // get datastore config
+          #ifdef HARDCODED_CONFIG
+          // - traditional method by name for old monolythic builds (to make sure we don't break anything)
           TBinfileDSConfig *binfiledscfgP = static_cast<TBinfileDSConfig *>(
             getSessionConfig()->getLocalDS(target.dbname)
           );
+          #else
+          // - newer, engine based targets should use the DBtypeID instead, to allow change of DB name without loosing config
+          TBinfileDSConfig *binfiledscfgP = static_cast<TBinfileDSConfig *>(
+            getSessionConfig()->getLocalDS(NULL,target.localDBTypeID)
+          );
+          #endif
           // check if we have config and if this DS is available now (profile.dsAvailFlags, DSFLAGS_ALWAYS_AVAILABLE, evtl. license...)
           if (binfiledscfgP && binfiledscfgP->isAvailable(&fProfile)) {
             // check if this DB must be synced
@@ -2811,11 +2880,11 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
                   mySlow = target.forceSlowSync;
                 }
                 // clean change logs if...
-                // ...this is the only profile
+                // ...we have separate changelog or this is the only profile
                 // ...this is NOT a resumable session (resumable not necessarily means that it WILL be resumed)
                 // ...we're about to slow sync
-                if (mySlow && target.resumeAlertCode==0 && fConfigP->fProfileBinFile.getNumRecords()==1) {
-                  fConfigP->cleanChangeLogForDBname(target.dbname);
+                if (mySlow && target.resumeAlertCode==0 && (fConfigP->fSeparateChangelogs || fConfigP->fProfileBinFile.getNumRecords()==1)) {
+                  fConfigP->cleanChangeLogForDBname(target.dbname,fProfile.profileID);
                 }
                 // set non-BinFile specific parameters (note that this call might
                 // be to a derivate which uses additional info from fTarget to set sync params)

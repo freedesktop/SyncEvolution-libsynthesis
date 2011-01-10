@@ -48,8 +48,8 @@ CVersion Plugin_Version( short buildNumber )
   #define P 256
   long    v;
 
-  #define SDK_VERSION_MAJOR 1 /* Release: V1.7.0, change this if you need troubles */
-  #define SDK_VERSION_MINOR 7
+  #define SDK_VERSION_MAJOR 1 /* Release: V1.8.0, change this if you need troubles */
+  #define SDK_VERSION_MINOR 8
   #define SDK_SUBVERSION    0
 
   /* allowed range for the local build number */
