@@ -1865,7 +1865,7 @@ static const char *nextunfolded(const char *p, TMimeDirMode aMimeMode, bool qpSo
 } // nextunfolded
 
 
-// helper for MIME DIR generation:
+// helper for MIME DIR parsing:
 // - apply encoding and charset conversion to values part of property if needed
 static void decodeValue(
   TEncodingTypes aEncoding,    // the encoding to be used
