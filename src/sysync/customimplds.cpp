@@ -2161,6 +2161,9 @@ localstatus TCustomImplDS::implGetItem(
             // mark entry as waiting for delete status
             // NOTES: - we cannot delete the map entry until we get a confirmItemOp() for it
             //        - the pendingStatus flag does not need to be persistent between sessions, so we don't set the changed flag here!
+						//				- the flag is important in case a server-delete vs client-replace conflict occurs which the client wins. In that
+						//          case implProcessItem needs to be able to tell that still having a map entry does NOT mean we do have
+						//					the record still in the DB.
             entry.mapflags |= mapflag_pendingDeleteStatus;
             (*fDeleteMapPos)=entry; // save updated entry in list
             // found one to report
@@ -2759,8 +2762,11 @@ bool TCustomImplDS::implProcessItem(
       remoteID=myitemP->getRemoteID();
       // first see if we have a map entry for this remote ID
       localID.erase(); // none yet
-      // Note: even items detected for deletion still have a map item until deletion is confirmed by the remote party,
-      //       so we'll be able to update already "deleted" items (in case they are not really gone, but only invisible in the sync set)
+      // Note:
+			// - even items detected for deletion still have a map item until deletion is confirmed by the remote party,
+      //   so we'll be able to update already "deleted" items (in case they are not really gone, but only invisible in the sync set)
+			// - we can use mapflag_pendingDeleteStatus (which does not need persistence in the DB, so works even for not resume-enabled backends)
+			//   to keep still existing and deleted items apart.
       mappos=findMapByRemoteID(remoteID); // search for it
       if (mappos!=fMapTable.end()) {
         localID = (*mappos).localid; // assign it if we have it
@@ -2773,10 +2779,13 @@ bool TCustomImplDS::implProcessItem(
       ///       in localEngineDS, but will be moved here later possibly
       case sop_add :
       	// check for duplicated add
-        // Note: server must check it here, because map lookup is needed. Contrarily, client
-        //       can check it on localengineds level against the pending maps list with isAddFromLastSession().
-        if (IS_SERVER && mappos!=fMapTable.end()) {
-        	// we already know this item
+        // Notes:
+				// - server must check it here, because map lookup is needed. Contrarily, client
+        //   can check it on localengineds level against the pending maps list with isAddFromLastSession().
+				// - if mapflag_pendingDeleteStatus is set, the item still has a map entry, but does not exist in the DB any more
+				//   so do not report 418 here!
+        if (IS_SERVER && mappos!=fMapTable.end() && ((*mappos).mapflags & mapflag_pendingDeleteStatus)==0) {
+        	// we already know this item (and it was not already detected as deleted from the DB, so should exist there)
           // - status "already exists"
           aStatusCommand.setStatusCode(418);
           ok = false;
