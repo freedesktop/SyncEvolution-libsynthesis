@@ -1457,9 +1457,17 @@ Ret_t subdtdEncWBXML(XltTagID_t tagId, XltRO_t reqOptFlag, const VoidPtr_t pCont
     /* Double the size of SubBufSize for the memory is small for some complex
      * content.
      */ 
-    Short_t           SubBufSize   = 12000 * 2; // for starters we use 12kB for each sub DTD to encode in WBXML
+    MemSize_t         SubBufSize   = 12000 * 2; // for starters we use 12kB for each sub DTD to encode in WBXML
     BufferMgmtPtr_t   pSubBufMgr   = NULL;
 
+    /* Even the doubled size was still too small. Instead of
+       hard-coding the size, make it as large as the buffer we are
+       copying into. The size of that one can be configured by the
+       user of the toolkit. -- Patrick Ohly */
+    MemSize_t VarSubBufSize = pBufMgr->smlXltBufferLen - pBufMgr->smlXltWrittenBytes;
+    if (VarSubBufSize > SubBufSize) {
+      SubBufSize = VarSubBufSize;
+    }
 
     // first create a sub buffer
     pSubBufMgr = (BufferMgmtPtr_t)smlLibMalloc(sizeof(BufferMgmt_t));
