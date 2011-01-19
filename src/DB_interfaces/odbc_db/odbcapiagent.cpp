@@ -1970,12 +1970,16 @@ SQLHDBC TODBCApiAgent::getODBCConnectionHandle(void)
 // pull connection handle out of session into another object (datastore)
 SQLHDBC TODBCApiAgent::pullODBCConnectionHandle(void)
 {
-  SQLHDBC connhandle = getODBCConnectionHandle();
-  fODBCConnectionHandle = SQL_NULL_HANDLE; // owner is caller, must do closing and disposing
   #ifdef SCRIPT_SUPPORT
-  // make sure possible script statement gets disposed, as connection is now owned by datastore
+  // make sure possible script statement gets disposed, as connection will be owned by datastore from now on
+	// Note: the script statement must be closed here already, because creating a new connection with getODBCConnectionHandle()
+	//   might trigger afterconnectscript, which in turn may use SQLEXECUTE() will ask for the current script statement.
+	//   If the script statement was not closed before that, SQLEXECUTE() would execute on the old statement and hence on
+	//   the old connection rather than on the new one.
   commitAndCloseScriptStatement();
   #endif
+  SQLHDBC connhandle = getODBCConnectionHandle();
+  fODBCConnectionHandle = SQL_NULL_HANDLE; // owner is caller, must do closing and disposing
   return connhandle;
 } // TODBCApiAgent::pullODBCConnectionHandle
 
