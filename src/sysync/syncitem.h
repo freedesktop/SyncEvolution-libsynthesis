@@ -1,7 +1,7 @@
 /*
  *  File:         SyncItem.h
  *
- *  Author:			  Lukas Zeller (luz@synthesis.ch)
+ *  Author:			  Lukas Zeller (luz@plan44.ch)
  *
  *  TSyncItem
  *    Abstract Base class of all data containing items.
@@ -9,7 +9,7 @@
  *    which holds type information and conversion
  *    features.
  *
- *  Copyright (c) 2001-2009 by Synthesis AG (www.synthesis.ch)
+ *  Copyright (c) 2001-2011 by Synthesis AG + plan44.ch
  *
  *  2001-06-18 : luz : created
  *

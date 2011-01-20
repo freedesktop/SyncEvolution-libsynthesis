@@ -1,13 +1,13 @@
 /**
  *  @File     localengineds.cpp
  *
- *  @Author   Lukas Zeller (luz@synthesis.ch)
+ *  @Author   Lukas Zeller (luz@plan44.ch)
  *
  *  @brief TLocalEngineDS
  *    Abstraction of the local datastore - interface class to the
  *    sync engine.
  *
- *    Copyright (c) 2001-2009 by Synthesis AG (www.synthesis.ch)
+ *    Copyright (c) 2001-2011 by Synthesis AG + plan44.ch
  *
  *  @Date 2005-09-15 : luz : created from localdatastore
  */

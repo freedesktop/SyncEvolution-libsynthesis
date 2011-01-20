@@ -1,12 +1,12 @@
 /**
  *  @File     engine_defs.h
  *
- *  @Author   Lukas Zeller (luz@synthesis.ch)
+ *  @Author   Lukas Zeller (luz@plan44.ch)
  *            Beat Forster (bfo@synthesis.ch)
  *
  *  @brief Definitions needed for the common engine interface
  *
- *    Copyright (c) 2007-2009 by Synthesis AG (www.synthesis.ch)
+ *    Copyright (c) 2007-2011 by Synthesis AG + plan44.ch
  *
  */
 

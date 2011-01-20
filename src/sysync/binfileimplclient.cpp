@@ -1,13 +1,13 @@
 /**
  *  @File     binfileimplclient.cpp
  *
- *  @Author   Lukas Zeller (luz@synthesis.ch)
+ *  @Author   Lukas Zeller (luz@plan44.ch)
  *
  *  @brief TBinfileImplClient
  *    Represents a client session (agent) that saves profile, target, resume info
  *    and optionally changelog in TBinFile binary files
  *
- *    Copyright (c) 2003-2009 by Synthesis AG (www.synthesis.ch)
+ *    Copyright (c) 2003-2011 by Synthesis AG + plan44.ch
  *
  *  @Date 2005-09-30 : luz : created from TBinfileImplClient
  */

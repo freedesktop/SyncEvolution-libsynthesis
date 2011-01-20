@@ -1,13 +1,13 @@
 /*
  *  File:         syncagent.cpp
  *
- *  Author:			  Lukas Zeller (luz@synthesis.ch)
+ *  Author:			  Lukas Zeller (luz@plan44.ch)
  *
  *  TSyncAgent:   Provides functionality to run client or server
  *                sessions.
  *                Unifies former TSyncClient and TSyncServer
  *
- *  Copyright (c) 2002-2009 by Synthesis AG (www.synthesis.ch)
+ *  Copyright (c) 2002-2011 by Synthesis AG + plan44.ch
  *
  *  2009-09-30 : luz : created from syncclient.cpp and syncserver.cpp
  *

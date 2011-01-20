@@ -1,13 +1,13 @@
 /**
  *  @File     binfileimplds.cpp
  *
- *  @Author   Lukas Zeller (luz@synthesis.ch)
+ *  @Author   Lukas Zeller (luz@plan44.ch)
  *
  *  @brief TBinfileImplDS
  *    Represents a client datastore implementation which has target management
  *    (and optionally change log) based on binary files
  *
- *    Copyright (c) 2003-2009 by Synthesis AG (www.synthesis.ch)
+ *    Copyright (c) 2003-2011 by Synthesis AG + plan44.ch
  *
  *  @Date 2005-09-30 : luz : created from TBinfileImplDS
  */

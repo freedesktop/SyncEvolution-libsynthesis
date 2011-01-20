@@ -4,7 +4,7 @@
  *    of multiple SyncML-Toolkit "Sessions" (Message composition/de-
  *    composition) as well as multiple database synchronisations.
  *
- *  Copyright (c) 2001-2009 by Synthesis AG (www.synthesis.ch)
+ *  Copyright (c) 2001-2011 by Synthesis AG + plan44.ch
  *
  */
 

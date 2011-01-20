@@ -6,7 +6,7 @@
  *  DB_Api class
  *    Bridge to user programmable interface
  *
- *  Copyright (c) 2004-2009 by Synthesis AG (www.synthesis.ch)
+ *  Copyright (c) 2004-2011 by Synthesis AG + plan44.ch
  *
  */
 

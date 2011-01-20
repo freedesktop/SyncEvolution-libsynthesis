@@ -11,7 +11,7 @@
  *
  *  written in Std C, can be used in C++ as well
  *
- *  Copyright (c) 2004-2009 by Synthesis AG (www.synthesis.ch)
+ *  Copyright (c) 2004-2011 by Synthesis AG + plan44.ch
  *
  */
 

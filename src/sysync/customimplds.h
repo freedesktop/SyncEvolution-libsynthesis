@@ -1,13 +1,13 @@
 /**
  *  @File     customimpl.h
  *
- *  @Author   Lukas Zeller (luz@synthesis.ch)
+ *  @Author   Lukas Zeller (luz@plan44.ch)
  *
  *  @brief TCustomImplDS
  *    Base class for customizable datastores (mainly extended DB mapping features
  *    common to all derived classes like ODBC, DBAPI etc.).
  *
- *    Copyright (c) 2001-2009 by Synthesis AG (www.synthesis.ch)
+ *    Copyright (c) 2001-2011 by Synthesis AG + plan44.ch
  *
  *  @Date 2005-12-05 : luz : separated from odbcapids
  */

@@ -1,14 +1,14 @@
 /**
  *  @File     stdlogicds.cpp
  *
- *  @Author   Lukas Zeller (luz@synthesis.ch)
+ *  @Author   Lukas Zeller (luz@plan44.ch)
  *
  *  @brief TStdLogicDS
  *    Standard database logic implementation, suitable for most (currently all)
  *    actual DS implementations, but takes as few assumptions about datastore
  *    so for vastly different sync patterns, this could be replaced by differnt locic
  *
- *    Copyright (c) 2001-2009 by Synthesis AG (www.synthesis.ch)
+ *    Copyright (c) 2001-2011 by Synthesis AG + plan44.ch
  *
  *  @Date 2005-09-15 : luz : created from custdbdatastore
  */
