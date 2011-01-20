@@ -1199,6 +1199,9 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fLastSessionMaps.clear();
   #endif
   #ifdef SYSYNC_SERVER
+  PDEBUGPRINTFX(DBG_DATA,(
+    "fTempGUIDMap: removing %ld items", (long)fTempGUIDMap.size()
+  ));
   fTempGUIDMap.clear();
   #endif
 
@@ -1543,6 +1546,12 @@ void TLocalEngineDS::dsLocalIdHasChanged(const char *aOldID, const char *aNewID)
     for (pos=fTempGUIDMap.begin(); pos!=fTempGUIDMap.end(); pos++) {
       if (pos->second == aOldID) {
         // update ID
+        PDEBUGPRINTFX(DBG_DATA,(
+          "fTempGUIDMap: updating mapping of %s from %s to %s",
+          pos->first.c_str(),
+          aOldID,
+          aNewID
+        ));
         pos->second = aNewID;
         break;
       }
@@ -1583,11 +1592,43 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
   if (maxguidsize>0) {
     if (aLocalID.length()+prefixsize>(uInt32)maxguidsize) { //BCPPB needed unsigned cast
       // real GUID is too long, we need to create a temp
+      
+      // first check if there is already a mapping for it,
+      // because on-disk storage can only hold one; also
+      // saves space
+      // TODO: implement this more efficiently than this O(N) search
+      for (TStringToStringMap::const_iterator it = fTempGUIDMap.begin();
+           it != fTempGUIDMap.end();
+           ++it) {
+        if (it->second == aLocalID) {
+          // found an existing mapping!
+          PDEBUGPRINTFX(DBG_ERROR,(
+            "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s' (reused?!)",
+            aLocalID.c_str(),
+            it->first.c_str()
+          ));
+          aLocalID = it->first;
+          return;
+        }
+      }
+
       string tempguid;
-      StringObjPrintf(tempguid,"#%ld",(long)fTempGUIDMap.size()+1); // as list only grows, we have unique tempuids for sure
+      long counter = fTempGUIDMap.size(); // as list only grows, we have unique tempuids for sure
+      while (true) {
+        counter++;
+        StringObjPrintf(tempguid,"#%ld",counter);
+        if (fTempGUIDMap.find(tempguid) != fTempGUIDMap.end()) {
+          PDEBUGPRINTFX(DBG_ERROR,(
+            "fTempGUIDMap: '%s' not new?!",
+            tempguid.c_str()
+          ));
+        } else {
+          break;
+        }
+      }
       fTempGUIDMap[tempguid]=aLocalID;
       PDEBUGPRINTFX(DBG_DATA,(
-        "translated realLocalID='%s' to tempLocalID='%s'",
+        "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s'",
         aLocalID.c_str(),
         tempguid.c_str()
       ));
@@ -2424,6 +2465,7 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
     // if we process a sync alert now, we haven't started sync or map generation
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
+      // server case: forget Temp GUID mapping
       // make sure we are not carrying forward any left-overs. Last sessions's tempGUID mappings that are
       // needed for "early map" resolution might be loaded by the call to engInitSyncAnchors below.
       // IMPORTANT NOTE: the tempGUIDs that might get loaded will become invalid as soon as <Sync>
