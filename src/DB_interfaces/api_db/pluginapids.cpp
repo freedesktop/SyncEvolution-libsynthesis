@@ -201,7 +201,7 @@ void TPluginDSConfig::localResolve(bool aLastPass)
       #endif
       #if !defined(DBAPI_ASKEYITEMS) || !defined(ENGINEINTERFACE_SUPPORT)
       if (fItemAsKey) SYSYNC_THROW(TConfigParseException("This engine does not support data items passed as key handles"));
-      #endif      
+      #endif
     }
     // connect module for handling admin access
     // - use same module and params as data if no separate module specified and plugin_datastoreadmin is set
@@ -540,7 +540,7 @@ bool TPluginApiDS::postReadProcessItem(TMultiFieldItem &aItem, uInt16 aSetNo)
           } while(basefieldP->isArray()); // only arrays do loop all array elements
         }
         if (fmiP->as_param && basefieldP->elementsBasedOn(fty_string)) {
-        	// string based field (string or BLOB) mapped as parameter 
+          // string based field (string or BLOB) mapped as parameter
           // unlike with textItems that get the BLOBID from the DB,
           // in asKey mode, BLOBID is just map name plus a possible array index.
           // Plugin must be able to identify the BLOB using this plus the item ID.
@@ -1196,13 +1196,13 @@ localstatus TPluginApiDS::apiZapSyncSet(void)
   TSyError dberr = LOCERR_OK;
 	// API must be able to process current filters in order to execute a zap - otherwise we would delete
   // more than the sync set defined by local filters.
-  bool apiCanZap = engFilteredFetchesFromDB(false); 
+  bool apiCanZap = engFilteredFetchesFromDB(false);
   if (apiCanZap) {
     // try to use plugin's specialized implementation
     dberr = fDBApi_Data.DeleteSyncSet();
     apiCanZap = dberr!=LOCERR_NOTIMP; // API claims to be able to zap (but still might have failed with a DBerr in this case!)
   }
-  // do it one by one if DeleteAllItems() is not implemented or plugin cannot apply current filters 
+  // do it one by one if DeleteAllItems() is not implemented or plugin cannot apply current filters
   if (!apiCanZap) {
 		dberr = zapSyncSetOneByOne();
   }
@@ -2218,12 +2218,12 @@ localstatus TPluginApiDS::apiLoadAdminData(
       #ifdef SYSYNC_SERVER
       case mapentry_tempidmap:
       	if (IS_SERVER) {
-          PDEBUGPRINTFX(DBG_DATA,(
+          PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
             "fTempGUIDMap: restore mapping from %s to %s",
             mapEntry.remoteid.c_str(),
             mapEntry.localid.c_str()
           ));
-          
+
           fTempGUIDMap[mapEntry.remoteid]=mapEntry.localid; // tempGUIDs are accessed by remoteID=tempID
         }
         break;
@@ -2524,7 +2524,7 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize, bool aNeedsTotalSize, bool aNe
 // returns size of entire blob
 size_t TApiBlobProxy::getBlobSize(TStringField *aFieldP)
 {
-  fetchBlob(0,true,false); // only needs the size, but no data 
+  fetchBlob(0,true,false); // only needs the size, but no data
   return fBlobSize;
 } // TApiBlobProxy::getBlobSize
 

@@ -1717,7 +1717,7 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
       // A RRULE with no end extends at least into current time (for tz range update, see below)
       if (until==noLinearTime) {
         // no end, but we still need a range to generate time zones for
-      	tzend = getSession()->getSystemNowAs(TCTX_UTC);
+        tzend = getSession()->getSystemNowAs(TCTX_UTC);
       }
       else {
         // Treat RR_END similar to CONVMODE_AUTODATE, i.e. prevent rendering a date-only value in mimo_old (which is not correct according to the standard)

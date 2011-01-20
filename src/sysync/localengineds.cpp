@@ -1199,7 +1199,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fLastSessionMaps.clear();
   #endif
   #ifdef SYSYNC_SERVER
-  PDEBUGPRINTFX(DBG_DATA,(
+  PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
     "fTempGUIDMap: removing %ld items", (long)fTempGUIDMap.size()
   ));
   fTempGUIDMap.clear();
@@ -1546,7 +1546,7 @@ void TLocalEngineDS::dsLocalIdHasChanged(const char *aOldID, const char *aNewID)
     for (pos=fTempGUIDMap.begin(); pos!=fTempGUIDMap.end(); pos++) {
       if (pos->second == aOldID) {
         // update ID
-        PDEBUGPRINTFX(DBG_DATA,(
+        PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
           "fTempGUIDMap: updating mapping of %s from %s to %s",
           pos->first.c_str(),
           aOldID,
@@ -1592,7 +1592,7 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
   if (maxguidsize>0) {
     if (aLocalID.length()+prefixsize>(uInt32)maxguidsize) { //BCPPB needed unsigned cast
       // real GUID is too long, we need to create a temp
-      
+
       // first check if there is already a mapping for it,
       // because on-disk storage can only hold one; also
       // saves space
@@ -1627,7 +1627,7 @@ void TLocalEngineDS::adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, 
         }
       }
       fTempGUIDMap[tempguid]=aLocalID;
-      PDEBUGPRINTFX(DBG_DATA,(
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
         "fTempGUIDMap: translated realLocalID='%s' to tempLocalID='%s'",
         aLocalID.c_str(),
         tempguid.c_str()
