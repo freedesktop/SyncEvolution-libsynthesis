@@ -4516,20 +4516,24 @@ bool TMimeDirProfileHandler::parseLevels(
 
 void TMimeDirProfileHandler::getOptionsFromDatastore(void)
 {
-  // get options datastore if one is related
-  if (fRelatedDatastoreP) {
-    fReceiverCanHandleUTC = fRelatedDatastoreP->getSession()->fRemoteCanHandleUTC;
-    fVCal10EnddatesSameDay = fRelatedDatastoreP->getSession()->fVCal10EnddatesSameDay;
-    fReceiverTimeContext = fRelatedDatastoreP->getSession()->fUserTimeContext; // default to user context
-    fDontSendEmptyProperties = fRelatedDatastoreP->getSession()->fDontSendEmptyProperties;
-    fDefaultOutCharset = fRelatedDatastoreP->getSession()->fDefaultOutCharset;
-    fDefaultInCharset = fRelatedDatastoreP->getSession()->fDefaultInCharset;
-    fDoQuote8BitContent = fRelatedDatastoreP->getSession()->fDoQuote8BitContent;
-    fDoNotFoldContent = fRelatedDatastoreP->getSession()->fDoNotFoldContent;
-    fTreatRemoteTimeAsLocal = fRelatedDatastoreP->getSession()->fTreatRemoteTimeAsLocal;
-    fTreatRemoteTimeAsUTC = fRelatedDatastoreP->getSession()->fTreatRemoteTimeAsUTC;
+  // get options datastore if one is related;
+  // ignore the session from getSession() here because we need
+  // to distinguish between script context and normal sync context
+  // (the former has no datastore, the latter has)
+  TSyncSession *sessionP = fRelatedDatastoreP ? fRelatedDatastoreP->getSession() : NULL;
+  if (sessionP) {
+    fReceiverCanHandleUTC = sessionP->fRemoteCanHandleUTC;
+    fVCal10EnddatesSameDay = sessionP->fVCal10EnddatesSameDay;
+    fReceiverTimeContext = sessionP->fUserTimeContext; // default to user context
+    fDontSendEmptyProperties = sessionP->fDontSendEmptyProperties;
+    fDefaultOutCharset = sessionP->fDefaultOutCharset;
+    fDefaultInCharset = sessionP->fDefaultInCharset;
+    fDoQuote8BitContent = sessionP->fDoQuote8BitContent;
+    fDoNotFoldContent = sessionP->fDoNotFoldContent;
+    fTreatRemoteTimeAsLocal = sessionP->fTreatRemoteTimeAsLocal;
+    fTreatRemoteTimeAsUTC = sessionP->fTreatRemoteTimeAsUTC;
     #ifndef NO_REMOTE_RULES
-    fActiveRemoteRules = fRelatedDatastoreP->getSession()->fActiveRemoteRules; // copy the list
+    fActiveRemoteRules = sessionP->fActiveRemoteRules; // copy the list
     #endif
   }
 }
