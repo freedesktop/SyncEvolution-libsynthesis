@@ -5212,16 +5212,49 @@ void TMimeDirProfileHandler::setRemoteRule(const string &aRemoteRuleName)
     if((*pos)->fElementName == aRemoteRuleName) {
       // only this rule and all rules included by it rule must be active
       fActiveRemoteRules.clear();
-      fActiveRemoteRules.push_back(*pos);
+      activateRemoteRule(*pos);
       TRemoteRulesList::iterator spos;
       for(spos=(*pos)->fSubRulesList.begin();spos!=(*pos)->fSubRulesList.end();spos++) {
-        fActiveRemoteRules.push_back(*spos);
+        activateRemoteRule(*spos);
       }
       break;
     }
   }
 } // TMimeDirProfileHandler::setRemoteRule
 
+void TMimeDirProfileHandler::activateRemoteRule(TRemoteRuleConfig *aRuleP)
+{
+  // activate this rule (similar code as in TSyncSession::checkRemoteSpecifics()
+  fActiveRemoteRules.push_back(aRuleP);
+  // - apply options that have a value
+  //if (aRuleP->fLegacyMode>=0) fLegacyMode = aRuleP->fLegacyMode;
+  //if (aRuleP->fLenientMode>=0) fLenientMode = aRuleP->fLenientMode;
+  //if (aRuleP->fLimitedFieldLengths>=0) fLimitedRemoteFieldLengths = aRuleP->fLimitedFieldLengths;
+  if (aRuleP->fDontSendEmptyProperties>=0) fDontSendEmptyProperties = aRuleP->fDontSendEmptyProperties;
+  if (aRuleP->fDoQuote8BitContent>=0) fDoQuote8BitContent = aRuleP->fDoQuote8BitContent;
+  if (aRuleP->fDoNotFoldContent>=0) fDoNotFoldContent = aRuleP->fDoNotFoldContent;
+  //if (aRuleP->fNoReplaceInSlowsync>=0) fNoReplaceInSlowsync = aRuleP->fNoReplaceInSlowsync;
+  if (aRuleP->fTreatRemoteTimeAsLocal>=0) fTreatRemoteTimeAsLocal = aRuleP->fTreatRemoteTimeAsLocal;
+  if (aRuleP->fTreatRemoteTimeAsUTC>=0) fTreatRemoteTimeAsUTC = aRuleP->fTreatRemoteTimeAsUTC;
+  if (aRuleP->fVCal10EnddatesSameDay>=0) fVCal10EnddatesSameDay = aRuleP->fVCal10EnddatesSameDay;
+  //if (aRuleP->fIgnoreDevInfMaxSize>=0) fIgnoreDevInfMaxSize = aRuleP->fIgnoreDevInfMaxSize;
+  //if (aRuleP->fIgnoreCTCap>=0) fIgnoreCTCap = aRuleP->fIgnoreCTCap;
+  //if (aRuleP->fDSPathInDevInf>=0) fDSPathInDevInf = aRuleP->fDSPathInDevInf;
+  //if (aRuleP->fDSCgiInDevInf>=0) fDSCgiInDevInf = aRuleP->fDSCgiInDevInf;
+  //if (aRuleP->fUpdateClientDuringSlowsync>=0) fUpdateClientDuringSlowsync = aRuleP->fUpdateClientDuringSlowsync;
+  //if (aRuleP->fUpdateServerDuringSlowsync>=0) fUpdateServerDuringSlowsync = aRuleP->fUpdateServerDuringSlowsync;
+  //if (aRuleP->fAllowMessageRetries>=0) fAllowMessageRetries = aRuleP->fAllowMessageRetries;
+  //if (aRuleP->fStrictExecOrdering>=0) fStrictExecOrdering = aRuleP->fStrictExecOrdering;
+  //if (aRuleP->fTreatCopyAsAdd>=0) fTreatCopyAsAdd = aRuleP->fTreatCopyAsAdd;
+  //if (aRuleP->fCompleteFromClientOnly>=0) fCompleteFromClientOnly = aRuleP->fCompleteFromClientOnly;
+  //if (aRuleP->fRequestMaxTime>=0) fRequestMaxTime = aRuleP->fRequestMaxTime;
+  if (aRuleP->fDefaultOutCharset!=chs_unknown) fDefaultOutCharset = aRuleP->fDefaultOutCharset;
+  if (aRuleP->fDefaultInCharset!=chs_unknown) fDefaultInCharset = aRuleP->fDefaultInCharset;
+  // - possibly override decisions that are otherwise made by session
+  //   Note: this is not a single option because we had this before rule options were tristates.
+  //if (aRuleP->fForceUTC>0) fRemoteCanHandleUTC=true;
+  //if (aRuleP->fForceLocaltime>0) fRemoteCanHandleUTC=false;
+}
 
 // check if given rule (by name, or if aRuleName=NULL by rule pointer) is active
 bool TMimeDirProfileHandler::isActiveRule(TRemoteRuleConfig *aRuleP)

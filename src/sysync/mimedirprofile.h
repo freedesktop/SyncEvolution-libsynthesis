@@ -474,6 +474,9 @@ public:
   // - mode (for those profiles that have more than one, like MIME-DIR's old/standard)
   virtual void setProfileMode(sInt32 aMode);
 	#ifndef NO_REMOTE_RULES
+  // set specific remote rule and activate the behavior defined by it;
+  // to be used only in script context, inside a session the session
+  // properties are used instead
   virtual void setRemoteRule(const string &aRemoteRuleName);
 	#endif
   // generate Text Data (includes header and footer)
@@ -669,6 +672,10 @@ private:
     const TProfileDefinition *aProfileP,
     bool aRootLevel
   );
+#ifndef NO_REMOTE_RULES
+  // helper for setRemoteRule(): add one specific remote rule and activate the behavior defined by it
+  void activateRemoteRule(TRemoteRuleConfig *aRuleP);
+#endif
 }; // TMimeDirProfileHandler
 
 
