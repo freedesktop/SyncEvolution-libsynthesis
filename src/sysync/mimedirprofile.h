@@ -259,6 +259,9 @@ public:
   sInt16 numValues;
   // conversion specification(s) for each value
   TConversionDef *convdefs;
+	// if set, property is not processed but stored entirely (unfolded, but otherwise unprocessed) in the first <value> defined
+	// This gets automatically set when a property name contains an asterisk wildcard character
+	bool unprocessed;
   // if set, property has a list of values that are stored in an array field or
   // by offseting fid. Note that a PropNameExtension is needed to allow storing more
   // than a single value. If valuelist=true, convdefs should only contain a single entry,
@@ -598,7 +601,8 @@ private:
     bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
     char aFirstChar,            // will be appended before value if there is any value
 		sInt32 &aNumNonSpcs,				// how many non-spaces are already in the value
-	  bool aFoldAtSeparators			// if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
+	  bool aFoldAtSeparator,			// if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
+		bool aEscapeOnlyLF					// if true, only linefeeds are escaped as \n, but nothing else (not even \ itself)
   );
   // - recursive expansion of properties
   void expandProperty(
@@ -649,7 +653,8 @@ private:
     char aSeparator,						// separator between values that consist of a list of enums etc. (more common for params than for values)
     TMimeDirMode aMimeMode,     // MIME mode (older or newer vXXX format compatibility)
     bool aParamValue,           // set if parsing parameter value (different escaping rules)
-    bool aStructured            // set if value consists of multiple values (has semicolon content escaping)
+    bool aStructured,           // set if value consists of multiple values (has semicolon content escaping)
+		bool aOnlyDeEscLF						// set if de-escaping only for \n -> LF, but all visible char escapes should be left intact
   );
   // - parse given property
   bool parseProperty(
@@ -660,7 +665,9 @@ private:
     sInt16 aRepArraySize, // size of array (for security)
     TMimeDirMode aMimeMode, // MIME mode (older or newer vXXX format compatibility)
 	  cAppCharP aGroupName, // property group ("a" in "a.TEL:131723612")
-  	size_t aGroupNameLen
+  	size_t aGroupNameLen,
+		cAppCharP aFullPropName, // entire property name (excluding group) - might be needed in case of wildcard property match
+  	size_t aFullNameLen
   );
   // parse MIME-DIR level from specified string into item
   bool parseLevels(
