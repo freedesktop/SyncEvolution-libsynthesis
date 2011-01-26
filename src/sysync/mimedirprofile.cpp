@@ -976,6 +976,9 @@ TPropertyDefinition::TPropertyDefinition(const char* aName, sInt16 aNumVals, boo
   allowFoldAtSep = aAllowFoldAtSep; // allow folding at value separators even if it inserts a space at the end of the previous value
   groupFieldID = aGroupFieldID; // fid for field that contains the group tag (prefix to the property name, like "a" in "a.TEL:079122327")
   propGroup = aPropertyGroupID; // property group ID
+  // check if this is an unprocessed wildcard property
+  unprocessed = strchr(aName, '*')!=NULL;
+  // check value list
   if (aNumVals==NUMVAL_LIST || aNumVals==NUMVAL_REP_LIST) {
     // value list
     valuelist = true;
@@ -1975,7 +1978,7 @@ static void decodeValue(
   }
   else {
     // no (known) encoding
-    p = skipfolded(aText,aMimeMode,false); // get unfolded start point (in case value starts with folding sequence
+    p = skipfolded(aText,aMimeMode,false); // get unfolded start point (in case value starts with folding sequence)
     do {
       c=*p;
       if (isEndOfLineOrText(c) || (!escaped && aStructSep!=0 && (c==aStructSep || c==aAltSep))) break; // EOLN and structure-sep (usually ;) terminate value
@@ -2195,7 +2198,8 @@ sInt16 TMimeDirProfileHandler::generateValue(
   bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
   char aFirstChar,            // will be appended before value if there is any value (and in MIME-DIR '\b' optional break indicator is appended as well)
   sInt32 &aNumNonSpcs,        // how many non-spaces are already in the value
-  bool aFoldAtSeparators      // if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
+  bool aFoldAtSeparators,     // if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
+  bool aEscapeOnlyLF          // if true, only linefeeds are escaped as \n, but nothing else (not even \ itself)
 )
 {
   string vallist;             // as received from fieldToMIMEString()
@@ -2306,7 +2310,6 @@ sInt16 TMimeDirProfileHandler::generateValue(
                 aNumNonSpcs = 0; // new word starts
               }
               // only text must be fully escaped, turn escaping off for RRULE (RECUR type)
-              bool noescape = aConvDefP->convmode==CONVMODE_RRULE;
               // escape reserved chars
               switch (c) {
                 case '"':
@@ -2314,7 +2317,7 @@ sInt16 TMimeDirProfileHandler::generateValue(
                   goto add_char; // otherwise, just add
                 case ',':
                   // in MIME-DIR, always escape commas, in pre-MIME-DIR only if usage in value list requires it
-                  if (noescape || (!aCommaEscape && aMimeMode==mimo_old)) goto add_char;
+                  if (!aCommaEscape && aMimeMode==mimo_old) goto add_char;
                   goto do_escape;
                 case ':':
                   // always escape colon in parameters
@@ -2327,10 +2330,12 @@ sInt16 TMimeDirProfileHandler::generateValue(
                   goto do_escape;
                 case ';':
                   // in MIME-DIR, always escape semicolons, in pre-MIME-DIR only in parameters and structured values
-                  if (noescape || (!aParamValue && !aStructured && aMimeMode==mimo_old)) goto add_char;
+                  if (!aParamValue && !aStructured && aMimeMode==mimo_old) goto add_char;
                 do_escape:
-                  // escape chars with backslash
-                  outval+='\\';
+                  if (!aEscapeOnlyLF) {
+                    // escape chars with backslash
+                    outval+='\\';
+                  }
                   goto out_char;
                 case '\r':
                   // ignore returns
@@ -2553,7 +2558,7 @@ bool TMimeDirProfileHandler::generateParams(
         //       same index as for the property itself)
         // Note: Escape commas if separator is a comma
         sInt32 numNoSpcs = aNumNonSpcs;
-        if (generateValue(aItem,&(paramP->convdef),aBaseOffset,aRepOffset,paramstr,sep,aMimeMode,true,false,sep==',',encoding,nonasc,0,numNoSpcs,false)>=GENVALUE_ELEMENT) {
+        if (generateValue(aItem,&(paramP->convdef),aBaseOffset,aRepOffset,paramstr,sep,aMimeMode,true,false,sep==',',encoding,nonasc,0,numNoSpcs,false,false)>=GENVALUE_ELEMENT) {
           // value generated, add parameter name/value (or separator/value for already started params)
           aString.append(paramstr);
           aNumNonSpcs = numNoSpcs; // actually added, count now
@@ -2726,35 +2731,11 @@ sInt16 TMimeDirProfileHandler::generateProperty(
   fPropTZIDtctx = TCTX_UNKNOWN;
   // - start with empty text
   proptext.erase();
-  // - first set group if there is one
-  if (aPropP->groupFieldID!=FID_NOT_SUPPORTED) {
-    // get group name
-    TItemField *g_fldP = aItem.getArrayFieldAdjusted(aPropP->groupFieldID+aBaseOffset, aRepeatOffset, true);
-    if (g_fldP && !g_fldP->isEmpty()) {
-      g_fldP->appendToString(proptext);
-      proptext += '.'; // group separator
-    }
-  }
-  // - append name and (possibly) parameters that are constant over all repetitions
-  proptext += aPrefix;
-  // - up to here assume no spaces
-  sInt32 numNonSpcs = proptext.size()+14; // some extra room for possible ";CHARSET=UTF8"
   // - init flags
-  bool anyvaluessupported=false; // at least one of the main values must be supported by the remote in order to generate property at all
-  bool arrayexhausted=false; // flag will be set if a main value was not generated because array exhausted
-  // - append parameter values
-  //   anyvalues gets set if a parameter with shownonempty attribute was generated
-  bool anyvalues=generateParams(
-    aItem,  // the item where data comes from
-    proptext, // where params will be appended
-    aPropP,  // the property definition
-    aMimeMode,
-    aBaseOffset,
-    aRepeatOffset,
-    aPropNameExt,
-    numNonSpcs
-  );
-  // - append value(s)
+  bool anyvaluessupported = false; // at least one of the main values must be supported by the remote in order to generate property at all
+  bool arrayexhausted = false; // flag will be set if a main value was not generated because array exhausted
+  bool anyvalues = false; // flag will be set when at least one value has been generated
+  sInt32 numNonSpcs=0;
   encoding=enc_none; // default is no encoding
   sInt16 v=0; // value counter
   nonasc=false; // assume plain ASCII
@@ -2762,134 +2743,229 @@ sInt16 TMimeDirProfileHandler::generateProperty(
   TEncodingTypes enc;
   bool na;
   const TConversionDef *convP;
-  sInt16 maxrep=1,repinc=1;
-  if (aPropNameExt) {
-    maxrep=aPropNameExt->maxRepeat;
-    repinc=aPropNameExt->repeatInc;
-  }
-  // generate property contents
-  if (aPropP->valuelist && !aPropP->expandlist) {
-    // property with value list
-    // NOTE: convdef[0] is used for all values, aRepeatOffset changes
+  // - now generate
+  if (aPropP->unprocessed) {
     convP = &(aPropP->convdefs[0]);
-    // - now iterate over available repeats or array contents
-    while(aRepeatOffset<maxrep*repinc || maxrep==REP_ARRAY) {
-      // generate one value
-      enc=encoding;
-      na=false;
-      genres=generateValue(
-        aItem,
-        convP,
-        aBaseOffset, // offset relative to base field
-        aRepeatOffset, // additional offset or array index
-        elemtext,
-        aPropP->valuesep, // use valuelist separator between multiple values possibly generated from a list in a single field (e.g. CATEGORIES)
-        aMimeMode,
-        false, // not a param
-        true, // always escape ; in valuelist properties
-        aPropP->valuesep==',' || aPropP->altvaluesep==',', // escape commas if one of the separators is a comma
-        enc,
-        na,
-        v>0 ? aPropP->valuesep : 0, // separate with specified multi-value-delimiter if not first value
-        numNonSpcs, // number of consecutive non-spaces, accumulated
-        aPropP->allowFoldAtSep
-      );
-      // check if something was generated
-      if (genres>=GENVALUE_ELEMENT) {
-        // generated something, might have caused encoding/noasc change
-        encoding=enc;
-        nonasc=nonasc || na;
+    // unfolded and not-linefeed-escaped raw property stored in string - generate it as one value
+    enc=encoding;
+    na=false;
+    genres=generateValue(
+      aItem,
+      convP,
+      aBaseOffset, // base offset, relative to
+      aRepeatOffset, // repeat offset or array index
+      elemtext, // value will be stored here (might be binary in case of BLOBs, but then encoding will be set)
+      0, // should for some exotic reason values consist of a list, separate it by "," (";" is reserved for structured values)
+      aMimeMode,
+      false, // no parameter
+      false, // not structured value, don't escape ";"
+      false, // don't escape commas, either
+      enc, // will receive needed encoding (usually B64 for binary values)
+      na,
+      0, // no first char
+      numNonSpcs, // number of consecutive non-spaces, accumulated
+      aPropP->allowFoldAtSep,
+      true // linefeed only escaping
+    );
+    // check if something was generated
+    if (genres>=GENVALUE_ELEMENT) {
+      // generated something, might have caused encoding/noasc change
+      encoding=enc;
+      nonasc=nonasc || na;
+      anyvaluessupported=true;
+      anyvalues=true;
+      // separate name+params and values
+      bool dq = false;
+      bool fc = true;
+      size_t pti = string::npos;
+      appChar c;
+      for (cAppCharP p=elemtext.c_str(); (c=*p)!=0; p++) {
+        if (dq) {
+          if (c=='"') dq = false; // end of double quoted part
+        }
+        else {
+          // not in doublequote
+          if (fc && c=='"') dq = true; // if first char is doublequote, start quoted string
+          else if (c==':') { pti = p-elemtext.c_str(); break; } // found
+          else if (c=='\\' && *(p+1)) p++; // make sure next char is not evaluated
+        }
+        fc = false; // no longer first char
       }
-      // update if we have at least one value of this property supported (even if empty) by the remote party
-      if (genres>GENVALUE_NOTSUPPORTED) anyvaluessupported=true;
-      if (genres==GENVALUE_EXHAUSTED) arrayexhausted=true; // for at least one component of the property, the array is exhausted
-      // update if we have any value now (even if only empty)
-      // - generate empty property according to
-      //   - aSuppressEmpty
-      //   - session-global fDontSendEmptyProperties
-      //   - supressEmpty property flag in property definition
-      //   - if no repeat (i.e. no aPropNameExt), exhausted array is treated like empty value (i.e. rendered unless suppressempty set)
-      anyvalues = anyvalues || (genres>=
-        (aSuppressEmpty || fDontSendEmptyProperties || aPropP->suppressEmpty
-          ? GENVALUE_ELEMENT // if empty values should be suppressed, we need a non-empty element (array or simple field)
-          : GENVALUE_EXHAUSTED // for valuelists, if empty values are not explicitly suppressed (i.e. minshow==0, see caller) exhausted array must always produce an empty value
-        )
-      );
-      // count effective value appended
-      v++;
-      // update repeat offset
-      aRepeatOffset+=repinc;
-      // check for array mode - stop if array is exhausted or field not supported
-      if (maxrep==REP_ARRAY && genres<=GENVALUE_EXHAUSTED) break;
+      if (pti!=string::npos) {
+        proptext.assign(elemtext, 0, pti); // name+params without separator
+        elemtext.erase(0, pti+1); // remove name and separator
+      }
+    }
+    else {
+      arrayexhausted = true; // no more values, assume array exhausted
     }
   }
   else {
-    // property with individual values (like N)
-    // NOTE: field changes with different convdefs, offsets remain stable
-    arrayexhausted = true; // assume all arrays exhausted unless we find at least one non-exhausted array
-    bool somearrays = false; // no arrays yet
-    do {
-      convP = &(aPropP->convdefs[v]);
-      // generate one value
-      enc=encoding;
-      na=false;
-      genres=generateValue(
-        aItem,
-        convP,
-        aBaseOffset, // base offset, relative to
-        aRepeatOffset, // repeat offset or array index
-        elemtext, // value will be stored here (might be binary in case of BLOBs, but then encoding will be set)
-        ',', // should for some exotic reason values consist of a list, separate it by "," (";" is reserved for structured values)
-        aMimeMode,
-        false,
-        aPropP->numValues>1, // structured value, escape ";"
-        aPropP->altvaluesep==',', // escape commas if alternate separator is a comma
-        enc, // will receive needed encoding (usually B64 for binary values)
-        na,
-        0, // no first char
-        numNonSpcs, // number of consecutive non-spaces, accumulated
-        aPropP->allowFoldAtSep
-      );
-      //* %%% */ PDEBUGPRINTFX(DBG_EXOTIC,("generateValue #%hd for property '%s' returns genres==%hd",v,TCFG_CSTR(aPropP->propname),genres));
-      // check if something was generated
-      if (genres>=GENVALUE_ELEMENT) {
-        // generated something, might have caused encoding/noasc change
-        encoding=enc;
-        nonasc=nonasc || na;
+    // Normally generated property
+    // - first set group if there is one
+    if (aPropP->groupFieldID!=FID_NOT_SUPPORTED) {
+      // get group name
+      TItemField *g_fldP = aItem.getArrayFieldAdjusted(aPropP->groupFieldID+aBaseOffset, aRepeatOffset, true);
+      if (g_fldP && !g_fldP->isEmpty()) {
+        g_fldP->appendToString(proptext);
+        proptext += '.'; // group separator
       }
-      // update if we have at least one value of this property supported (even if empty) by the remote party
-      if (genres>GENVALUE_NOTSUPPORTED) anyvaluessupported=true;
-      if (genres==GENVALUE_ELEMENT || genres==GENVALUE_EMPTYELEMENT) {
-        arrayexhausted = false; // there is at least one non-exhausted array we're reading from (even if only empty value)
-        somearrays = true; // generating from array
+    }
+    // - append name and (possibly) parameters that are constant over all repetitions
+    proptext += aPrefix;
+    // - up to here assume no spaces
+    numNonSpcs = proptext.size()+14; // some extra room for possible ";CHARSET=UTF8"
+    // - append parameter values
+    //   anyvalues gets set if a parameter with shownonempty attribute was generated
+    anyvalues=generateParams(
+      aItem,  // the item where data comes from
+      proptext, // where params will be appended
+      aPropP,  // the property definition
+      aMimeMode,
+      aBaseOffset,
+      aRepeatOffset,
+      aPropNameExt,
+      numNonSpcs
+    );
+    // - append value(s)
+    sInt16 maxrep=1,repinc=1;
+    if (aPropNameExt) {
+      maxrep=aPropNameExt->maxRepeat;
+      repinc=aPropNameExt->repeatInc;
+    }
+    // generate property contents
+    if (aPropP->valuelist && !aPropP->expandlist) {
+      // property with value list
+      // NOTE: convdef[0] is used for all values, aRepeatOffset changes
+      convP = &(aPropP->convdefs[0]);
+      // - now iterate over available repeats or array contents
+      while(aRepeatOffset<maxrep*repinc || maxrep==REP_ARRAY) {
+        // generate one value
+        enc=encoding;
+        na=false;
+        genres=generateValue(
+          aItem,
+          convP,
+          aBaseOffset, // offset relative to base field
+          aRepeatOffset, // additional offset or array index
+          elemtext,
+          aPropP->valuesep, // use valuelist separator between multiple values possibly generated from a list in a single field (e.g. CATEGORIES)
+          aMimeMode,
+          false, // not a param
+          true, // always escape ; in valuelist properties
+          aPropP->valuesep==',' || aPropP->altvaluesep==',', // escape commas if one of the separators is a comma
+          enc,
+          na,
+          v>0 ? aPropP->valuesep : 0, // separate with specified multi-value-delimiter if not first value
+          numNonSpcs, // number of consecutive non-spaces, accumulated
+          aPropP->allowFoldAtSep,
+          convP->convmode==CONVMODE_RRULE // RRULES are not to be escaped
+        );
+        // check if something was generated
+        if (genres>=GENVALUE_ELEMENT) {
+          // generated something, might have caused encoding/noasc change
+          encoding=enc;
+          nonasc=nonasc || na;
+        }
+        // update if we have at least one value of this property supported (even if empty) by the remote party
+        if (genres>GENVALUE_NOTSUPPORTED) anyvaluessupported=true;
+        if (genres==GENVALUE_EXHAUSTED) arrayexhausted=true; // for at least one component of the property, the array is exhausted
+        // update if we have any value now (even if only empty)
+        // - generate empty property according to
+        //   - aSuppressEmpty
+        //   - session-global fDontSendEmptyProperties
+        //   - supressEmpty property flag in property definition
+        //   - if no repeat (i.e. no aPropNameExt), exhausted array is treated like empty value (i.e. rendered unless suppressempty set)
+        anyvalues = anyvalues || (genres>=
+          (aSuppressEmpty || fDontSendEmptyProperties || aPropP->suppressEmpty
+            ? GENVALUE_ELEMENT // if empty values should be suppressed, we need a non-empty element (array or simple field)
+            : GENVALUE_EXHAUSTED // for valuelists, if empty values are not explicitly suppressed (i.e. minshow==0, see caller) exhausted array must always produce an empty value
+          )
+        );
+        // count effective value appended
+        v++;
+        // update repeat offset
+        aRepeatOffset+=repinc;
+        // check for array mode - stop if array is exhausted or field not supported
+        if (maxrep==REP_ARRAY && genres<=GENVALUE_EXHAUSTED) break;
       }
-      else if (genres==GENVALUE_EXHAUSTED)
-        somearrays = true; // generating from array
-      // update if we have any value now (even if only empty)
-      // - generate empty property according to
-      //   - aSuppressEmpty
-      //   - session-global fDontSendEmptyProperties
-      //   - supressEmpty property flag in property definition
-      //   - if no repeat (i.e. no aPropNameExt), exhausted array is treated like empty value (i.e. rendered unless suppressempty set)
-      anyvalues = anyvalues ||
-        (genres>=(aSuppressEmpty || fDontSendEmptyProperties || aPropP->suppressEmpty ? GENVALUE_ELEMENT : (aPropNameExt ? GENVALUE_EMPTYELEMENT : GENVALUE_EXHAUSTED)));
-      // insert delimiter if not last value
-      v++;
-      if (v>=aPropP->numValues) break; // done with all values
-      // add delimiter for next value
-      if (aMimeMode==mimo_standard || aPropP->allowFoldAtSep) {
-        elemtext+='\b'; // preferred break location (or location where extra space is allowed for mimo_old)
-        numNonSpcs = 0; // can break here, new word starts
-      }
-      elemtext+=aPropP->valuesep;
-      numNonSpcs++; // count it (assuming separator is never a space!)
-      // add break indicator
-    } while(true);
-    // if none of the data sources is an array, we can't be exhausted.
-    if (!somearrays) arrayexhausted = false;
-  }
+    }
+    else {
+      // property with individual values (like N)
+      // NOTE: field changes with different convdefs, offsets remain stable
+      arrayexhausted = true; // assume all arrays exhausted unless we find at least one non-exhausted array
+      bool somearrays = false; // no arrays yet
+      do {
+        convP = &(aPropP->convdefs[v]);
+        // generate one value
+        enc=encoding;
+        na=false;
+        genres=generateValue(
+          aItem,
+          convP,
+          aBaseOffset, // base offset, relative to
+          aRepeatOffset, // repeat offset or array index
+          elemtext, // value will be stored here (might be binary in case of BLOBs, but then encoding will be set)
+          ',', // should for some exotic reason values consist of a list, separate it by "," (";" is reserved for structured values)
+          aMimeMode,
+          false,
+          aPropP->numValues>1, // structured value, escape ";"
+          aPropP->altvaluesep==',', // escape commas if alternate separator is a comma
+          enc, // will receive needed encoding (usually B64 for binary values)
+          na,
+          0, // no first char
+          numNonSpcs, // number of consecutive non-spaces, accumulated
+          aPropP->allowFoldAtSep,
+          convP->convmode==CONVMODE_RRULE // RRULES are not to be escaped
+        );
+        //* %%% */ PDEBUGPRINTFX(DBG_EXOTIC,("generateValue #%hd for property '%s' returns genres==%hd",v,TCFG_CSTR(aPropP->propname),genres));
+        // check if something was generated
+        if (genres>=GENVALUE_ELEMENT) {
+          // generated something, might have caused encoding/noasc change
+          encoding=enc;
+          nonasc=nonasc || na;
+        }
+        // update if we have at least one value of this property supported (even if empty) by the remote party
+        if (genres>GENVALUE_NOTSUPPORTED) anyvaluessupported=true;
+        if (genres==GENVALUE_ELEMENT || genres==GENVALUE_EMPTYELEMENT) {
+          arrayexhausted = false; // there is at least one non-exhausted array we're reading from (even if only empty value)
+          somearrays = true; // generating from array
+        }
+        else if (genres==GENVALUE_EXHAUSTED)
+          somearrays = true; // generating from array
+        // update if we have any value now (even if only empty)
+        // - generate empty property according to
+        //   - aSuppressEmpty
+        //   - session-global fDontSendEmptyProperties
+        //   - supressEmpty property flag in property definition
+        //   - if no repeat (i.e. no aPropNameExt), exhausted array is treated like empty value (i.e. rendered unless suppressempty set)
+        anyvalues = anyvalues ||
+          (genres>=(aSuppressEmpty || fDontSendEmptyProperties || aPropP->suppressEmpty ? GENVALUE_ELEMENT : (aPropNameExt ? GENVALUE_EMPTYELEMENT : GENVALUE_EXHAUSTED)));
+        // insert delimiter if not last value
+        v++;
+        if (v>=aPropP->numValues) break; // done with all values
+        // add delimiter for next value
+        if (aMimeMode==mimo_standard || aPropP->allowFoldAtSep) {
+          elemtext+='\b'; // preferred break location (or location where extra space is allowed for mimo_old)
+          numNonSpcs = 0; // can break here, new word starts
+        }
+        elemtext+=aPropP->valuesep;
+        numNonSpcs++; // count it (assuming separator is never a space!)
+        // add break indicator
+      } while(true);
+      // if none of the data sources is an array, we can't be exhausted.
+      if (!somearrays) arrayexhausted = false;
+    }
+  } // normal generated property from components
   // - finalize property if it contains supported fields at all (or is mandatory)
   if ((anyvaluessupported && anyvalues) || aPropP->mandatory) {
+    // - generate charset parameter if needed
+    //   NOTE: MIME-DIR based formats do NOT have the CHARSET attribute any more!
+    if (nonasc && aMimeMode==mimo_old && fDefaultOutCharset!=chs_ansi) {
+      // non-ASCII chars contained, generate property telling what charset is used
+      proptext.append(";CHARSET=");
+      proptext.append(MIMECharSetNames[fDefaultOutCharset]);
+    }
     // - generate encoding parameter if needed
     if (encoding!=enc_none) {
       // in MIME-DIR, only "B" is allowed for binary, for vCard 2.1 it is "BASE64"
@@ -2899,13 +2975,6 @@ sInt16 TMimeDirProfileHandler::generateProperty(
       // add the parameter
       proptext.append(";ENCODING=");
       proptext.append(MIMEEncodingNames[encoding]);
-    }
-    // - generate charset parameter if needed
-    //   NOTE: MIME-DIR based formats do NOT have the CHARSET attribute any more!
-    if (nonasc && aMimeMode==mimo_old && fDefaultOutCharset!=chs_ansi) {
-      // non-ASCII chars contained, generate property telling what charset is used
-      proptext.append(";CHARSET=");
-      proptext.append(MIMECharSetNames[fDefaultOutCharset]);
     }
     // - separate value from property text
     proptext+=':';
@@ -3023,7 +3092,6 @@ void TMimeDirProfileHandler::generateLevels(
   const TProfileDefinition *aProfileP
 )
 {
-  //* %%% */ PDEBUGBLOCKDESC("generateLevels",TCFG_CSTR(aProfileP->levelName));
   // check if level must be generated
   bool dolevel=false;
   string s,val;
@@ -3075,7 +3143,6 @@ void TMimeDirProfileHandler::generateLevels(
           propP=propP->next;
           continue;
         }
-        //* %%% */ PDEBUGBLOCKDESC("expand_property",TCFG_CSTR(propP->propname));
         #ifndef NO_REMOTE_RULES
         // check for beginning of new group (no or different property group number)
         if (propP->propGroup==0 || propP->propGroup!=propGroup) {
@@ -3141,7 +3208,6 @@ void TMimeDirProfileHandler::generateLevels(
             fMimeDirMode // MIME-DIR mode
           );
         }
-        //* %%% */ PDEBUGENDBLOCK("expand_property");
       } // properties loop
       // generate sublevels, if any
       const TProfileDefinition *subprofileP = aProfileP->subLevels;
@@ -3157,7 +3223,6 @@ void TMimeDirProfileHandler::generateLevels(
       finalizeProperty(s.c_str(),aString,fMimeDirMode,false,false);
     } // normal level
   } // if level must be generated
-  //* %%% */ PDEBUGENDBLOCK("generateLevels");
 } // TMimeDirProfileHandler::generateLevels
 
 
@@ -3533,7 +3598,8 @@ bool TMimeDirProfileHandler::parseValue(
   char aSeparator,            // separator between values
   TMimeDirMode aMimeMode,     // MIME mode (older or newer vXXX format compatibility)
   bool aParamValue,           // set if parsing parameter value (different escaping rules)
-  bool aStructured            // set if value consists of multiple values (has semicolon content escaping)
+  bool aStructured,           // set if value consists of multiple values (has semicolon content escaping)
+  bool aOnlyDeEscLF           // set if de-escaping only for \n -> LF, but all visible char escapes should be left intact
 )
 {
   string val,val2;
@@ -3578,6 +3644,7 @@ bool TMimeDirProfileHandler::parseValue(
             c=*p;
             if (!c) break; // half escape sequence, ignore
             else if (c=='n' || c=='N') c='\n';
+            else if (aOnlyDeEscLF) val+=c; // if deescaping only for \n, transfer escape char into output
             // other escaped chars are shown as themselves
           }
           // add char
@@ -3668,7 +3735,9 @@ bool TMimeDirProfileHandler::parseProperty(
   sInt16 aRepArraySize, // size of array (for security)
   TMimeDirMode aMimeMode, // MIME mode (older or newer vXXX format compatibility)
   cAppCharP aGroupName, // property group ("a" in "a.TEL:131723612")
-  size_t aGroupNameLen
+  size_t aGroupNameLen,
+  cAppCharP aFullPropName, // entire property name (excluding group) - might be needed in case of wildcard property match
+  size_t aFullNameLen
 )
 {
   TNameExtIDMap nameextmap;
@@ -3677,6 +3746,7 @@ bool TMimeDirProfileHandler::parseProperty(
   char c;
   string pname;
   string val;
+  string unprocessedVal;
   bool defaultparam;
   bool fieldoffsetfound;
   bool notempty = false;
@@ -3699,7 +3769,15 @@ bool TMimeDirProfileHandler::parseProperty(
   nameextmap = 0; // no name extensions detected so far
   fieldoffsetfound = (aPropP->nameExts==NULL); // no first pass needed at all w/o nameExts, just use offs=0
   valuelist = aPropP->valuelist; // cache flag
-  // scan parameter list
+  // prepare storage as unprocessed value
+  if (aPropP->unprocessed) {
+    if (aGroupName && *aGroupName) {
+      unprocessedVal.assign(aGroupName, aGroupNameLen);
+      unprocessedVal += '.';
+    }
+    unprocessedVal.append(aFullPropName, aFullNameLen);
+  }
+  // scan parameter list (even if unprocessed, to catch ENCODING and CHARSET)
   do {
     p=aText;
     while (*p==';') {
@@ -3742,8 +3820,12 @@ bool TMimeDirProfileHandler::parseProperty(
       // - obtain unfolded value
       val.erase();
       bool dquoted = false;
-      if (*vp=='"' && aMimeMode==mimo_standard) {
+    bool wasdquoted = false;
+    // - note: we allow quoted params even with mimo_old, as the chance is much higher that a param value
+    //   beginning with doublequote is actually a quoted string than a value containing a doublequote at the beginning
+      if (*vp=='"') {
         dquoted = true;
+        wasdquoted = true;
         vp=nextunfolded(vp,aMimeMode);
       }
       do {
@@ -3782,16 +3864,24 @@ bool TMimeDirProfileHandler::parseProperty(
       // - processing of next param starts here
       p=vp;
       // check for global parameters
+      bool storeUnprocessed = true;
       if ((aMimeMode==mimo_old && defaultparam) || strucmp(pname.c_str(),"ENCODING")==0) {
-        // get encoding (if valid encoding)
+        // get encoding
+        // Note: always process ENCODING, as QP is mimo-old specific and must be removed for normalized storage
         for (sInt16 k=0; k<numMIMEencodings; k++) {
           if (strucmp(val.c_str(),MIMEEncodingNames[k])==0) {
             encoding=static_cast <TEncodingTypes> (k);
           }
         }
+        if (encoding==enc_quoted_printable)
+          storeUnprocessed = false; // QP will be decoded, so param must not be stored
+        else
+          encoding = enc_none; // other encodings will not be processed
       }
       else if (strucmp(pname.c_str(),"CHARSET")==0) {
         // charset specified (mimo_old value-only not supported)
+        // Note: always process CHARSET, because non-UTF8 cannot be safely passed to DBs, so we need
+        //       to convert in case it's not UTF-8 even for "unprocessed" properties
         sInt16 k;
         for (k=1; k<numCharSets; k++) {
           if (strucmp(val.c_str(),MIMECharSetNames[k])==0) {
@@ -3806,6 +3896,18 @@ bool TMimeDirProfileHandler::parseProperty(
           // %%% replace 8bit chars with underscore
           charset=chs_unknown;
         }
+        storeUnprocessed = false;
+      }
+      if (aPropP->unprocessed && storeUnprocessed && fieldoffsetfound) {
+        // append in reconstructed form for storing "unprocessed" (= lightly normalized)
+        unprocessedVal += ';';
+        unprocessedVal += pname;
+        if (!defaultparam) {
+          unprocessedVal += '=';
+          if (wasdquoted) unprocessedVal += '"';
+          unprocessedVal += val;
+          if (wasdquoted) unprocessedVal += '"';
+        }
       }
       // find param in list now
       paramP = aPropP->parameterDefs;
@@ -3814,9 +3916,9 @@ bool TMimeDirProfileHandler::parseProperty(
         // check for match
         if (
           mimeModeMatch(paramP->modeDependency) &&
-#ifndef NO_REMOTE_RULES
+          #ifndef NO_REMOTE_RULES
           (!paramP->ruleDependency || isActiveRule(paramP->ruleDependency)) &&
-#endif
+          #endif
           ((defaultparam && paramP->defaultparam) || strucmp(pname.c_str(),TCFG_CSTR(paramP->paramname))==0)
         ) {
           // param name found
@@ -3869,7 +3971,8 @@ bool TMimeDirProfileHandler::parseProperty(
               defaultparam ? ';' : ',', // value list separator
               aMimeMode,    // MIME mode (older or newer vXXX format compatibility)
               true,         // parsing a parameter
-              false         // no structured value
+              false,        // no structured value
+              false         // normal, full de-escaping
             )) {
               DEBUGPRINTFX(DBG_PARSE,(
                 "TMimeDirProfileHandler::parseProperty: %s: value not parsed: %s",
@@ -4013,70 +4116,100 @@ bool TMimeDirProfileHandler::parseProperty(
     if (g_fldP)
       g_fldP->setAsString(aGroupName,aGroupNameLen); // store the group name (aGroupName might be NULL, that's ok)
   }
-  // - read value(s)
-  char sep=':'; // first value starts with colon
-  // repeat until we have all values
-  for (sInt16 i=0; i<aPropP->numValues || valuelist; i++) {
-    if (*p!=sep && (aPropP->altvaluesep==0 || *p!=aPropP->altvaluesep)) {
-      #ifdef SYDEBUG
-      // Note: for valuelists, this is the normal loop exit case as we are not limited by numValues
-      if (!valuelist) {
-        // New behaviour: omitting values is ok (needed e.g. for T39m)
-        DEBUGPRINTFX(DBG_PARSE,("TMimeDirProfileHandler::parseProperty: %s does not specify all values",TCFG_CSTR(aPropP->propname)));
-      }
-      #endif
-      break; // all available values read
-    }
-    // skip separator
-    p++;
-    // get value(list) unfolded
-    decodeValue(encoding,charset,aMimeMode,aPropP->numValues > 1 || valuelist ? aPropP->valuesep : 0,aPropP->altvaluesep,p,val);
-    // check if we can store, otherwise just read over value
-    // - get the conversion def for the value
-    TConversionDef *convDef = &(aPropP->convdefs[valuelist ? 0 : i]); // always use convdef[0] for value lists
-    // - store value if not a value list (but simple value or part of structured value), or store if
-    //   valuelist and repeat not yet exhausted, or if valuelist without repetition but combination separator
-    //   which allows to put multiple values into a single field
-    if (!valuelist || repoffset<maxrep*repinc || maxrep==REP_ARRAY || (valuelist && convDef->combineSep)) {
-      // convert and store value (or comma separated value-list, not to mix with valuelist-property!!)
+  if (aPropP->unprocessed) {
+    if (*p==':') {
+      // there is a value
+      p++;
+      // - get entire property value part, not checking for any separators, but converting to appchar (UTF-8) and unfolding
+      decodeValue(encoding==enc_quoted_printable ? encoding : enc_none, charset, aMimeMode, 0, 0, p, val);
+      // - add it to "unprocessed" value representation
+      unprocessedVal += ':';
+      unprocessedVal += val;
+      // - process this as a whole (de-escaping ONLY CRLFs) and assign to field
       if (!parseValue(
-        val,
-        convDef,
+        unprocessedVal,
+        &(aPropP->convdefs[0]), // the conversion definition
         baseoffset, // identifies base field
         repoffset,  // repeat offset to base field / array index
         aItem,      // the item where data goes to
         notempty,   // set true if value(s) parsed are not all empty
-        ',',
+        0, // no value list separator
         aMimeMode,  // MIME mode (older or newer vXXX format compatibility)
         false,      // no parameter
-        aPropP->numValues > 1 // structured if multiple values
+        false,      // not structured
+        true        // only de-escape linefeeds, but nothing else
       )) {
+        return false;
+      }
+    } // if property has a value part
+  } // if unprocessed property
+  else {
+    // - read and decode value(s)
+    char sep=':'; // first value starts with colon
+    // repeat until we have all values
+    for (sInt16 i=0; i<aPropP->numValues || valuelist; i++) {
+      if (*p!=sep && (aPropP->altvaluesep==0 || *p!=aPropP->altvaluesep)) {
+        #ifdef SYDEBUG
+        // Note: for valuelists, this is the normal loop exit case as we are not limited by numValues
+        if (!valuelist) {
+          // New behaviour: omitting values is ok (needed e.g. for T39m)
+          DEBUGPRINTFX(DBG_PARSE,("TMimeDirProfileHandler::parseProperty: %s does not specify all values",TCFG_CSTR(aPropP->propname)));
+        }
+        #endif
+        break; // all available values read
+      }
+      // skip separator
+      p++;
+      // get value(list) unfolded
+      decodeValue(encoding,charset,aMimeMode,aPropP->numValues > 1 || valuelist ? aPropP->valuesep : 0,aPropP->altvaluesep,p,val);
+      // check if we can store, otherwise just read over value
+      // - get the conversion def for the value
+      TConversionDef *convDef = &(aPropP->convdefs[valuelist ? 0 : i]); // always use convdef[0] for value lists
+      // - store value if not a value list (but simple value or part of structured value), or store if
+      //   valuelist and repeat not yet exhausted, or if valuelist without repetition but combination separator
+      //   which allows to put multiple values into a single field
+      if (!valuelist || repoffset<maxrep*repinc || maxrep==REP_ARRAY || (valuelist && convDef->combineSep)) {
+        // convert and store value (or comma separated value-list, not to mix with valuelist-property!!)
+        if (!parseValue(
+          val,
+          convDef,
+          baseoffset, // identifies base field
+          repoffset,  // repeat offset to base field / array index
+          aItem,      // the item where data goes to
+          notempty,   // set true if value(s) parsed are not all empty
+          ',',
+          aMimeMode,  // MIME mode (older or newer vXXX format compatibility)
+          false,      // no parameter
+          aPropP->numValues > 1, // structured if multiple values
+          false       // normal, full de-escaping
+        )) {
+          PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,(
+            "TMimeDirProfileHandler::parseProperty: %s: value not parsed: %s",
+            TCFG_CSTR(aPropP->propname),
+            val.c_str()
+          ));
+          return false;
+        }
+        // update repeat offset and repeat count if this is a value list
+        if (valuelist && convDef->combineSep==0 && (notempty || !overwriteempty)) {
+          // - update count for every non-empty value (for empty values only if overwriteempty is not set)
+          if (repid>=0)
+            aRepArray[repid]++; // next repetition
+          repoffset+=repinc; // also update repeat offset
+        }
+      }
+      else {
+        // value cannot be stored
         PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,(
-          "TMimeDirProfileHandler::parseProperty: %s: value not parsed: %s",
+          "TMimeDirProfileHandler::parseProperty: %s: value not stored because repeat exhausted: %s",
           TCFG_CSTR(aPropP->propname),
           val.c_str()
         ));
-        return false;
       }
-      // update repeat offset and repeat count if this is a value list
-      if (valuelist && convDef->combineSep==0 && (notempty || !overwriteempty)) {
-        // - update count for every non-empty value (for empty values only if overwriteempty is not set)
-        if (repid>=0)
-          aRepArray[repid]++; // next repetition
-        repoffset+=repinc; // also update repeat offset
-      }
-    }
-    else {
-      // value cannot be stored
-      PDEBUGPRINTFX(DBG_PARSE+DBG_EXOTIC,(
-        "TMimeDirProfileHandler::parseProperty: %s: value not stored because repeat exhausted: %s",
-        TCFG_CSTR(aPropP->propname),
-        val.c_str()
-      ));
-    }
-    // more values must be separated by the value sep char (default=';' but can be ',' e.g. for iCalendar 2.0 CATEGORIES)
-    sep = aPropP->valuesep;
-  } // for all values
+      // more values must be separated by the value sep char (default=';' but can be ',' e.g. for iCalendar 2.0 CATEGORIES)
+      sep = aPropP->valuesep;
+    } // for all values
+  } // process values
   if (notempty && !valuelist) {
     // at least one of the components is not empty. Make sure all components are "touched" such that
     // in case of arrays, these are assigned even if empty
@@ -4329,7 +4462,7 @@ bool TMimeDirProfileHandler::parseLevels(
         // compare
         if (
           mimeModeMatch(propP->modeDependency) && // none or matching mode dependency
-          strucmp(propname,TCFG_CSTR(propP->propname),n)==0
+          strwildcmp(propname,TCFG_CSTR(propP->propname),n)==0 // wildcards allowed (for unprocessed properties for example)
         ) {
           // found property def with matching name (and MIME mode)
           // check all in group (=all subsequent with same name)
@@ -4412,7 +4545,9 @@ bool TMimeDirProfileHandler::parseLevels(
                 maxreps,
                 fMimeDirMode, // MIME-DIR mode
                 groupname,
-                gn
+                gn,
+                propname,
+                n
               )) {
                 // property parsed successfully
                 propparsed=true;
@@ -4480,7 +4615,8 @@ bool TMimeDirProfileHandler::parseLevels(
         maxreps,
         fMimeDirMode, // MIME-DIR mode
         (*pos).groupname,
-        (*pos).groupnameLen
+        (*pos).groupnameLen,
+        "X-delayed", 9 // dummy, unprocessed properties must not be parsed in delayed mode!
       )) {
         // count mandarory properties found
         //%%% moved this to when we queue the delayed props, as mandatory count is per-profile
@@ -4971,7 +5107,7 @@ bool TMimeDirProfileHandler::analyzeCTCap(SmlDevInfCTCapPtr_t aCTCapP, TSyncItem
       for (sInt16 i=0; i<itemTypeP->fFieldDefinitionsP->numFields(); i++) {
         itemTypeP->getFieldOptions(i)->available=false;
       }
-      // force mandatory properties to be always "available"
+      // force mandatory+unprocessed properties to be always "available"
       setfieldoptions(NULL,fProfileDefinitionP,itemTypeP);
     }
     // now we have received fields
@@ -5006,9 +5142,9 @@ bool TMimeDirProfileHandler::setLevelOptions(const char *aLevelName, bool aEnabl
 
 
 // enable fields related to aPropP property in profiles recursively
-// or (if aPropP is NULL), enable fields of all mandatory properties
+// or (if aPropP is NULL), enable fields of all mandatory (or wildcard) properties
 void TMimeDirProfileHandler::setfieldoptions(
-  const SmlDevInfCTDataPtr_t aPropP, // property to enable fields for, NULL if all mandatory properties should be enabled
+  const SmlDevInfCTDataPtr_t aPropP, // property to enable fields for, NULL if all mandatory+unprocessed properties should be enabled
   const TProfileDefinition *aProfileP,
   TMimeDirItemType *aItemTypeP
 )
@@ -5065,7 +5201,7 @@ void TMimeDirProfileHandler::setfieldoptions(
   while (propdefP) {
     // compare
     if (
-      (propname==NULL && propdefP->mandatory) ||
+      (propname==NULL && (propdefP->mandatory || propdefP->unprocessed)) ||
       (propname && (strucmp(propname,TCFG_CSTR(propdefP->propname))==0))
     ) {
       // match (or enabling mandatory) -> enable all fields that are related to this property
