@@ -172,6 +172,8 @@ bool TMIMEProfileConfig::getConvMode(const char *aText, sInt16 &aConvMode)
     aConvMode=CONVMODE_FULLVALUETYPE;
   else if (strucmp(aText,"rrule")==0)
     aConvMode=CONVMODE_RRULE;
+  else if (strucmp(aText,"bday")==0)
+    aConvMode=CONVMODE_BDAY;
   else {
     fail("'conversion' value '%s' is invalid",aText);
     return false;
@@ -1379,8 +1381,9 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
   // get pointer to leaf field
   TItemField *fldP = aItem.getArrayField(aFid,aArrIndex,true); // existing array elements only
 
-  bool dateonly=false; // assume timestamp mode
-  bool autodate=true; // show date-only values automatically as date-only, even if stored in a timestamp field
+  bool dateonly = false; // assume timestamp mode
+  bool autodate = true; // show date-only values automatically as date-only, even if stored in a timestamp field
+  bool extFmt = false; // not extended ISO8601 date formats by default
   switch (aConvDefP->convmode) {
     // no special mode
     case CONVMODE_NONE:
@@ -1395,6 +1398,8 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
       else
         goto timestamp; // others are treated as timestamps
     // date & time modes
+    case CONVMODE_BDAY: // as date with extended format
+      extFmt = true; // special case, BDAY is rendered in extended format
     case CONVMODE_DATE: // always show as date
     dateonly:
       dateonly = true; // render as date in all cases
@@ -1420,11 +1425,11 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
       // check for special cases
       if (TCTX_IS_DURATION(tctx)) {
         // duration is shown as such
-        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DURATION, false, false, false, false);
+        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DURATION, false, false, extFmt, false);
       }
       else if (dateonly) {
         // date-only are either floating or shown as date-only part of original timestamp
-        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DATEONLY, false, false, false, false);
+        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DATEONLY, false, false, extFmt, false);
       }
       else if (fReceiverCanHandleUTC && !tsFldP->isFloating()) {
         // remote can handle UTC and the timestamp is not floating
@@ -1432,11 +1437,11 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
           // if we have rendered a TZID for this property, this means that apparently the remote
           // supports TZID (otherwise the field would not be marked available in the devInf).
           // - show it as floating, explicitly with both date AND time (both flags set)
-          tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_TIMEONLY | TCTX_DATEONLY, false, false, false, false);
+          tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_TIMEONLY | TCTX_DATEONLY, false, false, extFmt, false);
         }
         else {
           // - show it as UTC
-          tsFldP->getAsISO8601(aString, TCTX_UTC, true, false, false, false);
+          tsFldP->getAsISO8601(aString, TCTX_UTC, true, false, extFmt, false);
         }
       }
       else {
@@ -1456,13 +1461,13 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
             if (aConvDefP->convmode==CONVMODE_AUTOENDDATE && fVCal10EnddatesSameDay && TCTX_IS_DATEONLY(tctx) && fMimeDirMode==mimo_old)
               ts-=1; // subtract one unit to make end show last time unit of previous day
             // now show as floating ISO8601
-            TimestampToISO8601Str(aString, ts, TCTX_UNKNOWN, false, false);
+            TimestampToISO8601Str(aString, ts, TCTX_UNKNOWN, extFmt, false);
           }
         }
         else {
           // not floating (=not a enddateonly), but we can't send UTC - render as localtime
           // in item time zone (which defaults to session time zone)
-          tsFldP->getAsISO8601(aString, fItemTimeContext, false, false, false, false);
+          tsFldP->getAsISO8601(aString, fItemTimeContext, false, false, extFmt, false);
         }
       }
       return true; // found
@@ -3277,6 +3282,7 @@ bool TMimeDirProfileHandler::MIMEStringToField(
     case CONVMODE_TIMESTAMP: // nothing special for parsing
     case CONVMODE_AUTODATE: // nothing special for parsing
     case CONVMODE_AUTOENDDATE: // check for "last minute of the day"
+    case CONVMODE_BDAY: // as date with extended format, parses like CONVMODE_DATE
     case CONVMODE_DATE: // dates will be made floating
     case CONVMODE_NONE:
     normal:
@@ -3360,7 +3366,7 @@ bool TMimeDirProfileHandler::MIMEStringToField(
             }
           }
           // special conversions
-          if (aConvDefP->convmode==CONVMODE_DATE) {
+          if (aConvDefP->convmode==CONVMODE_DATE || aConvDefP->convmode==CONVMODE_BDAY) {
             tsFldP->makeFloating(); // date-only is forced floating
           }
           else if (aConvDefP->convmode==CONVMODE_AUTOENDDATE && fMimeDirMode==mimo_old) {

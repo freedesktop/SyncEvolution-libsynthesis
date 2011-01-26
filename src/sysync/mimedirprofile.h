@@ -47,7 +47,8 @@ namespace sysync {
 #define CONVMODE_MIME_DERIVATES 20
 
 // define those that we want to implement (also work as getConfMode conditionals)
-#define CONVMODE_RRULE CONVMODE_MIME_DERIVATES+0
+#define CONVMODE_RRULE CONVMODE_MIME_DERIVATES+0 // RRULE, needs RRULE field block
+#define CONVMODE_BDAY CONVMODE_MIME_DERIVATES+1 // like CONVMODE_DATE, but with 
 
 
 // special numvals
