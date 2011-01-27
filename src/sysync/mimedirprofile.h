@@ -24,6 +24,13 @@
 
 namespace sysync {
 
+// conversion mode is a basic value plus some optional flags
+#define CONVMODE_MASK 0xFF // 8 bits for basic convmode
+
+// flags
+#define CONVMODE_FLAG_EXTFMT 0x0100 // use ISO8601 extended format for rendering date and time
+#define CONVMODE_FLAG_MILLISEC 0x0200 // render milliseconds
+
 // special field conversion modes
 #define CONVMODE_NONE 0     // no conversion (just string copy), but includes value list parsing and enum conversion
 #define CONVMODE_VERSION 1  // version
@@ -48,7 +55,6 @@ namespace sysync {
 
 // define those that we want to implement (also work as getConfMode conditionals)
 #define CONVMODE_RRULE CONVMODE_MIME_DERIVATES+0 // RRULE, needs RRULE field block
-#define CONVMODE_BDAY CONVMODE_MIME_DERIVATES+1 // like CONVMODE_DATE, but with 
 
 
 // special numvals
@@ -67,7 +73,7 @@ typedef enum {
 
 // VTIMEZONE generation mode (what timezone definition rules to include)
 typedef enum {
-	vtzgen_current,
+  vtzgen_current,
   vtzgen_start,
   vtzgen_end,
   vtzgen_range,
@@ -77,7 +83,7 @@ typedef enum {
 
 
 typedef enum {
-	tzidgen_default,
+  tzidgen_default,
   tzidgen_olson,
   numTzIdGenModes
 } TTzIdGenMode;
@@ -96,7 +102,7 @@ class TRemoteRuleConfig;
 // enumeration modes
 typedef enum {
   enm_translate,      // translation from value to name and vice versa
-  enm_prefix,					// enumtext/enumval are prefixes of
+  enm_prefix,         // enumtext/enumval are prefixes of
   enm_default_name,   // default name when translating from value to name
   enm_default_value,  // default value when translating from name to value
   enm_ignore,         // ignore value or name
@@ -260,9 +266,9 @@ public:
   sInt16 numValues;
   // conversion specification(s) for each value
   TConversionDef *convdefs;
-	// if set, property is not processed but stored entirely (unfolded, but otherwise unprocessed) in the first <value> defined
-	// This gets automatically set when a property name contains an asterisk wildcard character
-	bool unprocessed;
+  // if set, property is not processed but stored entirely (unfolded, but otherwise unprocessed) in the first <value> defined
+  // This gets automatically set when a property name contains an asterisk wildcard character
+  bool unprocessed;
   // if set, property has a list of values that are stored in an array field or
   // by offseting fid. Note that a PropNameExtension is needed to allow storing more
   // than a single value. If valuelist=true, convdefs should only contain a single entry,
@@ -349,7 +355,7 @@ public:
     bool aCanFilter=false, // can be filtered -> show in filter cap
     TMimeDirMode aModeDep=numMimeModes, // property valid only for specific MIME mode
     char aAltValuesep=0, // no alternate separator
-		sInt16 aGroupFieldID=FID_NOT_SUPPORTED, // no group field
+    sInt16 aGroupFieldID=FID_NOT_SUPPORTED, // no group field
     bool aAllowFoldAtSep=false // do not fold at separators when it would insert extra spaces
   );
   void usePropertiesOf(TProfileDefinition *aProfile);
@@ -358,7 +364,7 @@ public:
   TProfileDefinition *findProfile(const char *aNam);
   // next in chain
   TProfileDefinition *next;
-	// parent profile
+  // parent profile
   TProfileDefinition *parentProfile; // NULL if root
   // Profile Level name
   TCFG_STRING levelName;
@@ -412,8 +418,8 @@ public:
   virtual void localResolve(bool aLastPass);
 protected:
   virtual void nestedElementEnd(void);
-  // - check conversion mode
-  virtual bool getConvMode(const char *aText, sInt16 &aConvMode);
+  // parse conversion mode
+  bool getConvMode(cAppCharP aText, sInt16 &aConvMode);
   #endif
   virtual void clear();
 private:
@@ -424,12 +430,12 @@ private:
   bool processPosition(TParameterDefinition *aParamP, const char **aAttributes);
   // parsing vars
   TProfileDefinition *fOpenProfile; // profile being parsed
-	TPropertyDefinition *fOpenProperty; // property being parsed
-	TParameterDefinition *fOpenParameter; // parameter being parsed
-	TConversionDef *fOpenConvDef; // conversion definition being parsed
-	TPropertyDefinition *fLastProperty; // last property added in profile (to build groups)
-	uInt16 fPropertyGroupID; // property grouping
-	#endif
+  TPropertyDefinition *fOpenProperty; // property being parsed
+  TParameterDefinition *fOpenParameter; // parameter being parsed
+  TConversionDef *fOpenConvDef; // conversion definition being parsed
+  TPropertyDefinition *fLastProperty; // last property added in profile (to build groups)
+  uInt16 fPropertyGroupID; // property grouping
+  #endif
 }; // TMIMEProfileConfig
 
 
@@ -477,9 +483,9 @@ public:
   // set profile options
   // - mode (for those profiles that have more than one, like MIME-DIR's old/standard)
   virtual void setProfileMode(sInt32 aMode);
-	#ifndef NO_REMOTE_RULES
+  #ifndef NO_REMOTE_RULES
   virtual void setRemoteRule(const string &aRemoteRuleName);
-	#endif
+  #endif
   // generate Text Data (includes header and footer)
   virtual void generateText(TMultiFieldItem &aItem, string &aString);
   // parse Data item (includes header and footer)
@@ -517,7 +523,7 @@ private:
   #ifndef NO_REMOTE_RULES
   // - dependency on certain remote rule(s)
   TRemoteRulesList fActiveRemoteRules; // list of active remote rules that might influence behaviour
-	bool isActiveRule(TRemoteRuleConfig *aRuleP); // check if given rule is among the active ones
+  bool isActiveRule(TRemoteRuleConfig *aRuleP); // check if given rule is among the active ones
   #endif
   // vars
   TMIMEProfileConfig *fProfileCfgP; // the MIME-DIR profile config element
@@ -568,11 +574,11 @@ protected:
 private:
   // helpers for CTCap/FilterCap
   // - set field options (enabled, maxsize, maxoccur, notruncate) of fields related to aPropP property in profiles recursively
-	//   or (if aPropP is NULL), enable fields of all mandatory properties
+  //   or (if aPropP is NULL), enable fields of all mandatory properties
   void setfieldoptions(
     const SmlDevInfCTDataPtr_t aPropP, // property to enable fields for, NULL if all mandatory properties should be enabled
     const TProfileDefinition *aProfileP,
-	  TMimeDirItemType *aItemTypeP
+    TMimeDirItemType *aItemTypeP
   );
   // - set level
   bool setLevelOptions(const char *aLevelName, bool aEnable, TMimeDirItemType *aItemTypeP);
@@ -595,15 +601,15 @@ private:
     string &aString,            // where value is ADDED
     char aSeparator,
     TMimeDirMode aMimeMode,     // MIME mode (older or newer vXXX format compatibility)
-	  bool aParamValue,           // set if generating parameter value (different escaping rules, i.e. ";" and ":" must be escaped)
+    bool aParamValue,           // set if generating parameter value (different escaping rules, i.e. ";" and ":" must be escaped)
     bool aStructured,           // set if value consists of multiple values (needs ";" escaping)
-	  bool aCommaEscape,          // set if "," content escaping is needed (for values in valuelists like TYPE=TEL,WORK etc.)
+    bool aCommaEscape,          // set if "," content escaping is needed (for values in valuelists like TYPE=TEL,WORK etc.)
     TEncodingTypes &aEncoding,  // modified if special value encoding is required
     bool &aNonASCII,            // set if any non standard 7bit ASCII-char is contained
     char aFirstChar,            // will be appended before value if there is any value
-		sInt32 &aNumNonSpcs,				// how many non-spaces are already in the value
-	  bool aFoldAtSeparator,			// if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
-		bool aEscapeOnlyLF					// if true, only linefeeds are escaped as \n, but nothing else (not even \ itself)
+    sInt32 &aNumNonSpcs,        // how many non-spaces are already in the value
+    bool aFoldAtSeparator,      // if true, even in mimo_old folding may appear at value separators (adding an extra space - which is ok for EXDATE and similar)
+    bool aEscapeOnlyLF          // if true, only linefeeds are escaped as \n, but nothing else (not even \ itself)
   );
   // - recursive expansion of properties
   void expandProperty(
@@ -635,7 +641,7 @@ private:
     sInt16 aBaseOffset,
     sInt16 aRepOffset,
     TPropNameExtension *aPropNameExt, // propname extension for generating musthave param values
-		sInt32 &aNumNonSpcs // how many non-spaces are already in the value
+    sInt32 &aNumNonSpcs // how many non-spaces are already in the value
   );
   // - recursively generate levels
   void generateLevels(
@@ -651,11 +657,11 @@ private:
     sInt16 aRepOffset,          // repeat offset, adds to aBaseOffset for non-array fields, is array index for array fileds
     TMultiFieldItem &aItem,     // the item where data goes to
     bool &aNotEmpty,            // is set true (but never set false) if property contained any (non-positional) values
-    char aSeparator,						// separator between values that consist of a list of enums etc. (more common for params than for values)
+    char aSeparator,            // separator between values that consist of a list of enums etc. (more common for params than for values)
     TMimeDirMode aMimeMode,     // MIME mode (older or newer vXXX format compatibility)
     bool aParamValue,           // set if parsing parameter value (different escaping rules)
     bool aStructured,           // set if value consists of multiple values (has semicolon content escaping)
-		bool aOnlyDeEscLF						// set if de-escaping only for \n -> LF, but all visible char escapes should be left intact
+    bool aOnlyDeEscLF           // set if de-escaping only for \n -> LF, but all visible char escapes should be left intact
   );
   // - parse given property
   bool parseProperty(
@@ -665,10 +671,10 @@ private:
     sInt16 *aRepArray,  // array[repeatID], holding current repetition COUNT for a certain nameExts entry
     sInt16 aRepArraySize, // size of array (for security)
     TMimeDirMode aMimeMode, // MIME mode (older or newer vXXX format compatibility)
-	  cAppCharP aGroupName, // property group ("a" in "a.TEL:131723612")
-  	size_t aGroupNameLen,
-		cAppCharP aFullPropName, // entire property name (excluding group) - might be needed in case of wildcard property match
-  	size_t aFullNameLen
+    cAppCharP aGroupName, // property group ("a" in "a.TEL:131723612")
+    size_t aGroupNameLen,
+    cAppCharP aFullPropName, // entire property name (excluding group) - might be needed in case of wildcard property match
+    size_t aFullNameLen
   );
   // parse MIME-DIR level from specified string into item
   bool parseLevels(
@@ -725,9 +731,9 @@ void MakeAllday(TItemField *aStartFldP, TItemField *aEndFldP, timecontext_t aTim
 
 
 
-}	// namespace sysync
+} // namespace sysync
 
-#endif	// MimeDirProfile_H
+#endif  // MimeDirProfile_H
 
 // eof
 
