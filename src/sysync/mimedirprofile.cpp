@@ -133,48 +133,74 @@ TProfileHandler *TMIMEProfileConfig::newProfileHandler(TMultiFieldItemType *aIte
 
 
 // get conversion mode, virtual, can be overridden by derivates
-bool TMIMEProfileConfig::getConvMode(const char *aText, sInt16 &aConvMode)
+bool TMIMEProfileConfig::getConvMode(cAppCharP aText, sInt16 &aConvMode)
 {
-  // basic modes
-  if (strucmp(aText,"none")==0)
-    aConvMode=CONVMODE_NONE;
-  else if (strucmp(aText,"version")==0)
-    aConvMode=CONVMODE_VERSION;
-  else if (strucmp(aText,"prodid")==0)
-    aConvMode=CONVMODE_PRODID;
-  else if (strucmp(aText,"timestamp")==0)
-    aConvMode=CONVMODE_TIMESTAMP;
-  else if (strucmp(aText,"date")==0)
-    aConvMode=CONVMODE_DATE;
-  else if (strucmp(aText,"autodate")==0)
-    aConvMode=CONVMODE_AUTODATE;
-  else if (strucmp(aText,"autoenddate")==0)
-    aConvMode=CONVMODE_AUTOENDDATE;
-  else if (strucmp(aText,"tz")==0)
-    aConvMode=CONVMODE_TZ;
-  else if (strucmp(aText,"daylight")==0)
-    aConvMode=CONVMODE_DAYLIGHT;
-  else if (strucmp(aText,"tzid")==0)
-    aConvMode=CONVMODE_TZID;
-  else if (strucmp(aText,"emptyonly")==0)
-    aConvMode=CONVMODE_EMPTYONLY;
-  else if (strucmp(aText,"bitmap")==0)
-    aConvMode=CONVMODE_BITMAP;
-  else if (strucmp(aText,"multimix")==0)
-    aConvMode=CONVMODE_MULTIMIX;
-  else if (strucmp(aText,"blob_b64")==0)
-    aConvMode=CONVMODE_BLOB_B64;
-  else if (strucmp(aText,"mailto")==0)
-    aConvMode=CONVMODE_MAILTO;
-  else if (strucmp(aText,"valuetype")==0)
-    aConvMode=CONVMODE_VALUETYPE;
-  else if (strucmp(aText,"fullvaluetype")==0)
-    aConvMode=CONVMODE_FULLVALUETYPE;
-  else if (strucmp(aText,"rrule")==0)
-    aConvMode=CONVMODE_RRULE;
+  // separate options
+  size_t n=0; // no size
+  cAppCharP op = strchr(aText, '+');
+  if (op) n = op-aText;
+  // check basic modes
+  if (op && n==0) {
+    // only options, no basic mode
+    aConvMode = CONVMODE_NONE;
+  }
   else {
-    fail("'conversion' value '%s' is invalid",aText);
-    return false;
+    // first item is basic mode
+    if (strucmp(aText,"none",n)==0)
+      aConvMode = CONVMODE_NONE;
+    else if (strucmp(aText,"version",n)==0)
+      aConvMode = CONVMODE_VERSION;
+    else if (strucmp(aText,"prodid",n)==0)
+      aConvMode = CONVMODE_PRODID;
+    else if (strucmp(aText,"timestamp",n)==0)
+      aConvMode = CONVMODE_TIMESTAMP;
+    else if (strucmp(aText,"date",n)==0)
+      aConvMode = CONVMODE_DATE;
+    else if (strucmp(aText,"autodate",n)==0)
+      aConvMode = CONVMODE_AUTODATE;
+    else if (strucmp(aText,"autoenddate",n)==0)
+      aConvMode = CONVMODE_AUTOENDDATE;
+    else if (strucmp(aText,"tz",n)==0)
+      aConvMode = CONVMODE_TZ;
+    else if (strucmp(aText,"daylight",n)==0)
+      aConvMode = CONVMODE_DAYLIGHT;
+    else if (strucmp(aText,"tzid",n)==0)
+      aConvMode = CONVMODE_TZID;
+    else if (strucmp(aText,"emptyonly",n)==0)
+      aConvMode = CONVMODE_EMPTYONLY;
+    else if (strucmp(aText,"bitmap",n)==0)
+      aConvMode = CONVMODE_BITMAP;
+    else if (strucmp(aText,"multimix",n)==0)
+      aConvMode = CONVMODE_MULTIMIX;
+    else if (strucmp(aText,"blob_b64",n)==0)
+      aConvMode = CONVMODE_BLOB_B64;
+    else if (strucmp(aText,"mailto",n)==0)
+      aConvMode = CONVMODE_MAILTO;
+    else if (strucmp(aText,"valuetype",n)==0)
+      aConvMode = CONVMODE_VALUETYPE;
+    else if (strucmp(aText,"fullvaluetype",n)==0)
+      aConvMode = CONVMODE_FULLVALUETYPE;
+    else if (strucmp(aText,"rrule",n)==0)
+      aConvMode = CONVMODE_RRULE;
+    else {
+      fail("'conversion' value '%s' is invalid",aText);
+      return false;
+    }
+  }
+  // now check for options flags and or them into conversion value
+  while (op) {
+    aText = op+1; // skip +
+    n = 0;
+    op = strchr(aText, '+');
+    if (op) n = op-aText;
+    if (strucmp(aText,"extfmt",n)==0)
+      aConvMode |= CONVMODE_FLAG_EXTFMT;
+    else if (strucmp(aText,"millisec",n)==0)
+      aConvMode |= CONVMODE_FLAG_MILLISEC;
+    else {
+      fail("'conversion' option '%s' is invalid",aText);
+      return false;
+    }
   }
   return true;
 } // TMIMEProfileConfig::getConvMode
@@ -424,12 +450,12 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
       // <value field="N_FIRST" conversion="none" combine="no"/>
       // - set default options
       fid=FID_NOT_SUPPORTED;
-      convmode=CONVMODE_NONE;
-      combsep=0;
+      convmode = CONVMODE_NONE;
+      combsep = 0;
       // - get other options of convdef
       if (!getConvAttrs(aAttributes,fid,convmode,combsep)) return true; // failed
       // - set convdef
-      fOpenConvDef=fOpenParameter->setConvDef(fid,convmode,combsep);
+      fOpenConvDef = fOpenParameter->setConvDef(fid,convmode,combsep);
       startNestedParsing();
     }
     else if (strucmp(aElementName,"position")==0) {
@@ -455,13 +481,13 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
         return fail("'index' out of range (0..%hd)",fOpenProperty->numValues);
       // - set default options
       fid=FID_NOT_SUPPORTED;
-      convmode=CONVMODE_NONE;
-      combsep=0;
+      convmode = CONVMODE_NONE;
+      combsep = 0;
       // - get other options of convdef
       if (!getConvAttrs(aAttributes,fid,convmode,combsep))
         return true; // failed
       // - set convdef
-      fOpenConvDef=fOpenProperty->setConvDef(idx,fid,convmode,combsep);
+      fOpenConvDef = fOpenProperty->setConvDef(idx,fid,convmode,combsep);
       startNestedParsing();
     }
     else if (strucmp(aElementName,"parameter")==0) {
@@ -1332,7 +1358,7 @@ static bool mixvalparse(cAppCharP aMixVal, uInt16 &aOffs, bool &aIsBitMap, uInt1
 // to a given convdef (for multi-field conversion modes such as CONVMODE_RRULE
 sInt16 TMimeDirProfileHandler::fieldBlockSize(const TConversionDef &aConvDef)
 {
-  if (aConvDef.convmode==CONVMODE_RRULE)
+  if ((aConvDef.convmode & CONVMODE_MASK)==CONVMODE_RRULE)
     return 6; // RRULE fieldblock: DTSTART,FREQ,INTERVAL,FIRSTMASK,LASTMASK,UNTIL = 6 fields
   else
     return 1; // single field
@@ -1379,9 +1405,12 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
   // get pointer to leaf field
   TItemField *fldP = aItem.getArrayField(aFid,aArrIndex,true); // existing array elements only
 
-  bool dateonly=false; // assume timestamp mode
-  bool autodate=true; // show date-only values automatically as date-only, even if stored in a timestamp field
-  switch (aConvDefP->convmode) {
+  bool dateonly = false; // assume timestamp mode
+  bool autodate = true; // show date-only values automatically as date-only, even if stored in a timestamp field
+  bool extFmt = (aConvDefP->convmode & CONVMODE_FLAG_EXTFMT)!=0;
+  bool milliSec = (aConvDefP->convmode & CONVMODE_FLAG_MILLISEC)!=0;
+  sInt16 convmode = aConvDefP->convmode & CONVMODE_MASK;
+  switch (convmode) {
     // no special mode
     case CONVMODE_NONE:
     case CONVMODE_EMPTYONLY:
@@ -1420,11 +1449,11 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
       // check for special cases
       if (TCTX_IS_DURATION(tctx)) {
         // duration is shown as such
-        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DURATION, false, false, false, false);
+        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DURATION, false, false, extFmt, milliSec);
       }
       else if (dateonly) {
         // date-only are either floating or shown as date-only part of original timestamp
-        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DATEONLY, false, false, false, false);
+        tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_DATEONLY, false, false, extFmt, milliSec);
       }
       else if (fReceiverCanHandleUTC && !tsFldP->isFloating()) {
         // remote can handle UTC and the timestamp is not floating
@@ -1432,11 +1461,11 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
           // if we have rendered a TZID for this property, this means that apparently the remote
           // supports TZID (otherwise the field would not be marked available in the devInf).
           // - show it as floating, explicitly with both date AND time (both flags set)
-          tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_TIMEONLY | TCTX_DATEONLY, false, false, false, false);
+          tsFldP->getAsISO8601(aString, TCTX_UNKNOWN | TCTX_TIMEONLY | TCTX_DATEONLY, false, false, extFmt, milliSec);
         }
         else {
           // - show it as UTC
-          tsFldP->getAsISO8601(aString, TCTX_UTC, true, false, false, false);
+          tsFldP->getAsISO8601(aString, TCTX_UTC, true, false, extFmt, milliSec);
         }
       }
       else {
@@ -1453,16 +1482,16 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
             }
             // first check for auto-end-date (which must be floating)
             // Note: we don't get here with a date only mimo_standard because it will be catched above, so test is not really needed
-            if (aConvDefP->convmode==CONVMODE_AUTOENDDATE && fVCal10EnddatesSameDay && TCTX_IS_DATEONLY(tctx) && fMimeDirMode==mimo_old)
+            if (convmode==CONVMODE_AUTOENDDATE && fVCal10EnddatesSameDay && TCTX_IS_DATEONLY(tctx) && fMimeDirMode==mimo_old)
               ts-=1; // subtract one unit to make end show last time unit of previous day
             // now show as floating ISO8601
-            TimestampToISO8601Str(aString, ts, TCTX_UNKNOWN, false, false);
+            TimestampToISO8601Str(aString, ts, TCTX_UNKNOWN, extFmt, milliSec);
           }
         }
         else {
           // not floating (=not a enddateonly), but we can't send UTC - render as localtime
           // in item time zone (which defaults to session time zone)
-          tsFldP->getAsISO8601(aString, fItemTimeContext, false, false, false, false);
+          tsFldP->getAsISO8601(aString, fItemTimeContext, false, false, extFmt, milliSec);
         }
       }
       return true; // found
@@ -1517,7 +1546,7 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
         tctx = fItemTimeContext; // use item zone
       }
       // now render context as selected
-      if (aConvDefP->convmode==CONVMODE_TZID) {
+      if (convmode==CONVMODE_TZID) {
         // time zone ID for iCal 2.0 TZID parameter
         // - make sure meta context is resolved (we don't want "SYSTEM" as TZID!)
         if (!TzResolveMetaContext(tctx, getSessionZones())) return false; // cannot resolve, no time zone ID
@@ -1552,14 +1581,14 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
         }
         // - get resolved TZ offset and DAYLIGHT string for vCal 1.0
         ContextToTzDaylight(tctx,ts,s,tctx,getSessionZones());
-        if (aConvDefP->convmode==CONVMODE_TZ) {
+        if (convmode==CONVMODE_TZ) {
           // time zone in +/-hh[:mm] format for vCal 1.0 TZ property
           // - render offset in extended format
           aString.erase();
           // - return true only if we actually have a TZ
           return ContextToISO8601StrAppend(aString, tctx, true);
         }
-        else if (aConvDefP->convmode==CONVMODE_DAYLIGHT) {
+        else if (convmode==CONVMODE_DAYLIGHT) {
           // TZ and DAYLIGHT property for vCal 1.0
           aString = s;
           // - return true only if we actually have a DAYLIGHT
@@ -1589,7 +1618,7 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
         else if (TCTX_IS_TIMEONLY(tctx)) aString="TIME";
         else {
           // only show type if full value type requested
-          if (aConvDefP->convmode==CONVMODE_FULLVALUETYPE)
+          if (convmode==CONVMODE_FULLVALUETYPE)
             aString="DATE-TIME";
           else
             return false; // we don't need a VALUE param for normal datetimes
@@ -1655,7 +1684,7 @@ bool TMimeDirProfileHandler::fieldToMIMEString(
                 // create bit representation
                 if (!aString.empty() && aConvDefP->combineSep)
                   aString+=aConvDefP->combineSep; // separator first if not first item
-                if (aConvDefP->convmode==CONVMODE_MULTIMIX) {
+                if (convmode==CONVMODE_MULTIMIX) {
                   // multimix mode, use full syntax
                   if (mixOffs[i]>0)
                     StringObjAppendPrintf(aString,"%d.",mixOffs[i]);
@@ -2230,7 +2259,7 @@ sInt16 TMimeDirProfileHandler::generateValue(
           maxSiz = 0; // no size restriction
         bool noTruncate=aItem.getTargetItemType()->getFieldOptions(fid)->notruncate;
         // check for BLOB values
-        if (aConvDefP->convmode==CONVMODE_BLOB_B64) {
+        if ((aConvDefP->convmode & CONVMODE_MASK)==CONVMODE_BLOB_B64) {
           // no value lists, escaping, enums. Simply set value and encoding
           TItemField *fldP = aItem.getArrayField(fid,aRepOffset,true); // existing array elements only
           if (!fldP) return GENVALUE_EXHAUSTED; // no leaf field - must be exhausted array (fldP==NULL is not possible here for non-arrays)
@@ -2859,7 +2888,7 @@ sInt16 TMimeDirProfileHandler::generateProperty(
           v>0 ? aPropP->valuesep : 0, // separate with specified multi-value-delimiter if not first value
           numNonSpcs, // number of consecutive non-spaces, accumulated
           aPropP->allowFoldAtSep,
-          convP->convmode==CONVMODE_RRULE // RRULES are not to be escaped
+          (convP->convmode & CONVMODE_MASK)==CONVMODE_RRULE // RRULES are not to be escaped
         );
         // check if something was generated
         if (genres>=GENVALUE_ELEMENT) {
@@ -2916,7 +2945,7 @@ sInt16 TMimeDirProfileHandler::generateProperty(
           0, // no first char
           numNonSpcs, // number of consecutive non-spaces, accumulated
           aPropP->allowFoldAtSep,
-          convP->convmode==CONVMODE_RRULE // RRULES are not to be escaped
+          (convP->convmode & CONVMODE_MASK)==CONVMODE_RRULE // RRULES are not to be escaped
         );
         //* %%% */ PDEBUGPRINTFX(DBG_EXOTIC,("generateValue #%hd for property '%s' returns genres==%hd",v,TCFG_CSTR(aPropP->propname),genres));
         // check if something was generated
@@ -3263,7 +3292,8 @@ bool TMimeDirProfileHandler::MIMEStringToField(
 
   // get pointer to leaf field
   TItemField *fldP = aItem.getArrayField(aFid,aArrIndex);
-  switch (aConvDefP->convmode) {
+  sInt16 convmode = aConvDefP->convmode & CONVMODE_MASK;
+  switch (convmode) {
     case CONVMODE_MAILTO:
       // remove the mailto: prefix if there is one
       if (strucmp(aText,"mailto:",7)==0)
@@ -3360,10 +3390,10 @@ bool TMimeDirProfileHandler::MIMEStringToField(
             }
           }
           // special conversions
-          if (aConvDefP->convmode==CONVMODE_DATE) {
+          if (convmode==CONVMODE_DATE) {
             tsFldP->makeFloating(); // date-only is forced floating
           }
-          else if (aConvDefP->convmode==CONVMODE_AUTOENDDATE && fMimeDirMode==mimo_old) {
+          else if (convmode==CONVMODE_AUTOENDDATE && fMimeDirMode==mimo_old) {
             // check if this could be a 23:59 type end-of-day
             lineartime_t ts = tsFldP->getTimestampAs(fItemTimeContext,&tctx); // get in item context or floating
             lineartime_t ts0 = lineartime2dateonlyTime(ts);
@@ -3455,7 +3485,7 @@ bool TMimeDirProfileHandler::MIMEStringToField(
     case CONVMODE_MULTIMIX:
     case CONVMODE_BITMAP:
       while (*aText && *aText==' ') aText++; // skip leading spaces
-      if (aConvDefP->convmode==CONVMODE_MULTIMIX) {
+      if (convmode==CONVMODE_MULTIMIX) {
         // parse value to determine field
         if (!mixvalparse(aText, offs, isBitMap, n)) return true; // syntax not ok, nop
         fldP = aItem.getArrayField(aFid+offs,aArrIndex);
@@ -3617,7 +3647,7 @@ bool TMimeDirProfileHandler::parseValue(
     // find out if value exists (available in source and target)
     if (isFieldAvailable(aItem,fid)) {
       // parse only if field available in both source and target
-      if (aConvDefP->convmode==CONVMODE_BLOB_B64) {
+      if ((aConvDefP->convmode & CONVMODE_MASK)==CONVMODE_BLOB_B64) {
         // move 1:1 into field
         // - get pointer to leaf field
         TItemField *fldP = aItem.getArrayField(fid,aRepOffset);
@@ -4974,7 +5004,7 @@ void TMimeDirProfileHandler::enumerateProperties(const TProfileDefinition *aProf
           }
           // - add property data descriptor
           propdataP->prop = newDevInfCTData(TCFG_CSTR(propP->propname),sz,noTruncate,maxOccur,dataType);
-          if (propP->convdefs && propP->convdefs->convmode==CONVMODE_VERSION) {
+          if (propP->convdefs && (propP->convdefs->convmode & CONVMODE_MASK)==CONVMODE_VERSION) {
             // special case: add version valenum
             addPCDataStringToList(aItemTypeP->getTypeVers(),&(propdataP->prop->valenum));
           }
@@ -5008,7 +5038,7 @@ void TMimeDirProfileHandler::enumeratePropFilters(const TProfileDefinition *aPro
       if (
         propP->canFilter &&
         (propP->showInCTCap || aProfileP==aSelectedProfileP) &&
-        propP->convdefs && propP->convdefs[0].convmode!=CONVMODE_VERSION && propP->convdefs[0].convmode!=CONVMODE_PRODID
+        propP->convdefs && (propP->convdefs[0].convmode & CONVMODE_MASK)!=CONVMODE_VERSION && (propP->convdefs[0].convmode & CONVMODE_MASK)!=CONVMODE_PRODID
       ) {
         // Note: properties of explicitly selected (sub)profiles will be shown anyway,
         //       as only purpose of suppressing properties in devInf is to avoid

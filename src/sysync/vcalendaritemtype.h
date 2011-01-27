@@ -23,10 +23,6 @@ using namespace sysync;
 
 namespace sysync {
 
-// define local conversion mode for MIME-derivate
-#define CONVMODE_RRULE CONVMODE_MIME_DERIVATES+0
-
-
 // vCalendar variants
 typedef enum {
   vcalendar_vers_1_0,
