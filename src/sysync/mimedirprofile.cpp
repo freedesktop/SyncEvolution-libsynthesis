@@ -511,10 +511,10 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
         return fail("bad boolean value");
       // - add parameter
       fOpenParameter = fOpenProperty->addParam(nam,defparam,positional,shownonempty,showinctcap,modeDep);
-#ifndef NO_REMOTE_RULES
+      #ifndef NO_REMOTE_RULES
       const char *depRuleName = getAttr(aAttributes,"rule");
       TCFG_ASSIGN(fOpenParameter->dependencyRuleName,depRuleName); // save name for later resolving
-#endif
+      #endif
       startNestedParsing();
     }
     else if (strucmp(aElementName,"position")==0) {
@@ -941,10 +941,10 @@ TParameterDefinition::TParameterDefinition(
   shownonempty=aShowNonEmpty;
   showInCTCap=aShowInCTCap;
   modeDependency=aModeDep;
-#ifndef NO_REMOTE_RULES
+  #ifndef NO_REMOTE_RULES
   ruleDependency=NULL;
   TCFG_CLEAR(dependencyRuleName);
-#endif
+  #endif
 } // TParameterDefinition::TParameterDefinition
 
 
@@ -3850,9 +3850,9 @@ bool TMimeDirProfileHandler::parseProperty(
       // - obtain unfolded value
       val.erase();
       bool dquoted = false;
-    bool wasdquoted = false;
-    // - note: we allow quoted params even with mimo_old, as the chance is much higher that a param value
-    //   beginning with doublequote is actually a quoted string than a value containing a doublequote at the beginning
+      bool wasdquoted = false;
+      // - note: we allow quoted params even with mimo_old, as the chance is much higher that a param value
+      //   beginning with doublequote is actually a quoted string than a value containing a doublequote at the beginning
       if (*vp=='"') {
         dquoted = true;
         wasdquoted = true;
@@ -3894,7 +3894,7 @@ bool TMimeDirProfileHandler::parseProperty(
       // - processing of next param starts here
       p=vp;
       // check for global parameters
-      bool storeUnprocessed = true;
+      bool storeUnprocessed = true; // in case this is a unprocessed property, flag will be cleared to prevent storing params that still ARE processed
       if ((aMimeMode==mimo_old && defaultparam) || strucmp(pname.c_str(),"ENCODING")==0) {
         // get encoding
         // Note: always process ENCODING, as QP is mimo-old specific and must be removed for normalized storage
@@ -3903,10 +3903,12 @@ bool TMimeDirProfileHandler::parseProperty(
             encoding=static_cast <TEncodingTypes> (k);
           }
         }
-        if (encoding==enc_quoted_printable)
-          storeUnprocessed = false; // QP will be decoded, so param must not be stored
-        else
-          encoding = enc_none; // other encodings will not be processed
+        if (aPropP->unprocessed) {
+          if (encoding==enc_quoted_printable)
+            storeUnprocessed = false; // QP will be decoded (for unprocessed properties), so param must not be stored
+          else
+            encoding = enc_none; // other encodings will not be processed for unprocessed properties
+        }
       }
       else if (strucmp(pname.c_str(),"CHARSET")==0) {
         // charset specified (mimo_old value-only not supported)
@@ -3926,7 +3928,7 @@ bool TMimeDirProfileHandler::parseProperty(
           // %%% replace 8bit chars with underscore
           charset=chs_unknown;
         }
-        storeUnprocessed = false;
+        storeUnprocessed = false; // CHARSET is never included in unprocessed property, as we always store UTF-8
       }
       if (aPropP->unprocessed && storeUnprocessed && fieldoffsetfound) {
         // append in reconstructed form for storing "unprocessed" (= lightly normalized)
