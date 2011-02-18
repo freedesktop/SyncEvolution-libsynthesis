@@ -3463,7 +3463,7 @@ cAppCharP paramScan(cAppCharP aParams,cAppCharP aParamName, string &aValue)
   cAppCharP q,r;
   int nl,vl;
   bool quotedvalue=false;
-  if (!p) return false;
+  if (!p) return NULL;
   while (*p && *p==';') {
     // skip param intro
     p++;
@@ -3838,7 +3838,7 @@ sInt16 TDBItemKey::getFidFor(cAppCharP aName, stringSize aNameSz)
 
 TItemField *TDBItemKey::getBaseFieldFromFid(sInt16 aFid)
 {
-	if (!fItemP) return false; // no item, no field is accessible
+	if (!fItemP) return NULL; // no item, no field is accessible
   return fCustomImplDS->getMappedBaseFieldOrVar(*fItemP, aFid);
 } // TDBItemKey::getBaseFieldFromFid
 

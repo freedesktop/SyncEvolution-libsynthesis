@@ -102,8 +102,9 @@ bool TBinFile::platformTruncateFile(uInt32 aNewSize)
   #if defined(LINUX) || defined(MACOSX)
     fflush(fCBinFile); // unbuffer everything
     int fd = fileno(fCBinFile); // get file descriptor
-    if (ftruncate(fd,aNewSize))
+    if (ftruncate(fd,aNewSize)) {
       ; // error ignored
+    }
   #elif defined(WIN32)
     fflush(fCBinFile); // unbuffer everything
     HANDLE h = (HANDLE)fileno(fCBinFile); // get file descriptor

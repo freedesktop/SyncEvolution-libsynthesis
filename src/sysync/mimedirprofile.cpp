@@ -4666,7 +4666,7 @@ bool TMimeDirProfileHandler::parseLevels(
   if (foundmandatory<aProfileP->numMandatoryProperties) {
     // not all mandatory properties found
     POBJDEBUGPRINTFX(getSession(),DBG_ERROR,(
-      "parseMimeDir: missing %hd of %hd mandatory properies",
+      "parseMimeDir: missing %d of %hd mandatory properies",
       aProfileP->numMandatoryProperties-foundmandatory,
       aProfileP->numMandatoryProperties
     ));

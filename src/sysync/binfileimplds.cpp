@@ -2418,7 +2418,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
       (long)pendingItemHeader.storedSize
     ));
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_DETAILS,(
-      "SaveAdminData: saved pending item: src='%s', targ='%s', laststatus=%hd, pistate=%hd, total=%ld, unconfirmed=%ld, stored=%ld",
+      "SaveAdminData: saved pending item: src='%s', targ='%s', laststatus=%hd, pistate=%d, total=%ld, unconfirmed=%ld, stored=%ld",
       pendingItemHeader.lastSourceURI,
       pendingItemHeader.lastTargetURI,
       pendingItemHeader.lastItemStatus,

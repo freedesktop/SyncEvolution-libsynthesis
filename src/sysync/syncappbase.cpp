@@ -1861,8 +1861,9 @@ localstatus TSyncAppBase::readXMLConfigFile(cAppCharP aFilePath)
     #endif
     CONSOLEPRINTF(("- Config file read from '%s'",aFilePath));
     #ifdef SYDEBUG
-    if (getRootConfig()->fDebugConfig.fSessionDebugLogs || getRootConfig()->fDebugConfig.fGlobalDebugLogs)
+    if (getRootConfig()->fDebugConfig.fSessionDebugLogs || getRootConfig()->fDebugConfig.fGlobalDebugLogs) {
       CONSOLEPRINTF(("- Debug log path: %s",getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()));
+    }
     // signal where config came from
     fConfigFilePath=aFilePath;
     #endif
