@@ -107,6 +107,7 @@ else
 XMLPARSE_CFLAGS_BUILTIN = -I$(srcdir)/Targets/ReleasedProducts/clientEngine_autotools/systemxml
 endif
 
+libsynthesissdk_la_LIBADD = libsmltk.la # san.cpp calls sml* functions directly
 libsynthesissdk_la_LDFLAGS = -static
 libsynthesissdk_la_CFLAGS = $(PIC_CXXFLAGS)
 libsynthesissdk_la_CXXFLAGS = $(PIC_CXXFLAGS)
