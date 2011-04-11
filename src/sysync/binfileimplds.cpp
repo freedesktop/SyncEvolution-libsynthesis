@@ -2228,7 +2228,8 @@ bool TBinfileImplDS::implEndDataWrite(void)
   // Note that in BASED_ON_BINFILE_CLIENT case, implEndDataWrite() is
   // derived by customimplds and will call the other apiEndDataWrite(cmpRef)
   // variant, and then call this inherited method.
-  return apiEndDataWrite()!=LOCERR_OK;
+  string thisSyncIdentifier;
+  return apiEndDataWrite(thisSyncIdentifier)!=LOCERR_OK;
 } // TBinfileImplDS::implEndDataWrite
 
 
