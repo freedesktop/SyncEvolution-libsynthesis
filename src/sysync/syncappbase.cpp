@@ -1805,7 +1805,7 @@ static int _CALLING_ CFileReader(
   FILE *cfgfile = (FILE *)aContext;
   // read from file
   size_t len = fread(aBuffer, 1, aMaxSize, cfgfile);
-  if (len<0) {
+  if (len<=0) {
     if (!feof(cfgfile))
       return appFalse; // not EOF, other error: failed
     len=0; // nothing read, end of file
