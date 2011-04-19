@@ -2730,16 +2730,6 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
           fSlowSync ? "slow" : "normal",
           fFirstTimeSync ? " first time" : ""
         ));
-        #ifdef PROGRESS_EVENTS
-        // - progress event
-        DB_PROGRESS_EVENT(
-          this,
-          pev_alerted,
-          fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0,
-          fResuming ? 1 : 0,
-          fSyncMode
-        );
-        #endif // PROGRESS_EVENTS
       } // client Case
       #endif // SYSYNC_CLIENT
     }
@@ -4189,6 +4179,32 @@ localstatus TLocalEngineDS::changeState(TLocalEngineDSState aNewState, bool aFor
   if (!aForceOnError && err1) goto endchange;
   // switch state
   fLocalDSState = aNewState;
+
+  if (aNewState == dssta_syncmodestable) {
+    // There are multiple places where the sync mode is frozen.  Ensure
+    // that this change is reported in all of them by putting the code
+    // here.
+    PDEBUGPRINTFX(DBG_HOT,(
+                         "executing %s%s%s Sync%s",
+                         fResuming ? "resumed " : "",
+                         fSlowSync ? "slow" : "normal",
+                         fFirstTimeSync ? " first time" : "",
+                         fSyncMode == smo_twoway ? ", two-way" :
+                         fSyncMode == smo_fromclient ? " from client" :
+                         fSyncMode == smo_fromserver ? " from server" :
+                         " in unknown direction?!"
+                           ));
+#ifdef PROGRESS_EVENTS
+    // progress event
+    DB_PROGRESS_EVENT(this,
+                      pev_alerted,
+                      fSlowSync ? (fFirstTimeSync ? 2 : 1) : 0,
+                      fResuming ? 1 : 0,
+                      fSyncMode
+                      );
+#endif // PROGRESS_EVENTS
+  }
+
   // now give logic opportunity to react again
   err2 = dsAfterStateChange(oldState,aNewState);
 endchange:
