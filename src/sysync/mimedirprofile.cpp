@@ -5381,10 +5381,6 @@ void TMimeDirProfileHandler::setRemoteRule(const string &aRemoteRuleName)
       // only this rule and all rules included by it rule must be active
       fActiveRemoteRules.clear();
       activateRemoteRule(*pos);
-      TRemoteRulesList::iterator spos;
-      for(spos=(*pos)->fSubRulesList.begin();spos!=(*pos)->fSubRulesList.end();spos++) {
-        activateRemoteRule(*spos);
-      }
       break;
     }
   }
@@ -5422,6 +5418,12 @@ void TMimeDirProfileHandler::activateRemoteRule(TRemoteRuleConfig *aRuleP)
   //   Note: this is not a single option because we had this before rule options were tristates.
   //if (aRuleP->fForceUTC>0) fRemoteCanHandleUTC=true;
   //if (aRuleP->fForceLocaltime>0) fRemoteCanHandleUTC=false;
+
+  // now recursively activate included rules
+  TRemoteRulesList::iterator pos;
+  for(pos=aRuleP->fSubRulesList.begin();pos!=aRuleP->fSubRulesList.end();pos++) {
+    activateRemoteRule(*pos);
+  }
 }
 
 // check if given rule (by name, or if aRuleName=NULL by rule pointer) is active
