@@ -19,6 +19,7 @@
 #include "sysync.h"
 #include "binfileimplclient.h"
 #include "binfileimplds.h"
+#include <cstddef>
 
 #if defined(BINFILE_ALWAYS_ACTIVE) && defined(SYSYNC_SERVER)
   #error "BINFILE_ALWAYS_ACTIVE is not compatible with server-enabled builds"

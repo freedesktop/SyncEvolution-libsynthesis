@@ -19,6 +19,7 @@
 #include "binfileimplclient.h"
 #include "binfileimplds.h"
 #include "syserial.h"
+#include <cstddef>
 
 
 namespace sysync {
