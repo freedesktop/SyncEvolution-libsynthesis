@@ -577,10 +577,14 @@ void TDebugLoggerBase::DebugOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, 
 {
   // we need a format and debug not completely off
   if (getMask() && aBlockName) {
+#ifdef __clang__
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wformat-security"
+#endif
     DebugOpenBlock(TDBG_LOCATION_ARG aBlockName,aBlockTitle,aCollapsed,NULL);
+#ifdef __clang__
     #pragma clang diagnostic pop
+#endif
   }
 } // TDebugLoggerBase::DebugOpenBlock
 
