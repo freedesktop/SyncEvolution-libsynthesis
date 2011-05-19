@@ -498,8 +498,17 @@ public:
   virtual localstatus apiEndDataRead(void) = 0;
   /// start of write
   virtual localstatus apiStartDataWrite(void) = 0;
+#ifdef __clang__
+/// Same name as in TBinfileImplDS. Tell clang compiler to ignore that name clash,
+/// it is okay here.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#endif
   /// end DB data write sequence (but not yet admin data)
   virtual localstatus apiEndDataWrite(string &aThisSyncIdentifier) = 0;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
   /// @}
 
