@@ -903,7 +903,7 @@ protected:
   /// signal start of data write phase
   virtual localstatus apiStartDataWrite(void) { return LOCERR_OK; };
   /// signal end of data write phase
-  virtual localstatus apiEndDataWrite(string &aThisSyncIdentifier) { return LOCERR_OK; };
+  virtual localstatus apiEndDataWrite(void) { return LOCERR_OK; };
   /// update item by local ID in the sync set. Caller retains ownership of aItemP
   /// @return != LOCERR_OK  if item with specified ID is not found.
   virtual localstatus updateItemByID(localid_t aLocalID, TSyncItem *aItemP) = 0;
