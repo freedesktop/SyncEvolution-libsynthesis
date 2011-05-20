@@ -37,14 +37,14 @@
 #endif
 
 #if defined MACOSX
-	#define ENGINE_ENTRY ENTRY_C
-	#define ENGINE_ENTRY_CXX
-	
-	#ifdef __GNUC__
-	  #define ENTRY_ATTR __attribute__((visibility("default")))
-	#else
-	  #define ENTRY_ATTR
-	#endif
+  #define ENGINE_ENTRY ENTRY_C
+  #define ENGINE_ENTRY_CXX
+
+  #ifdef __GNUC__
+    #define ENTRY_ATTR __attribute__((visibility("default")))
+  #else
+    #define ENTRY_ATTR
+  #endif
 #elif defined _MSC_VER
   /* Visual Studio 2005 requires a specific entry point definition */
   /* This definition is empty for all other platforms */
@@ -52,9 +52,9 @@
   #define ENGINE_ENTRY_CXX ENGINE_ENTRY
   #define ENTRY_ATTR
 #else
-	#define ENGINE_ENTRY ENTRY_C
-	#define ENGINE_ENTRY_CXX
-	#define ENTRY_ATTR
+  #define ENGINE_ENTRY ENTRY_C
+  #define ENGINE_ENTRY_CXX
+  #define ENTRY_ATTR
 #endif
 
 /* compose name of external symbols with C binding:
@@ -388,7 +388,7 @@ enum DebugFlags {
   DBG_PLUGIN_DB    = 0x0002,
   /** DB access calls, exotic calls as well */
   DBG_PLUGIN_EXOT  = 0x0004,
-  /** direct printf calls for test */ 
+  /** direct printf calls for test */
   DBG_PLUGIN_DIRECT= 0x0008,
   /** GetValue/SetValue debugging */
   DBG_GET_SET_VALUE= 0x0010,
@@ -441,7 +441,7 @@ typedef TSyError (*OpenSubkey_Func)       ( void* aCB, KeyH *aKeyH,
                                                        KeyH  aParentKeyH, sInt32    aID,   uInt16 aMode );
 typedef TSyError (*DeleteSubkey_Func)     ( void* aCB, KeyH  aParentKeyH, sInt32    aID );
 typedef TSyError (*GetKeyID_Func)         ( void* aCB, KeyH  aKeyH,       sInt32   *aID );
-typedef TSyError (*SetTextMode_Func)      ( void* aCB, KeyH  aKeyH,       uInt16 aCharSet, 
+typedef TSyError (*SetTextMode_Func)      ( void* aCB, KeyH  aKeyH,       uInt16 aCharSet,
                                                                           uInt16 aLineEndMode, bool aBigEndian );
 typedef TSyError (*SetTimeMode_Func)      ( void* aCB, KeyH  aKeyH,       uInt16 aTimeMode );
 typedef TSyError (*CloseKey_Func)         ( void* aCB, KeyH  aKeyH );
@@ -650,7 +650,7 @@ typedef TSyError (*ConnectEngineS_Func)   ( UI_Call_In  aCI,
                                             CVersion    aPrgVersion,
                                             uInt16      aDebugFlags );
 
-typedef TSyError (*DisconnectEngine_Func)	( UI_Call_In  aCI );
+typedef TSyError (*DisconnectEngine_Func) ( UI_Call_In  aCI );
 
 
 

@@ -1,7 +1,7 @@
 /*
  *  File:         RemoteDataStore.cpp
  *
- *  Author:			  Lukas Zeller (luz@plan44.ch)
+ *  Author:       Lukas Zeller (luz@plan44.ch)
  *
  *  TRemoteDataStore
  *    Abstraction of remote data store for SyncML Server
@@ -39,7 +39,7 @@ void TRemoteDataStore::InternalResetDataStore(void)
   // for server, get default GUID size (in case remote devInf does not send one)
   #ifdef SYSYNC_SERVER
   if (IS_SERVER) {
-	  fMaxGUIDSize = static_cast<TAgentConfig *>(getSession()->getSessionConfig())->fMaxGUIDSizeSent;
+    fMaxGUIDSize = static_cast<TAgentConfig *>(getSession()->getSessionConfig())->fMaxGUIDSizeSent;
   }
   #endif
 } // TRemoteDataStore::InternalResetDataStore

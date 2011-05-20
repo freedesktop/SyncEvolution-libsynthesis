@@ -591,13 +591,13 @@ bool TPluginApiAgent::CheckLogin(const char *aOriginalUserName, const char *aMod
   int pwmode = fDBApiSession.PasswordMode();
   // check anonymous login
   if (aAuthStringType==sectyp_anonymous) {
-  	if (pwmode==Password_ClrText_IN || pwmode==Password_MD5_Nonce_IN) {
-    	// modes that pass in credential string - pass empty credential string to signal "anonymous"
-	    authok = fDBApiSession.Login(aModifiedUserName,"",userKey)==LOCERR_OK;
+    if (pwmode==Password_ClrText_IN || pwmode==Password_MD5_Nonce_IN) {
+      // modes that pass in credential string - pass empty credential string to signal "anonymous"
+      authok = fDBApiSession.Login(aModifiedUserName,"",userKey)==LOCERR_OK;
     }
     else {
-    	// modes that get credential string from API - check that API returns empty string to signal "anonymous" login is ok
-	    authok = fDBApiSession.Login(aModifiedUserName,dbSecret,userKey)==LOCERR_OK;
+      // modes that get credential string from API - check that API returns empty string to signal "anonymous" login is ok
+      authok = fDBApiSession.Login(aModifiedUserName,dbSecret,userKey)==LOCERR_OK;
       authok = authok && dbSecret.empty(); // returned secret must be empty to allow anonymous login
     }
   }

@@ -2217,7 +2217,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
     switch (mapEntry.entrytype) {
       #ifdef SYSYNC_SERVER
       case mapentry_tempidmap:
-      	if (IS_SERVER) {
+        if (IS_SERVER) {
           PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,(
             "fTempGUIDMap: restore mapping from %s to %s",
             mapEntry.remoteid.c_str(),
@@ -2230,8 +2230,8 @@ localstatus TPluginApiDS::apiLoadAdminData(
       #endif
       #ifdef SYSYNC_CLIENT
       case mapentry_pendingmap:
-      	if (IS_CLIENT)
-	        fPendingAddMaps[mapEntry.localid]=mapEntry.remoteid;
+        if (IS_CLIENT)
+          fPendingAddMaps[mapEntry.localid]=mapEntry.remoteid;
         break;
       #endif
     case mapentry_invalid:

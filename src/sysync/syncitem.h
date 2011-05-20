@@ -1,7 +1,7 @@
 /*
  *  File:         SyncItem.h
  *
- *  Author:			  Lukas Zeller (luz@plan44.ch)
+ *  Author:       Lukas Zeller (luz@plan44.ch)
  *
  *  TSyncItem
  *    Abstract Base class of all data containing items.
@@ -151,7 +151,7 @@ public:
   uInt32 getDbgMask(void);
   #endif
   // - get session owner (dispatcher/clientbase)
-  TSyncAppBase *getSyncAppBase(void);  
+  TSyncAppBase *getSyncAppBase(void);
 protected:
   // operation to be performed with this item at its destination
   TSyncOperation fSyncOp;
@@ -161,8 +161,8 @@ private:
   TSyncItem *castToSameTypeP(TSyncItem *aItemP) { return aItemP; } // all are compatible TSyncItem
 }; // TSyncItem
 
-}	// namespace sysync
+} // namespace sysync
 
-#endif	// SyncItem_H
+#endif  // SyncItem_H
 
 // eof

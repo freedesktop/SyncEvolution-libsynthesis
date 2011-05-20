@@ -196,7 +196,7 @@ public:
   ///   - fPreviousToRemoteSyncIdentifier = string identifying last session that sent data to remote
   ///                         (or last changelog update in case of BASED_ON_BINFILE_CLIENT). Needs only be saved
   ///                         if derived datastore cannot work with timestamps and has its own identifier.
-	///   - fMapTable         = list<TMapEntry> containing map entries. The implementation must load all map entries
+  ///   - fMapTable         = list<TMapEntry> containing map entries. The implementation must load all map entries
   ///                         related to the current sync target identified by the triple of (aDeviceID,aDatabaseID,aRemoteDBID)
   ///                         or by fTargetKey. The entries added to fMapTable must have "changed", "added" and "deleted" flags
   ///                         set to false.
@@ -369,8 +369,8 @@ private:
   // config pointer
   TPluginDSConfig *fPluginDSConfigP;
   // filter testing
-	bool fAPICanFilter;
-	bool fAPIFiltersTested;  
+  bool fAPICanFilter;
+  bool fAPIFiltersTested;
 }; // TPluginApiDS
 
 
@@ -409,6 +409,6 @@ private:
 
 } // namespace sysync
 
-#endif	// PLUGINAPIDS_H
+#endif  // PLUGINAPIDS_H
 
 // eof

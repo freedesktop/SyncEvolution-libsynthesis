@@ -106,7 +106,7 @@ enum TKeyValEnum {
   /** special ID for values that cannot be accessed by ID AT ALL */
   KEYVAL_NO_ID = -7,
   /** special ID to specify entire contents of a container */
-  KEYVAL_ID_ALL	= -8
+  KEYVAL_ID_ALL = -8
 };
 
 /* ---- special value names ---- */
@@ -259,7 +259,7 @@ enum TStepCmdEnum {
   STEPCMD_AUTOSYNC_CHECK = 41,
 /* - output from engine */
   /** engine returns to caller w/o progress info, and should be called
-      again ASAP with STEPCMD_STEP or, if the previous call was 
+      again ASAP with STEPCMD_STEP or, if the previous call was
       STEPCMD_SUSPEND, with the step command that was pending before
       doing the suspend (for example STEPCMD_GOTDATA, STEPCMD_SENTDATA, STEPCMD_STEP) */
   STEPCMD_OK = 100,
@@ -336,7 +336,7 @@ enum TProgressEventEnum {
   PEV_DEBUG = 5,
 
   /* transport-related */
-  
+
   PEV_SENDSTART = 6,
   PEV_SENDEND = 7,
   PEV_RECVSTART = 8,
@@ -357,7 +357,7 @@ enum TProgressEventEnum {
   PEV_DISPLAY100 = 14,
 
   /* session-related */
-  
+
   PEV_SESSIONSTART = 15,
   /** session ended, probably with error in extra */
   PEV_SESSIONEND = 16,

@@ -889,7 +889,7 @@ TSyError TDB_Api_Config::Connect( cAppCharP aModName, CContext &globContext,
         bool asS= !asK ||  FlagBoth( ca, CA_AdminAsKey );
         if  (asS) err= DBApi_Assign( ca, &m.ds.dsAdm.str, sizeof(m.ds.dsAdm.str),Plugin_DS_Admin_Str );
 
-	      if   (!err) err= DBApi_Assign( ca, &m.ds.dsAdm.map, sizeof(m.ds.dsAdm.map), vda );
+        if   (!err) err= DBApi_Assign( ca, &m.ds.dsAdm.map, sizeof(m.ds.dsAdm.map), vda );
       } // if
 
       if   (!err) err= DBApi_Assign( ca, &m.ds.dsData,    sizeof(m.ds.dsData),    vdd );

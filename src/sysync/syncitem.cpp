@@ -1,7 +1,7 @@
 /*
  *  File:         SyncItem.cpp
  *
- *  Author:			  Lukas Zeller (luz@plan44.ch)
+ *  Author:       Lukas Zeller (luz@plan44.ch)
  *
  *  TSyncItem
  *    Abstract Base class of all data containing items.
@@ -97,7 +97,7 @@ uInt32 TSyncItem::getDbgMask(void)
 
 TSyncAppBase *TSyncItem::getSyncAppBase(void)
 {
-	return getSession() ? getSession()->getSyncAppBase() : NULL;	
+  return getSession() ? getSession()->getSyncAppBase() : NULL;
 } // TSyncItem::getSyncAppBase
 
 

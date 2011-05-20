@@ -132,7 +132,7 @@ uInt32 TSyncDataStore::getDbgMask(void)
 
 TSyncAppBase *TSyncDataStore::getSyncAppBase(void)
 {
-	return fSessionP ? fSessionP->getSyncAppBase() : NULL;	
+  return fSessionP ? fSessionP->getSyncAppBase() : NULL;
 } // TSyncDataStore::getSyncAppBase
 
 
