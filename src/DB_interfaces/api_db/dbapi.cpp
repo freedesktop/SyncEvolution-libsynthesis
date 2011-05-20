@@ -141,19 +141,19 @@
   #endif
 
   #ifdef HARDCODED_CUSTOM
-    namespace iPhone_db0 {
+    namespace iPhone_dbplugin1 {
       #include "dbapi_include.h"
     } // namespace
 
-    namespace iPhone_db1 {
+    namespace iPhone_dbplugin2 {
       #include "dbapi_include.h"
     } // namespace
 
-    namespace iPhone_db2 {
+    namespace iPhone_dbplugin3 {
       #include "dbapi_include.h"
     } // namespace
 
-    namespace iPhone_db3 {
+    namespace iPhone_dbplugin4 {
       #include "dbapi_include.h"
     } // namespace
   #endif
@@ -529,10 +529,10 @@ static TSyError DBApi_LibAssign( appPointer aMod, string &ps, appPointer aField,
     #endif
 
     #ifdef HARDCODED_CUSTOM
-    else if (BuiltIn( ps,n, "iPhone_db0" )) err=  iPhone_db0::AssignMethods( aMod, aField,aFSize, aKey );
-    else if (BuiltIn( ps,n, "iPhone_db1" )) err=  iPhone_db1::AssignMethods( aMod, aField,aFSize, aKey );
-    else if (BuiltIn( ps,n, "iPhone_db2" )) err=  iPhone_db2::AssignMethods( aMod, aField,aFSize, aKey );
-    else if (BuiltIn( ps,n, "iPhone_db3" )) err=  iPhone_db3::AssignMethods( aMod, aField,aFSize, aKey );
+    else if (BuiltIn( ps,n, "iPhone_dbplugin1" )) err=  iPhone_dbplugin1::AssignMethods( aMod, aField,aFSize, aKey );
+    else if (BuiltIn( ps,n, "iPhone_dbplugin2" )) err=  iPhone_dbplugin2::AssignMethods( aMod, aField,aFSize, aKey );
+    else if (BuiltIn( ps,n, "iPhone_dbplugin3" )) err=  iPhone_dbplugin3::AssignMethods( aMod, aField,aFSize, aKey );
+    else if (BuiltIn( ps,n, "iPhone_dbplugin4" )) err=  iPhone_dbplugin4::AssignMethods( aMod, aField,aFSize, aKey );
     #endif
   #endif
 

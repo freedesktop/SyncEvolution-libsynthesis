@@ -151,7 +151,7 @@ void TPluginDSConfig::localResolve(bool aLastPass)
   fPluginParams_Data.Resolve(aLastPass);
   // try to resolve configured API-module name into set of function pointers
   if (aLastPass) {
-  	// Determine if we may use non-built-in plugins
+    // Determine if we may use non-built-in plugins
     bool allowDLL= true; // by default, it is allowed, but if PLUGIN_DLL is not set, it will be disabled anyway.
     #if defined(SYSER_REGISTRATION) && !defined(DLL_PLUGINS_ALWAYS_ALLOWED)
     // license flags present and DLL plugins not generally allowed:
@@ -187,7 +187,7 @@ void TPluginDSConfig::localResolve(bool aLastPass)
       // now pass plugin-specific config
       if (fDBApiConfig_Data.PluginParams(fPluginParams_Data.fConfigString.c_str())!=LOCERR_OK)
         SYSYNC_THROW(TConfigParseException("Module does not understand params passed in <plugin_params>"));
-			// Check module capabilities
+      // Check module capabilities
       TDB_Api_Str capa;
       fDBApiConfig_Data.Capabilities(capa);
       string capaStr = capa.c_str();
@@ -318,7 +318,7 @@ void TPluginApiDS::announceAgentDestruction(void)
 void TPluginApiDS::InternalResetDataStore(void)
 {
   // filtering capabilities need to be evaluated first
-	fAPICanFilter = false;
+  fAPICanFilter = false;
   fAPIFiltersTested = false;
 } // TPluginApiDS::InternalResetDataStore
 
@@ -428,7 +428,7 @@ bool TPluginApiDS::parseDBItemData(
   uInt16 aSetNo
 )
 {
-	bool stored = parseItemData(aItem,aItemData,aSetNo);
+  bool stored = parseItemData(aItem,aItemData,aSetNo);
   if (stored) {
     // post-process
     stored = postReadProcessItem(aItem,aSetNo);
@@ -468,16 +468,16 @@ bool TPluginApiDS::generateDBItemData(
       // determine base field (might be array)
       basefieldP = getMappedBaseFieldOrVar(aItem,fid);
       if (generateItemFieldData(
-      	aAssignedOnly,
-				fPluginDSConfigP->fDataCharSet,
+        aAssignedOnly,
+        fPluginDSConfigP->fDataCharSet,
         fPluginDSConfigP->fDataLineEndMode,
         fPluginDSConfigP->fDataTimeZone,
         basefieldP,
         fmiP->getName(),
         aDataFields
       ))
-	    	createdone=true; // we now have at least one field
-		} // if writable field
+        createdone=true; // we now have at least one field
+    } // if writable field
   } // for all field mappings
   PDEBUGPRINTFX(DBG_USERDATA+DBG_DBAPI+DBG_EXOTIC+DBG_HOT,("generateDBItemData generated string for DBApi:"));
   PDEBUGPUTSXX(DBG_USERDATA+DBG_DBAPI+DBG_EXOTIC,aDataFields.c_str(),0,true);
@@ -519,9 +519,9 @@ bool TPluginApiDS::postReadProcessItem(TMultiFieldItem &aItem, uInt16 aSetNo)
         if (!basefieldP) continue;
         // We have a base field for this, check what to do
         if (fPluginDSConfigP->fUserZoneOutput && !fmiP->floating_ts && basefieldP->elementsBasedOn(fty_timestamp)) {
-        	// userzoneoutput requested for non-floating timestamp field, move it!
+          // userzoneoutput requested for non-floating timestamp field, move it!
           #ifdef ARRAYFIELD_SUPPORT
-					arrayIndex=0;
+          arrayIndex=0;
           #endif
           do {
             #ifdef ARRAYFIELD_SUPPORT
@@ -536,7 +536,7 @@ bool TPluginApiDS::postReadProcessItem(TMultiFieldItem &aItem, uInt16 aSetNo)
             #else
             leaffieldP = basefieldP; // no arrays: leaf is always base field
             #endif
-	          static_cast<TTimestampField *>(leaffieldP)->moveToContext(fSessionP->fUserTimeContext, false);
+            static_cast<TTimestampField *>(leaffieldP)->moveToContext(fSessionP->fUserTimeContext, false);
           } while(basefieldP->isArray()); // only arrays do loop all array elements
         }
         if (fmiP->as_param && basefieldP->elementsBasedOn(fty_string)) {
@@ -916,7 +916,7 @@ bool TPluginApiDS::dsFilteredFetchesFromDB(bool aFilterChanged)
   if (!fDBApi_Data.Created()) return inherited::dsFilteredFetchesFromDB(aFilterChanged);
   #endif
   if (aFilterChanged || !fAPIFiltersTested) {
-  	fAPIFiltersTested = true;
+    fAPIFiltersTested = true;
     // Anyway, let DBApi know (even if all filters are empty)
     string filters;
     // - local DB filter (=static filter, from config)
@@ -948,7 +948,7 @@ bool TPluginApiDS::dsFilteredFetchesFromDB(bool aFilterChanged)
 // requested by aNeedAll)
 localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
 {
-	TSyError dberr=LOCERR_OK;
+  TSyError dberr=LOCERR_OK;
   #ifdef SYDEBUG
   string ts1,ts2;
   #endif
@@ -968,7 +968,7 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
           NULL // no associated session level // fPluginAgentP->getDBApiSession()
         );
         if (dberr==LOCERR_OK) {
-        	// make sure plugin now sees filters before starting to read sync set
+          // make sure plugin now sees filters before starting to read sync set
           // Note: due to late instantiation of the data plugin, previous calls to engFilteredFetchesFromDB() were not
           //   evaluated by the plugin, so we need to do that here explicitly once again
           engFilteredFetchesFromDB(false);
@@ -978,18 +978,18 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
     else if (dberr==LOCERR_NOTIMP)
       dberr=LOCERR_OK; // we just don't have a data plugin, that's ok, inherited (SQL) will handle data
     if (dberr!=LOCERR_OK)
-    	goto endread;
+      goto endread;
   } // binfile active
   #endif // BASED_ON_BINFILE_CLIENT
   #ifndef SDK_ONLY_SUPPORT
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created())
-  	return inherited::apiReadSyncSet(aNeedAll);
+    return inherited::apiReadSyncSet(aNeedAll);
   #endif
 
   // just let plugin know if we want data (if it actually does is the plugin's choice)
   if (aNeedAll) {
-  	// we'll need all data in the datastore in the end, let datastore know
+    // we'll need all data in the datastore in the end, let datastore know
     // Note: this is a suggestion to the plugin only - plugin does not need to follow it
     //       and can return only ID/changed or all data for both states of this flag,
     //       even changing on a item-by-item basis (can make sense for optimization).
@@ -1006,7 +1006,7 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
   fWriting=false;
   fPluginAgentP->fScriptContextDatastore=this;
   if (!TScriptContext::executeTest(true,fScriptContextP,fPluginDSConfigP->fFieldMappings.fInitScript,fPluginDSConfigP->getDSFuncTableP(),fPluginAgentP)) {
-  	PDEBUGPRINTFX(DBG_ERROR,("<initscript> failed"));
+    PDEBUGPRINTFX(DBG_ERROR,("<initscript> failed"));
     goto endread;
   }
   #endif
@@ -1025,7 +1025,7 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
   // start the reading phase anyway (to make sure call order is always StartRead/EndRead/StartWrite/EndWrite)
   dberr = fDBApi_Data.StartDataRead(fPreviousToRemoteSyncIdentifier.c_str(),fPreviousSuspendIdentifier.c_str());
   if (dberr!=LOCERR_OK) {
-  	PDEBUGPRINTFX(DBG_ERROR,("DBapi::StartDataRead fatal error: %hd",dberr));
+    PDEBUGPRINTFX(DBG_ERROR,("DBapi::StartDataRead fatal error: %hd",dberr));
     goto endread;
   }
   // we don't need to load the syncset if we are only refreshing from remote
@@ -1091,7 +1091,7 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
         #endif
         if (dberr!=LOCERR_OK) {
           PDEBUGPRINTFX(DBG_ERROR,("DBapi::ReadNextItem fatal error = %hd",dberr));
-		      #if defined(DBAPI_ASKEYITEMS) && defined(ENGINEINTERFACE_SUPPORT)
+          #if defined(DBAPI_ASKEYITEMS) && defined(ENGINEINTERFACE_SUPPORT)
           if (mfitemP) delete mfitemP;
           #endif
           goto endread;
@@ -1194,7 +1194,7 @@ localstatus TPluginApiDS::apiZapSyncSet(void)
   if (!fDBApi_Data.Created()) return inherited::apiZapSyncSet();
   #endif
   TSyError dberr = LOCERR_OK;
-	// API must be able to process current filters in order to execute a zap - otherwise we would delete
+  // API must be able to process current filters in order to execute a zap - otherwise we would delete
   // more than the sync set defined by local filters.
   bool apiCanZap = engFilteredFetchesFromDB(false);
   if (apiCanZap) {
@@ -1204,7 +1204,7 @@ localstatus TPluginApiDS::apiZapSyncSet(void)
   }
   // do it one by one if DeleteAllItems() is not implemented or plugin cannot apply current filters
   if (!apiCanZap) {
-		dberr = zapSyncSetOneByOne();
+    dberr = zapSyncSetOneByOne();
   }
   // return status
   return dberr;
@@ -1237,7 +1237,7 @@ localstatus TPluginApiDS::apiFetchItem(TMultiFieldItem &aItem, bool aReadPhase, 
     if (itemKeyP->isWritten()) {
       // post-process (run scripts, create BLOB proxies if needed)
       postReadProcessItem(aItem,0);
-		}
+    }
     // done with the key
     delete itemKeyP;
   }
@@ -1425,7 +1425,7 @@ localstatus TPluginApiDS::apiUpdateItem(TMultiFieldItem &aItem)
   if (dberr==LOCERR_OK) {
     // check if ID has changed
     if (!updItemAndParentID.item.empty() && strcmp(updItemAndParentID.item.c_str(),aItem.getLocalID())!=0) {
-    	if (IS_SERVER) {
+      if (IS_SERVER) {
         // update item ID and Map
         dsLocalIdHasChanged(aItem.getLocalID(),updItemAndParentID.item.c_str());
       }
@@ -1575,9 +1575,9 @@ void TPluginApiDS::dsThreadMayChangeNow(void)
 //         or directly before startDataRead (in BASED_ON_BINFILE_CLIENT binfileDSActive() case)
 TSyError TPluginApiDS::connectDataPlugin(void)
 {
-	TSyError err = LOCERR_NOTIMP;
+  TSyError err = LOCERR_NOTIMP;
   // filtering capabilities need to be reevaluated anyway
-	fAPICanFilter = false;
+  fAPICanFilter = false;
   fAPIFiltersTested = false;
   // only connect if we have plugin data support
   if (fPluginDSConfigP->fDBApiConfig_Data.Connected()) {
@@ -1992,7 +1992,7 @@ localstatus TPluginApiDS::apiLoadAdminData(
     }
   }
   else if (err==LOCERR_NOTIMP)
-  	err=LOCERR_OK; // we just don't have a data plugin, that's ok, inherited (SQL) will handle data
+    err=LOCERR_OK; // we just don't have a data plugin, that's ok, inherited (SQL) will handle data
   if (err!=LOCERR_OK)
     SYSYNC_THROW(TSyncException("Error creating context for plugin module handling data",err));
   // Perform actual loading of admin data
@@ -2410,10 +2410,10 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize, bool aNeedsTotalSize, bool aNe
     memSize neededBytes = aNeededSize-fFetchedSize; // how much we need to read more
     memSize totalsize = 0; // not known
 
-		if (fIsStringBLOB)
-    	aNeedsAllData = true; // strings must be fetched entirely, as they need to be converted before we can measure size or get data
+    if (fIsStringBLOB)
+      aNeedsAllData = true; // strings must be fetched entirely, as they need to be converted before we can measure size or get data
     if (!fBlobBuffer && aNeededSize==0 && (aNeedsTotalSize || aNeedsAllData))
-    	neededBytes=200; // just read a bit to possibly obtain the total size
+      neededBytes=200; // just read a bit to possibly obtain the total size
     do {
       // read a block
       dberr = fApiDsP->fDBApi_Data.ReadBlob(
@@ -2432,14 +2432,14 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize, bool aNeedsTotalSize, bool aNe
         SYSYNC_THROW(TSyncException("ReadBlob returned more data than requested"));
       // check if we know the total size reliably now
       if (totalsize) {
-      	// non-zero return means we know the total size now
+        // non-zero return means we know the total size now
         fBlobSize = totalsize;
         fBlobSizeKnown = true;
       }
       else {
-      	// could be unknown size OR zero blob
+        // could be unknown size OR zero blob
         if (neededBytes>0 && blobData.fSize==0) {
-        	// we tried to read, but got nothing, and total size is zero -> this means explicit zero size
+          // we tried to read, but got nothing, and total size is zero -> this means explicit zero size
           fBlobSize = 0;
           fBlobSizeKnown = true;
         }
@@ -2469,9 +2469,9 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize, bool aNeedsTotalSize, bool aNe
       blobData.DisposeBlk();         // <blobData.fSize> will be set back to 0 here !!
       // check end of data from API
       if (last) {
- 				if (!fBlobSizeKnown) {
- 	        fBlobSize = fFetchedSize;
-        	fBlobSizeKnown = true;
+        if (!fBlobSizeKnown) {
+          fBlobSize = fFetchedSize;
+          fBlobSizeKnown = true;
         }
         // end of BLOB: done fetching ANYWAY
         break;
@@ -2479,13 +2479,13 @@ void TApiBlobProxy::fetchBlob(size_t aNeededSize, bool aNeedsTotalSize, bool aNe
       // the BLOB is bigger than what we have fetched so far
       // - check if we are done even if not at end of blob
       if (!aNeedsAllData && fFetchedSize>=aNeededSize && (!aNeedsTotalSize || fBlobSizeKnown))
-      	break; // we have what was requested
-			// - we need to load more data
+        break; // we have what was requested
+      // - we need to load more data
       if (aNeedsAllData) {
-      	if (fBlobSizeKnown)
-        	neededBytes = fBlobSize-fFetchedSize; // try to get rest in one chunk
-      	else
-	        neededBytes = 4096; // we don't know how much is coming, continue reading in 4k chunks
+        if (fBlobSizeKnown)
+          neededBytes = fBlobSize-fFetchedSize; // try to get rest in one chunk
+        else
+          neededBytes = 4096; // we don't know how much is coming, continue reading in 4k chunks
       }
       // we need to continue until we get the total size or last
       first=false;
