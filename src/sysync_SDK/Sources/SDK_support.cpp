@@ -571,15 +571,15 @@ CVersion VersionNr( string s )
 
 bool SameBegin( string s, string cmp )
 {
-  uInt32 w=      s.length()-cmp.length();
+  ssize_t w=      s.length()-cmp.length();
   return w>=0 && s.find   ( cmp, 0 )==0;
 } // SameBegin
 
 
 bool SameEnd  ( string s, string cmp )
 {
-  uInt32 w=      s.length()-cmp.length();
-  return w>=0 && s.find   ( cmp, w )==w;
+  ssize_t w=      s.length()-cmp.length();
+  return w>=0 && s.find   ( cmp, w )==(size_t)w;
 } // SameEnd
 
 

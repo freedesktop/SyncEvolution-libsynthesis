@@ -1805,7 +1805,7 @@ static int _CALLING_ CFileReader(
   FILE *cfgfile = (FILE *)aContext;
   // read from file
   size_t len = fread(aBuffer, 1, aMaxSize, cfgfile);
-  if (len<0) {
+  if (len<=0) {
     if (!feof(cfgfile))
       return appFalse; // not EOF, other error: failed
     len=0; // nothing read, end of file
@@ -1861,8 +1861,9 @@ localstatus TSyncAppBase::readXMLConfigFile(cAppCharP aFilePath)
     #endif
     CONSOLEPRINTF(("- Config file read from '%s'",aFilePath));
     #ifdef SYDEBUG
-    if (getRootConfig()->fDebugConfig.fSessionDebugLogs || getRootConfig()->fDebugConfig.fGlobalDebugLogs)
+    if (getRootConfig()->fDebugConfig.fSessionDebugLogs || getRootConfig()->fDebugConfig.fGlobalDebugLogs) {
       CONSOLEPRINTF(("- Debug log path: %s",getRootConfig()->fDebugConfig.fDebugInfoPath.c_str()));
+    }
     // signal where config came from
     fConfigFilePath=aFilePath;
     #endif

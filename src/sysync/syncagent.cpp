@@ -1919,7 +1919,7 @@ bool TSyncAgent::ServerMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand 
     ));
     // - abort session after too many auth failures
     if (fAuthFailures>=MAX_AUTH_ATTEMPTS) {
-      PDEBUGPRINTFX(DBG_ERROR,("Too many (>=%hd) failures, aborting session",MAX_AUTH_ATTEMPTS));
+      PDEBUGPRINTFX(DBG_ERROR,("Too many (>=%d) failures, aborting session",MAX_AUTH_ATTEMPTS));
       AbortSession(400,true);
     }
     #endif        

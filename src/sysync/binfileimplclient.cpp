@@ -19,6 +19,7 @@
 #include "binfileimplclient.h"
 #include "binfileimplds.h"
 #include "syserial.h"
+#include <cstddef>
 
 
 namespace sysync {
@@ -2922,8 +2923,12 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
         } // if target belongs to this profile
       } // if we can read the target record
     } // for all target records
-    // ok if at least one datastore enabled
-    return fLocalDataStores.size()>0 && fRemoteURI.size()>0 ? LOCERR_OK : LOCERR_NOCFG;
+    // ok if at least one datastore enabled;
+    // this also used to check fRemoteURI, but that setting is
+    // not needed if the app on top of libsynthesis knows how
+    // to contact the server (for example, via some transport
+    // which doesn't need a parameter)
+    return fLocalDataStores.size()>0 ? LOCERR_OK : LOCERR_NOCFG;
   } // active
 defaultprofile:
   return inherited::SelectProfile(aProfileSelector, aAutoSyncSession);

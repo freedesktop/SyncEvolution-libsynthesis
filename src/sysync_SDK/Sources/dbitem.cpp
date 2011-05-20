@@ -837,8 +837,9 @@ TSyError TDBItem::LoadDB( bool withKey, cAppCharP aPrefix, void* aCB )
       q= &ch;
       s= "";
       while (true) {
-        if (fread( q, 1,1, f ) != 1)
+        if (fread( q, 1,1, f ) != 1) {
           ; // error ignored
+        }
         
         if (feof( f )) break;
 

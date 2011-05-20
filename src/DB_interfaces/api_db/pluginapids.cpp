@@ -1803,7 +1803,7 @@ localstatus TPluginApiDS::apiSaveAdminData(bool aDataCommitted, bool aSessionFin
       TPartialItemState pp= fPartialItemState;
       if (pp==pi_state_save_incoming) pp= pi_state_loaded_incoming; // adapt them before
       if (pp==pi_state_save_outgoing) pp= pi_state_loaded_outgoing;
-      adminData+="\r\npartialitemstate:"; StringObjAppendPrintf( adminData,"%hd",pp );
+      adminData+="\r\npartialitemstate:"; StringObjAppendPrintf( adminData,"%d",pp );
       // - fLastItemStatus   = status code (TSyError) of last item
       adminData+="\r\nlastitemstatus:"; StringObjAppendPrintf( adminData,"%hd",fLastItemStatus );
       // - fLastSourceURI    = item ID (string, if limited in length should be long enough for large IDs, >=64 chars recommended)

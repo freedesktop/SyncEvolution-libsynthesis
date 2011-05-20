@@ -19,6 +19,7 @@
 #include "sysync.h"
 #include "binfileimplclient.h"
 #include "binfileimplds.h"
+#include <cstddef>
 
 #if defined(BINFILE_ALWAYS_ACTIVE) && defined(SYSYNC_SERVER)
   #error "BINFILE_ALWAYS_ACTIVE is not compatible with server-enabled builds"
@@ -2418,7 +2419,7 @@ localstatus TBinfileImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessfu
       (long)pendingItemHeader.storedSize
     ));
     PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_DETAILS,(
-      "SaveAdminData: saved pending item: src='%s', targ='%s', laststatus=%hd, pistate=%hd, total=%ld, unconfirmed=%ld, stored=%ld",
+      "SaveAdminData: saved pending item: src='%s', targ='%s', laststatus=%hd, pistate=%d, total=%ld, unconfirmed=%ld, stored=%ld",
       pendingItemHeader.lastSourceURI,
       pendingItemHeader.lastTargetURI,
       pendingItemHeader.lastItemStatus,
