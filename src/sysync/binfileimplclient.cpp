@@ -2924,11 +2924,17 @@ localstatus TBinfileImplClient::SelectProfile(uInt32 aProfileSelector, bool aAut
       } // if we can read the target record
     } // for all target records
     // ok if at least one datastore enabled;
-    // this also used to check fRemoteURI, but that setting is
-    // not needed if the app on top of libsynthesis knows how
-    // to contact the server (for example, via some transport
+    #ifdef ENGINE_LIBRARY
+    // For engine library, check for a non-empty URL makes no
+    // sense any more, because the app on top of libsynthesis may know how
+    // to contact the server without an URL (for example, via some transport
     // which doesn't need a parameter)
     return fLocalDataStores.size()>0 ? LOCERR_OK : LOCERR_NOCFG;
+    #else
+    // for classic synthesis builds (winmobile, palmos) the app relies on
+    // the check for a non-empty URL, so we keep it for these legacy build cases
+    return fLocalDataStores.size()>0 && fRemoteURI.size()>0 ? LOCERR_OK : LOCERR_NOCFG;
+    #endif
   } // active
 defaultprofile:
   return inherited::SelectProfile(aProfileSelector, aAutoSyncSession);
