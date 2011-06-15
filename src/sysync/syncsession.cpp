@@ -369,6 +369,9 @@ TRemoteRuleConfig::TRemoteRuleConfig(const char *aElementName, TConfigElement *a
 // config destructor
 TRemoteRuleConfig::~TRemoteRuleConfig()
 {
+  if (fOverrideDevInfBufferP)
+    smlFreeProtoElement(fOverrideDevInfBufferP);
+
   clear();
 } // TRemoteRuleConfig::~TRemoteRuleConfig
 
@@ -421,6 +424,9 @@ void TRemoteRuleConfig::clear(void)
 	fSubRule = false; // normal rule by default
   // - rules are final by default
   fFinalRule = true;
+  // no DevInf by default
+  fOverrideDevInfP = NULL;
+  fOverrideDevInfBufferP = NULL;
   // clear inherited
   inherited::clear();
 } // TRemoteRuleConfig::clear
@@ -851,10 +857,82 @@ void TSessionConfig::localResolve(bool aLastPass)
   // resolve
   if (aLastPass) {
     #ifndef NO_REMOTE_RULES
-    // - resolve rules
+    // - resolve rules and parse OverrideDevInf
     TRemoteRulesList::iterator pos;
-    for(pos=fRemoteRulesList.begin();pos!=fRemoteRulesList.end();pos++)
+    for(pos=fRemoteRulesList.begin();pos!=fRemoteRulesList.end();pos++) {
       (*pos)->Resolve(aLastPass);
+
+      if (!(*pos)->fOverrideDevInfXML.empty()) {
+        // SMLTK expects full SyncML message
+        string buffer =
+          "<SyncML><SyncHdr>"
+          "<VerDTD>1.2</VerDTD>"
+          "<VerProto>SyncML/1.2</VerProto>"
+          "<SessionID>1</SessionID>"
+          "<MsgID>1</MsgID>"
+          "<Target><LocURI>foo</LocURI></Target>"
+          "<Source><LocURI>bar</LocURI></Source>"
+          "</SyncHdr>"
+          "<SyncBody>"
+          "<Results>"
+          "<CmdID>1</CmdID>"
+          "<MsgRef>1</MsgRef>"
+          "<CmdRef>1</CmdRef>"
+          "<Meta>"
+          "<Type>application/vnd.syncml-devinf+xml</Type>"
+          "</Meta>"
+          "<Item>"
+          "<Source>"
+          "<LocURI>./devinf12</LocURI>"
+          "</Source>"
+          "<Data>"
+          ;
+        buffer += (*pos)->fOverrideDevInfXML;
+        buffer +=
+          "</Data>"
+          "</Item>"
+          "</Results>"
+          "</SyncBody>"
+          "</SyncML>";
+        MemPtr_t xml = (unsigned char *)buffer.c_str();
+        XltDecoderPtr_t decoder = NULL;
+        SmlSyncHdrPtr_t hdr = NULL;
+        Ret_t ret = xltDecInit(SML_XML,
+                               xml + buffer.size(),
+                               &xml,
+                               &decoder,
+                               &hdr);
+        if (ret != SML_ERR_OK) {
+          fRootElementP->setError(true, "initializing scanner for DevInf failed");
+        } else {
+          smlFreeProtoElement(hdr);
+          SmlProtoElement_t element;
+          VoidPtr_t content = NULL;
+          ret = xltDecNext(decoder,
+                           xml + buffer.size(),
+                           &xml,
+                           &element,
+                           &content);
+          if (ret != SML_ERR_OK) {
+            fRootElementP->setError(true, "parsing of OverrideDevInf failed");
+          } else if (element != SML_PE_RESULTS ||
+                     !((SmlResultsPtr_t)content)->itemList ||
+                     !((SmlResultsPtr_t)content)->itemList->item ||
+                     !((SmlResultsPtr_t)content)->itemList->item->data ||
+                     ((SmlResultsPtr_t)content)->itemList->item->data->contentType != SML_PCDATA_EXTENSION ||
+                     ((SmlResultsPtr_t)content)->itemList->item->data->extension != SML_EXT_DEVINF) {
+            fRootElementP->setError(true, "parsing of DevInf returned unexpected result");
+            if (content)
+              smlFreeProtoElement(content);
+          } else {
+            (*pos)->fOverrideDevInfP = (SmlDevInfDevInfPtr_t)((SmlResultsPtr_t)content)->itemList->item->data->content;
+            (*pos)->fOverrideDevInfBufferP = content;
+          }
+        }
+        if (decoder)
+          xltDecTerminate(decoder);
+      }
+    }
     #endif
     TLocalDSList::iterator pos2;
     for(pos2=fDatastores.begin();pos2!=fDatastores.end();pos2++)
@@ -4436,79 +4514,9 @@ localstatus TSyncSession::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP, Sm
   for(pos=fActiveRemoteRules.begin();pos!=fActiveRemoteRules.end();pos++) {      
     // activate this rule
     TRemoteRuleConfig *ruleP = *pos;
-    if (!ruleP->fOverrideDevInfXML.empty()) {
-      // SMLTK expects full SyncML message
-      string buffer =
-        "<SyncML><SyncHdr>"
-        "<VerDTD>1.2</VerDTD>"
-        "<VerProto>SyncML/1.2</VerProto>"
-        "<SessionID>1</SessionID>"
-        "<MsgID>1</MsgID>"
-        "<Target><LocURI>foo</LocURI></Target>"
-        "<Source><LocURI>bar</LocURI></Source>"
-        "</SyncHdr>"
-        "<SyncBody>"
-        "<Results>"
-        "<CmdID>1</CmdID>"
-        "<MsgRef>1</MsgRef>"
-        "<CmdRef>1</CmdRef>"
-        "<Meta>"
-        "<Type>application/vnd.syncml-devinf+xml</Type>"
-        "</Meta>"
-        "<Item>"
-        "<Source>"
-        "<LocURI>./devinf12</LocURI>"
-        "</Source>"
-        "<Data>"
-        ;
-      buffer += ruleP->fOverrideDevInfXML;
-      buffer +=
-        "</Data>"
-        "</Item>"
-        "</Results>"
-        "</SyncBody>"
-        "</SyncML>";
-      MemPtr_t xml = (unsigned char *)buffer.c_str();
-      XltDecoderPtr_t decoder = NULL;
-      SmlSyncHdrPtr_t hdr = NULL;
-      Ret_t ret = xltDecInit(SML_XML,
-                             xml + buffer.size(),
-                             &xml,
-                             &decoder,
-                             &hdr);
-      if (ret != SML_ERR_OK) {
-        sta = LOCERR_BADCONTENT;
-        PDEBUGPRINTFX(DBG_ERROR,("initializing scanner for DevInf in %s failed",ruleP->getName()));
-      } else {
-        SmlProtoElement_t element;
-        VoidPtr_t content = NULL;
-        ret = xltDecNext(decoder,
-                         xml + buffer.size(),
-                         &xml,
-                         &element,
-                         &content);
-        if (ret != SML_ERR_OK) {
-          sta = LOCERR_BADCONTENT;
-          PDEBUGPRINTFX(DBG_ERROR,("parsing of DevInf in %s failed",ruleP->getName()));
-        } else if (element != SML_PE_RESULTS ||
-                   !((SmlResultsPtr_t)content)->itemList ||
-                   !((SmlResultsPtr_t)content)->itemList->item ||
-                   !((SmlResultsPtr_t)content)->itemList->item->data ||
-                   ((SmlResultsPtr_t)content)->itemList->item->data->contentType != SML_PCDATA_EXTENSION ||
-                   ((SmlResultsPtr_t)content)->itemList->item->data->extension != SML_EXT_DEVINF) {
-          sta = LOCERR_BADCONTENT;
-          PDEBUGPRINTFX(DBG_ERROR,("parsing of DevInf in %s returned unexpected result",ruleP->getName()));
-        } else if (aOverrideDevInfP) {
-          // processing in caller will continue with updated DevInf
-          *aOverrideDevInfP = (SmlDevInfDevInfPtr_t)((SmlResultsPtr_t)content)->itemList->item->data->content;
-        }
-      }
-      if (decoder)
-        xltDecTerminate(decoder);
-      if (sta!=LOCERR_OK) {
-        AbortSession(sta,true);
-        break;
-      }
+    if (ruleP->fOverrideDevInfP && aOverrideDevInfP) {
+      // processing in caller will continue with updated DevInf
+      *aOverrideDevInfP = ruleP->fOverrideDevInfP;
     }
     // - apply options that have a value
     if (ruleP->fLegacyMode>=0) fLegacyMode = ruleP->fLegacyMode;

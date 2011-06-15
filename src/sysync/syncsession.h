@@ -160,6 +160,8 @@ public:
   // that it has sent and before applying other remote rule workarounds.
   // XML DevInf directly from XML config.
   string fOverrideDevInfXML;
+  SmlDevInfDevInfPtr_t fOverrideDevInfP;
+  VoidPtr_t fOverrideDevInfBufferP;
   // list of subrules to activate
   TRemoteRulesList fSubRulesList;
   // flag if this is a final rule (if matches, no more rules will be checked)
