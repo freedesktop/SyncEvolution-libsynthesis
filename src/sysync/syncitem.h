@@ -44,7 +44,10 @@ typedef enum {    // RELEVANCE                        COMPARE MODE
 //     be modified
 //     Fields with eqm_none will also not be included in CRC calculations for detecting changes.
 
+// Names for TEqualityMode when used as field relevance
 extern const char * const compareRelevanceNames[numEQmodes];
+  // Names for TEqualityMode when used as comparison mode
+extern const char * const comparisonModeNames[numEQmodes];
 
 
 // merge options
