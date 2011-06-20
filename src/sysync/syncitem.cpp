@@ -37,6 +37,18 @@ const char * const sysync::compareRelevanceNames[numEQmodes] = {
   "n/a"
 };
 
+
+const char * const sysync::comparisonModeNames[numEQmodes] = {
+  "all",    // compare all fields, even irrelevant ones
+  "n/a", // n/a (scripted)
+  "conflict", // compare fields relevant for (normal sync) conflict detection
+  "slowsync", // compare fields relevant for slow sync match
+  "firstsync", // compare fields relevant for first time slow sync match (possibly relaxed comparison rules)
+  "age", // no test for equality, only for age (returns SYSYNC_NOT_COMPARABLE if age comparison not possible)
+};
+
+
+
 /*
  * Implementation of TSyncItem
  */
