@@ -5139,7 +5139,7 @@ bool TMimeDirProfileHandler::analyzeCTCap(SmlDevInfCTCapPtr_t aCTCapP, TSyncItem
       for (sInt16 i=0; i<itemTypeP->fFieldDefinitionsP->numFields(); i++) {
         itemTypeP->getFieldOptions(i)->available=false;
       }
-      // force mandatory+unprocessed properties to be always "available"
+      // force mandatory properties to be always "available"
       setfieldoptions(NULL,fProfileDefinitionP,itemTypeP);
     }
     // now we have received fields
@@ -5174,9 +5174,9 @@ bool TMimeDirProfileHandler::setLevelOptions(const char *aLevelName, bool aEnabl
 
 
 // enable fields related to aPropP property in profiles recursively
-// or (if aPropP is NULL), enable fields of all mandatory (or wildcard) properties
+// or (if aPropP is NULL), enable fields of all mandatory properties
 void TMimeDirProfileHandler::setfieldoptions(
-  const SmlDevInfCTDataPtr_t aPropP, // property to enable fields for, NULL if all mandatory+unprocessed properties should be enabled
+  const SmlDevInfCTDataPtr_t aPropP, // property to enable fields for, NULL if all mandatory properties should be enabled
   const TProfileDefinition *aProfileP,
   TMimeDirItemType *aItemTypeP
 )
@@ -5233,7 +5233,7 @@ void TMimeDirProfileHandler::setfieldoptions(
   while (propdefP) {
     // compare
     if (
-      (propname==NULL && (propdefP->mandatory || propdefP->unprocessed)) ||
+      (propname==NULL && propdefP->mandatory) ||
       (propname && (strucmp(propname,TCFG_CSTR(propdefP->propname))==0))
     ) {
       // match (or enabling mandatory) -> enable all fields that are related to this property
