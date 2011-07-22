@@ -27,6 +27,7 @@
   #include "pcre.h" // for RegEx functions
 #endif
 
+#include <stdio.h>
 
 // script debug messages
 #ifdef SYDEBUG
@@ -868,6 +869,55 @@ public:
     // return result code
     aTermP->setAsInteger(exitcode);
   }; // func_Shellexecute
+
+  // string READ(string file)
+  // reads the file and returns its content or UNASSIGNED in case of failure;
+  // errors are logged
+  static void func_Read(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    // get params
+    string file;
+    aFuncContextP->getLocalVar(0)->getAsString(file);
+
+    // execute now
+    string content;
+    FILE *in;
+    in = fopen(file.c_str(), "rb");
+    if (in) {
+      long size = fseek(in, 0, SEEK_END);
+      if (size >= 0) {
+        // managed to obtain size, use it to pre-allocate result
+        content.reserve(size);
+        fseek(in, 0, SEEK_SET);
+      } else {
+        // ignore seek error, might not be a plain file
+        clearerr(in);
+      }
+
+      if (!ferror(in)) {
+        char buf[8192];
+        size_t read;
+        while ((read = fread(buf, 1, sizeof(buf), in)) > 0) {
+          content.append(buf, read);
+        }
+      }
+    }
+
+    if (in && !ferror(in)) {
+      // return content as string
+      aTermP->setAsString(content);
+    } else {
+        PLOGDEBUGPRINTFX(aFuncContextP->getDbgLogger(),
+                       DBG_ERROR,(
+                                  "IO error in READ(\"%s\"): %s ",
+                                  file.c_str(),
+                                  strerror(errno)));
+    }
+
+    if (in) {
+      fclose(in);
+    }
+  } // func_Read
 
 
   // string REMOTERULENAME()
@@ -2220,6 +2270,7 @@ const TBuiltInFuncDef BuiltInFuncDefs[] = {
   { "REQUESTMAXTIME", TBuiltinStdFuncs::func_RequestMaxTime, fty_none, 1, param_oneInteger },
   { "REQUESTMINTIME", TBuiltinStdFuncs::func_RequestMinTime, fty_none, 1, param_oneInteger },
   { "SHELLEXECUTE", TBuiltinStdFuncs::func_Shellexecute, fty_integer, 3, param_Shellexecute },
+  { "READ",  TBuiltinStdFuncs::func_Read, fty_string, 1, param_oneString },
   { "SESSIONVAR", TBuiltinStdFuncs::func_SessionVar, fty_none, 1, param_oneString },
   { "SETSESSIONVAR", TBuiltinStdFuncs::func_SetSessionVar, fty_none, 2, param_SetSessionVar },
   { "ABORTSESSION", TBuiltinStdFuncs::func_AbortSession, fty_none, 1, param_oneInteger },
