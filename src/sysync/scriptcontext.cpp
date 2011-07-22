@@ -2464,6 +2464,7 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
     text = itext.c_str();
   }
   // actual tokenisation
+  cAppCharP textstart = text;
   SYSYNC_TRY {
     // process text
     while (*text) {
@@ -2540,7 +2541,7 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
         else if (StrToEnum(ItemFieldTypeNames,numFieldTypes,enu,p,il)) {
           // check if declaration and if allowed
           if (aNoDeclarations && lasttoken!=TK_OPEN_PARANTHESIS)
-            SYSYNC_THROW(TTokenizeException(aScriptName, "no local variable declarations allowed in this script",aScriptText,text-aScriptText,line));
+            SYSYNC_THROW(TTokenizeException(aScriptName, "no local variable declarations allowed in this script",textstart,text-textstart,line));
           // code type into token
           aTScript+=TK_TYPEDEF; // token
           aTScript+=1; // length of additional data
@@ -2616,7 +2617,7 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
           else if (strucmp(p,"WINNING",il)==0) objidx=OBJ_TARGET;
           else if (strucmp(p,"TARGET",il)==0) objidx=OBJ_TARGET;
           else
-            SYSYNC_THROW(TTokenizeException(aScriptName,"unknown object name",aScriptText,text-aScriptText,line));
+            SYSYNC_THROW(TTokenizeException(aScriptName,"unknown object name",textstart,text-textstart,line));
           text++; // skip object qualifier
           aTScript+=TK_OBJECT; // token
           aTScript+=1; // length of additional data
@@ -2641,13 +2642,13 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
             p=text;
             while (isidentchar(*text)) text++;
             if (text==p)
-              SYSYNC_THROW(TTokenizeException(aScriptName,"missing macro name after $",aScriptText,text-aScriptText,line));
+              SYSYNC_THROW(TTokenizeException(aScriptName,"missing macro name after $",textstart,text-textstart,line));
             itm.assign(p,text-p);
             // see if we have such a macro
             TScriptConfig *cfgP = aAppBaseP->getRootConfig()->fScriptConfigP;
             TStringToStringMap::iterator pos = cfgP->fScriptMacros.find(itm);
             if (pos==cfgP->fScriptMacros.end())
-              SYSYNC_THROW(TTokenizeException(aScriptName,"unknown macro",aScriptText,p-1-aScriptText,line));
+              SYSYNC_THROW(TTokenizeException(aScriptName,"unknown macro",textstart,p-1-textstart,line));
             TMacroArgsArray macroArgs;
             // check for macro arguments
             if (*text=='(') {
@@ -2772,7 +2773,7 @@ void TScriptContext::Tokenize(TSyncAppBase *aAppBaseP, cAppCharP aScriptName, sI
             else token=TK_BITWISEOR; // |
             break;
           default:
-            SYSYNC_THROW(TTokenizeException(aScriptName,"Syntax Error",aScriptText,text-aScriptText,line));
+            SYSYNC_THROW(TTokenizeException(aScriptName,"Syntax Error",textstart,text-textstart,line));
         }
       }
       // add token if simple token found
