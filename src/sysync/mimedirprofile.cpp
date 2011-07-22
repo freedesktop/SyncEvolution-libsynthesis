@@ -23,6 +23,7 @@
 
 #include "syncagent.h"
 
+#include <ctype.h>
 
 using namespace sysync;
 
@@ -2274,8 +2275,18 @@ sInt16 TMimeDirProfileHandler::generateValue(
           }
           // append to existing string
           fldP->appendToString(outval,maxSiz);
-          // force B64 encoding
-          aEncoding=enc_base64;
+          // force B64 encoding if non-printable or non-ASCII characters
+          // are in the value
+          size_t len = outval.size();
+          for (size_t i = 0; i < len; i++) {
+            char c = outval[i];
+            if (!isascii(c) || !isprint(c)) {
+              aEncoding=enc_base64;
+              break;
+            }
+          }
+          // only ASCII in value: either because it contains only
+          // those to start with or because they will be encoded
           aNonASCII=false;
         }
         else {
