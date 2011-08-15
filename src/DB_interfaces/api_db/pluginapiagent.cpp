@@ -609,9 +609,21 @@ bool TPluginApiAgent::CheckLogin(const char *aOriginalUserName, const char *aMod
     authok = fDBApiSession.Login(aModifiedUserName,aAuthString,userKey)==LOCERR_OK;
   }
   else if (pwmode == Password_MD5_Nonce_IN) {
-    if (aAuthStringType==sectyp_clearpass) return false; // auth not possible
+    if (aAuthStringType==sectyp_clearpass) {
+        std::string p1, p2, p3;
+        if (nonce == "") getAuthNonce(aDeviceID, nonce);
+        p1 = aModifiedUserName;
+        p1 += ":";
+        p1 += aAuthString;
+        MD5B64(p1.c_str(), p1.length(), p2);
+        p2 += ":";
+        p2 += nonce;
+        MD5B64(p2.c_str(), p2.length(), p3);
+        authok = fDBApiSession.Login(aModifiedUserName,p3.c_str(), userKey)==LOCERR_OK;
+    } else {
     // login with MD5( MD5( user:pwd ):nonce )
     authok = fDBApiSession.Login(aModifiedUserName,aAuthString,userKey)==LOCERR_OK;
+    }
   }
   else {
     if (pwmode == Password_MD5_OUT) {
