@@ -2525,7 +2525,7 @@ void TBinfileImplClient::saveRemoteParams(void)
 
 
 // check remote devinf to detect special behaviour needed for some servers.
-localstatus TBinfileImplClient::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP)
+localstatus TBinfileImplClient::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP, SmlDevInfDevInfPtr_t *aOverrideDevInfP)
 {
   if (fConfigP->fBinfilesActive && aDevInfP) {
     // check for some specific servers we KNOW they need special treatment
@@ -2577,7 +2577,7 @@ localstatus TBinfileImplClient::checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevIn
     }
   }
   // let session handle other details
-  return inherited::checkRemoteSpecifics(aDevInfP);
+  return inherited::checkRemoteSpecifics(aDevInfP, aOverrideDevInfP);
 } // TBinfileImplClient::checkRemoteSpecifics
 
 

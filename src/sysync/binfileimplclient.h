@@ -550,7 +550,7 @@ public:
   uInt32 fRemotepartyID;
   // - check remote devinf to detect special behaviour needed for some servers. Base class
   //   does not do anything on server level (configured rules are handled at session level)
-  virtual localstatus checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP);
+  virtual localstatus checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP, SmlDevInfDevInfPtr_t *aOverrideDevInfP);
   TBinfileDBSyncProfile fProfile;
   // - remote specific client behaviour flags
   uInt8 fRemoteFlags; // flags for remote specific behaviour (remotespecs_XXX)

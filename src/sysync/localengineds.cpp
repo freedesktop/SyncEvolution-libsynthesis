@@ -2900,7 +2900,7 @@ localstatus TLocalEngineDS::engInitForSyncOps(
       // - this is executed only once per session, after that, we'll be fRemoteDevInfLock-ed
       if (!fSessionP->fRemoteDevInfKnown && !fSessionP->fRemoteDevInfLock) {
         // detect client specific server behaviour if needed
-        sta = fSessionP->checkRemoteSpecifics(NULL);
+        sta = fSessionP->checkRemoteSpecifics(NULL, NULL);
         fSessionP->remoteAnalyzed(); // analyzed now (accepted or not does not matter)
         if (sta!=LOCERR_OK)
           return sta; // not ok, device rejected
