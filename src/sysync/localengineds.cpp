@@ -3177,7 +3177,7 @@ bool TLocalEngineDS::engHandleSyncOpStatus(TStatusCommand *aStatusCmdP,TSyncOpCo
         //     a map. But symbian cannot send early maps - it instead does
         //     it's own duplicate checking.
         // ... during resumed sync as client (as servers might issue 418 for
-        //     items send a second time after an implicit suspend)
+        //     items sent a second time after an implicit suspend)
         PDEBUGPRINTFX(DBG_ERROR,("Warning: received 418 status for add in resumed/slowsync session -> treat it as ok (200)"));
         dsConfirmItemOp(sop_replace,localID,remoteID,true); // kind of ok
         statuscode=200; // convert to ok (but no count incremented, as nothing changed)

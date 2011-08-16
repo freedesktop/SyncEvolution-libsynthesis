@@ -1009,8 +1009,9 @@ protected:
   /// get conflict resolution strategy.
   virtual TConflictResolution getConflictStrategy(bool aForSlowSync, bool aForFirstTime=false);
   #ifdef SYSYNC_SERVER
-  /// called to check if conflicting replace command from server exists
+  /// check if conflicting item already exist in list of items-to-be-sent-to-client
   virtual TSyncItem *getConflictingItemByRemoteID(TSyncItem *syncitemP) = 0;
+  virtual TSyncItem *getConflictingItemByLocalID(TSyncItem *syncitemP) = 0;
   /// called to check if content-matching item from server exists
   virtual TSyncItem *getMatchingItem(TSyncItem *syncitemP, TEqualityMode aEqMode) = 0;
   /// called to prevent item to be sent to client in subsequent engGenerateSyncCommands()

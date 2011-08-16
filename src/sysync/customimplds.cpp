@@ -2796,11 +2796,52 @@ bool TCustomImplDS::implProcessItem(
         if (IS_SERVER) {
           #ifdef SYSYNC_SERVER
           if (sta==DB_DataMerged) {
-            // while adding, data was merged with pre-existing data (external from the sync set)
-            // so we should retrieve the full data and send an update back to the client
+            // while adding, data was merged with pre-existing data from...
+            // ..either data external from the sync set, such as augmenting a contact with info from a third-party lookup
+            // ..or another item pre-existing in the sync set.
+            PDEBUGPRINTFX(DBG_DATA,("Database adapter indicates that added item was merged with pre-existing data (status 207)"));
+            myitemP->setLocalID(localID.c_str()); // following searches need to be based on new localID returned by add
+            // check if the item resulting from merrge is known by the client already (in it's pre-merge form, that is)
+            TMapContainer::iterator conflictingMapPos = findMapByLocalID(localID.c_str(), mapentry_normal);
+            bool remoteAlreadyKnowsItem = conflictingMapPos!=fMapTable.end();
+            // also check if we have a (pre-merge) operation pending for that item already
+            TSyncItem *conflictingItemP = getConflictingItemByLocalID(myitemP);
+            if (conflictingItemP) {
+              // cancel any pending operation for the original item.
+              dontSendItemAsServer(conflictingItemP);
+            }
+            // If client already knows that item, we must propagate the merge to the client
+            // by deleting the original item (in addition to sending the update of the merge)
+            if (remoteAlreadyKnowsItem) {
+              PDEBUGPRINTFX(DBG_DATA,(
+                "Merge occured with an item already known remotely (localID=%s, remoteID=%s) -> delete duplicate from client",
+                (*conflictingMapPos).localid.c_str(),
+                (*conflictingMapPos).remoteid.c_str()
+              ));
+              // client already knows an item with that server-side localID
+              // - check if it is the same item as the added one from a server's perspective
+              //   (this should not normally not be the case, as otherwise we should not have
+              //   tried to add it in the first place - check above should have generated 418 error)
+              bool sameRemoteItem = (*conflictingMapPos).remoteid==myitemP->getRemoteID();
+              if (sameRemoteItem) {
+                PDEBUGPRINTFX(DBG_ERROR,("Consistency error: despite being added new, this remoteID is already known!?"));
+              }
+              else {
+                // create delete for now duplicate item on client
+                TSyncItem *duplDelP = newItemForRemote(myitemP->getTypeID());
+                if (duplDelP) {
+                  // - setup delete item
+                  duplDelP->setRemoteID((*conflictingMapPos).remoteid.c_str());
+                  duplDelP->clearLocalID();
+                  duplDelP->setSyncOp(sop_delete);
+                  // - add it to the list of changes to be sent to the client later
+                  SendItemAsServer(duplDelP);
+                }
+              }
+            }
+            // now create a replace command to update the item added from the client with the merge result
             // - this is like forcing a conflict, i.e. this loads the item by local/remoteid and adds it to
             //   the to-be-sent list of the server.
-            PDEBUGPRINTFX(DBG_DATA,("Database adapter indicates that added item was merged with pre-existing data (status 207), so update client with merged item"));
             forceConflict(myitemP);
             sta = LOCERR_OK; // otherwise, treat as ok
           }
