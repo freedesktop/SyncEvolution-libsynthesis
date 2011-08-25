@@ -17,6 +17,7 @@
 #ifdef SYDEBUG
 
 #include "generic_types.h"
+#include "platform_mutex.h"
 #include "sysync.h"
 
 namespace sysync {
@@ -169,6 +170,7 @@ private:
   TDbgFlushModes fFlushMode;
   string fFileName;
   FILE * fFile;
+  MutexPtr_t mutex;
 }; // TStdFileDbgOut
 
 #endif

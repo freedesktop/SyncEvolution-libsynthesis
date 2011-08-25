@@ -287,12 +287,14 @@ TStdFileDbgOut::TStdFileDbgOut()
   // init
   fFileName.erase();
   fFile=NULL;
+  mutex=newMutex();
 } // TStdFileDbgOut::TStdFileDbgOut
 
 
 TStdFileDbgOut::~TStdFileDbgOut()
 {
   destruct();
+  freeMutex(mutex);
 } // TStdFileDbgOut::~TStdFileDbgOut
 
 
@@ -364,6 +366,7 @@ void TStdFileDbgOut::putLine(cAppCharP aLine, bool aForceFlush)
   if (fIsOpen) {
     if (fFlushMode==dbgflush_openclose) {
       // we need to open the file for append first
+      lockMutex(mutex);
       fFile=fopen(fFileName.c_str(),"a");
     }
     if (fFile) {
@@ -376,6 +379,7 @@ void TStdFileDbgOut::putLine(cAppCharP aLine, bool aForceFlush)
         // we need to close the file after every line of output
         fclose(fFile);
         fFile=NULL;
+        unlockMutex(mutex);
       }
       else if (aForceFlush || fFlushMode==dbgflush_flush) {
         // simply flush
@@ -392,6 +396,7 @@ void TStdFileDbgOut::putRawData(cAppPointer aData, memSize aSize)
   if (fIsOpen) {
     if (fFlushMode==dbgflush_openclose) {
       // we need to open the file for append first
+      lockMutex(mutex);
       fFile=fopen(fFileName.c_str(),"a");
     }
     if (fFile) {
@@ -404,6 +409,7 @@ void TStdFileDbgOut::putRawData(cAppPointer aData, memSize aSize)
       // we need to close the file after every line of output
       fclose(fFile);
       fFile=NULL;
+      unlockMutex(mutex);
     }
     else if (fFlushMode==dbgflush_flush) {
       // simply flush
