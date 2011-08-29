@@ -1324,7 +1324,8 @@ localstatus TPluginApiDS::apiAddItem(TMultiFieldItem &aItem, string &aLocalID)
   return LOCERR_WRONGUSAGE; // completely wrong usage - should never happen as compatibility is tested at module connect
   #endif
   // now check result
-  if (dberr==LOCERR_OK) {
+  if (dberr==LOCERR_OK ||
+      dberr==DB_DataMerged) {
     // save new ID
     aLocalID = itemAndParentID.item.c_str();
     aItem.setLocalID(aLocalID.c_str()); // make sure item itself has correct ID as well
