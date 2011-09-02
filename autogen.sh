@@ -9,7 +9,7 @@ rm -rf aclocal.m4 autom4te.cache config.guess config.sub config.h.in configure d
 (cd src && ./gen-makefile-am.sh)
 
 libtoolize -c
-aclocal
+aclocal -I m4
 autoheader
 automake -a -c
 autoconf
