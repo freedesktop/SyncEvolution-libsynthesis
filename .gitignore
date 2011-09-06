@@ -1,3 +1,7 @@
+# ignore multi-git repos
+.git_*/
+switchgit
+
 # ignore generated files
 *.o
 src/sysync_SDK/bin
