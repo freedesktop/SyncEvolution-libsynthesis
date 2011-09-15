@@ -1118,8 +1118,9 @@ protected:
   void adjustLocalIDforSize(string &aLocalID, sInt32 maxguidsize, sInt32 prefixsize);
   /// for received GUIDs (Map command), obtain real GUID (might be temp GUID due to maxguidsize restrictions)
   void obtainRealLocalID(string &aLocalID);
-  /// helper to force a conflict (i.e. have a particular item in the sync set)
-  TSyncItem *forceConflict(TSyncItem *aSyncItemP);
+  /// helper to cause database version of an item (as identified by aSyncItemP's ID) to be sent to client
+  /// (aka "force a conflict")
+  TSyncItem *SendDBVersionOfItemAsServer(TSyncItem *aSyncItemP);
   #endif // SYSYNC_SERVER
   /// helper to save resume state either at end of request or explicitly at reception of a "suspend"
   SUPERDS_VIRTUAL localstatus engSaveSuspendState(bool aAnyway);

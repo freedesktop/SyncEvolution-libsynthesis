@@ -5144,8 +5144,9 @@ bool TLocalEngineDS::engProcessSyncOpItem(
 // Server Case
 // ===========
 
-// helper to force a conflict
-TSyncItem *TLocalEngineDS::forceConflict(TSyncItem *aSyncItemP)
+// helper to cause database version of an item (as identified by aSyncItemP's ID) to be sent to client
+// (aka "force a conflict")
+TSyncItem *TLocalEngineDS::SendDBVersionOfItemAsServer(TSyncItem *aSyncItemP)
 {
   TStatusCommand dummy(fSessionP);
   // - create new item
@@ -5171,7 +5172,7 @@ TSyncItem *TLocalEngineDS::forceConflict(TSyncItem *aSyncItemP)
     conflictingItemP=NULL;
   }
   return conflictingItemP;
-} // TLocalEngineDS::forceConflict
+} // TLocalEngineDS::SendDBVersionOfItemAsServer
 
 
 
@@ -5302,7 +5303,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
     // Note: a forced conflict can still occur even if item is rejected
     // (this has the effect of unconditionally letting the server item win)
     if (fForceConflict && syncop!=sop_add) {
-      conflictingItemP = forceConflict(aSyncItemP);
+      conflictingItemP = SendDBVersionOfItemAsServer(aSyncItemP);
       // Note: conflictingitem is always a replace
       if (conflictingItemP) {
         if (syncop==sop_delete) {
@@ -5393,7 +5394,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
       if (!echoItemP) conflictingItemP = getConflictingItemByRemoteID(aSyncItemP); // do not check conflicts if we have already created an echo
       // - check if we must force the conflict
       if (!conflictingItemP && fForceConflict) {
-        conflictingItemP=forceConflict(aSyncItemP);
+        conflictingItemP=SendDBVersionOfItemAsServer(aSyncItemP);
       }
       if (conflictingItemP) {
         // conflict only if other party has replace
@@ -5506,7 +5507,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
         if (!echoItemP) conflictingItemP = getConflictingItemByRemoteID(aSyncItemP);
         // - check if we must force the conflict
         if (!conflictingItemP && fForceConflict) {
-          conflictingItemP=forceConflict(aSyncItemP);
+          conflictingItemP=SendDBVersionOfItemAsServer(aSyncItemP);
         }
         bool deleteconflict=false;
         if (conflictingItemP) {
