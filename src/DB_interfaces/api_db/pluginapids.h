@@ -106,6 +106,8 @@ public:
   /// either  fDBAPIModule_Data or fDBAPIModule_Admin to select plugin handling of
   /// either data or admin independently.
   bool fDataModuleAlsoHandlesAdmin;
+  // wants startDataRead() called as early as possible
+  bool fEarlyStartDataRead;
   // - config object for API module
   TDB_Api_Config fDBApiConfig_Data;
   TDB_Api_Config fDBApiConfig_Admin;
@@ -252,6 +254,9 @@ public:
   ///   them separately afterwards).
   #endif // not BINFILE_ALWAYS_ACTIVE
 
+  /// perform early data access start (if datastore requests it by setting fEarlyStartDataRead config flag)
+  virtual localstatus apiEarlyDataAccessStart(void);
+  /// read the sync set
   virtual localstatus apiReadSyncSet(bool aNeedAll);
   /// Zap all data in syncset (note that everything outside the sync set will remain intact)
   virtual localstatus apiZapSyncSet(void);
@@ -314,6 +319,8 @@ public:
 private:
   // - connect data handling part of plugin. Returns LOCERR_NOTIMPL when no data plugin is selected
   TSyError connectDataPlugin(void);
+  // - prepare for reading syncset (is called early when fEarlyStartDataRead is set, otherwise from within apiReadSyncSet)
+  localstatus apiPrepareReadSyncSet(void);
   // - alert possible thread change to plugins
   //   Does not check if API is locked or not, see dsThreadMayChangeNow()
   void ThreadMayChangeNow(void);
