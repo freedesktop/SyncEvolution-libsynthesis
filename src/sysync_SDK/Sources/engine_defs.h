@@ -6,7 +6,7 @@
  *
  *  @brief Definitions needed for the common engine interface
  *
- *    Copyright (c) 2007-2011 by Synthesis AG + plan44.ch
+ *  Copyright (c) 2007-2011 by Synthesis AG + plan44.ch
  *
  */
 
@@ -211,14 +211,18 @@ enum TProfileFlagsEnum {
   /** run session in lenient mode */
   PROFILEFLAG_LENIENTMODE = 0x00000004,
   /** we should keep msg logs of the next session (not handled in engine!) */
-  PROFILEFLAG_MSGNEXTSYNC = 0x00000008
+  PROFILEFLAG_MSGNEXTSYNC = 0x00000008,
+  /** we should use this profile in global syncs (not handled in engine!) */
+  PROFILEFLAG_USEINGLOBSYNC = 0x00000008
 };
 
 
 /* ---- bit definitons for "transpFlags" profile field --- */
 enum TTranspFlagsEnum {
   /** SSL certificate verification/expiration errors should be ignored (not handled in engine!) */
-  TRANSPFLAG_SSLIGNORECERTFAIL = 0x00000001
+  TRANSPFLAG_SSLIGNORECERTFAIL = 0x00000001,
+  /** use http auth for server connection (not handled in engine!) */
+  TRANSPFLAG_USEHTTPAUTH = 0x00000002
 };
 
 

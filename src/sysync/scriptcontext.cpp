@@ -28,6 +28,7 @@
 #endif
 
 #include <stdio.h>
+#include <errno.h>
 
 // script debug messages
 #ifdef SYDEBUG
@@ -907,11 +908,11 @@ public:
       // return content as string
       aTermP->setAsString(content);
     } else {
-        PLOGDEBUGPRINTFX(aFuncContextP->getDbgLogger(),
-                       DBG_ERROR,(
-                                  "IO error in READ(\"%s\"): %s ",
-                                  file.c_str(),
-                                  strerror(errno)));
+        PLOGDEBUGPRINTFX(aFuncContextP->getDbgLogger(),DBG_ERROR,(
+          "IO error in READ(\"%s\"): %s ",
+          file.c_str(),
+          strerror(errno)
+        ));
     }
 
     if (in) {
@@ -1646,6 +1647,40 @@ public:
   }; // func_IsAvailable
 
 
+  // SETFIELDOPTIONS(variant &fieldvar, bool available [[[, int maxsize=0 ], int maxoccur=0 ], int notruncate=FALSE])
+  // set field options (override what might have been set by reading devInf)
+  // - fieldvar must be a field contained in the primary item of the caller, else function is NOP
+  static void func_SetFieldOptions(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    if (aFuncContextP->fParentContextP) {
+      // get item to find field in
+      TMultiFieldItem *checkItemP = aFuncContextP->fParentContextP->fTargetItemP;
+      // modify options on the "remote" type
+      TMultiFieldItemType *mfitP = checkItemP->getRemoteItemType();
+      // - get index of field by field pointer (passed by reference)
+      sInt16 fid = checkItemP->getIndexOfField(aFuncContextP->getLocalVar(0));
+      if (mfitP && fid!=FID_NOT_SUPPORTED) {
+        // field exists, we can set availability
+        // - get params
+        bool available = aFuncContextP->getLocalVar(1)->getAsBoolean();
+        sInt32 maxsize = FIELD_OPT_MAXSIZE_NONE;
+        if (aFuncContextP->getLocalVar(2)->isAssigned())
+          maxsize = aFuncContextP->getLocalVar(2)->getAsInteger();
+        sInt32 maxoccur = aFuncContextP->getLocalVar(3)->getAsInteger(); // returns 0 if not specified
+        bool notruncate = aFuncContextP->getLocalVar(4)->getAsBoolean();
+        // - now set options
+        TFieldOptions *fo = mfitP->getFieldOptions(fid);
+        if (fo) {
+          fo->available=available;
+          fo->maxsize=maxsize;
+          fo->maxoccur=maxoccur;
+          fo->notruncate=notruncate;
+        }
+      }
+    }
+  }; // func_SetFieldOptions
+
+
   // string ITEMDATATYPE()
   // returns the type's internal name (like "vcard21")
   static void func_ItemDataType(TItemField *&aTermP, TScriptContext *aFuncContextP)
@@ -2176,6 +2211,7 @@ const uInt8 param_contains[] = { REF(fty_none), VAL(fty_none), OPTVAL(fty_intege
 const uInt8 param_append[] = { REF(fty_none), VAL(fty_none) };
 const uInt8 param_swap[] = { REF(fty_none), REF(fty_none) };
 const uInt8 param_isAvailable[] = { REF(fty_none) };
+const uInt8 param_setFieldOptions[] = { REF(fty_none), VAL(fty_integer), OPTVAL(fty_integer), OPTVAL(fty_integer), OPTVAL(fty_integer) };
 const uInt8 param_typename[] = { VAL(fty_none) };
 const uInt8 param_SetSessionVar[] = { VAL(fty_string), VAL(fty_none) };
 const uInt8 param_SetDebugOptions[] = { VAL(fty_string), VAL(fty_integer) };
@@ -2208,6 +2244,7 @@ const TBuiltInFuncDef BuiltInFuncDefs[] = {
   { "NUMFORMAT", TBuiltinStdFuncs::func_NumFormat, fty_string, 4, param_NumFormat },
   { "NORMALIZED", TBuiltinStdFuncs::func_Normalized, fty_string, 1, param_Normalized },
   { "ISAVAILABLE", TBuiltinStdFuncs::func_IsAvailable, fty_integer, 1, param_isAvailable },
+  { "SETFIELDOPTIONS", TBuiltinStdFuncs::func_SetFieldOptions, fty_none, 5, param_setFieldOptions },
   { "ITEMDATATYPE", TBuiltinStdFuncs::func_ItemDataType, fty_string, 0, NULL },
   { "ITEMTYPENAME", TBuiltinStdFuncs::func_ItemTypeName, fty_string, 0, NULL },
   { "ITEMTYPEVERS", TBuiltinStdFuncs::func_ItemTypeVers, fty_string, 0, NULL },
