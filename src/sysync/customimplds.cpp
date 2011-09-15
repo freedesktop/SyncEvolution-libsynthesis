@@ -2901,7 +2901,7 @@ bool TCustomImplDS::implProcessItem(
               }
               else {
                 // augmented version was created in backend, fetch it now and add to list of items to be sent
-                augmentedItemP = (TMultiFieldItem *)SendDBVersionOfItemAsServer(myitemP);
+                SendDBVersionOfItemAsServer(myitemP);
               }
             }
             sta = LOCERR_OK; // otherwise, treat as ok
