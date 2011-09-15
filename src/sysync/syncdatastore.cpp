@@ -325,7 +325,7 @@ void TSyncDataStore::registerTypes(
     if (aXmitTypeListP->data) {
       // register
       TSyncItemType *itemtypeP =
-        TSyncItemType::registerType(fSessionP,aXmitTypeListP->data,aLocalItemTypes,aNewItemTypes,aRelatedDatastoreP);
+        TSyncItemType::registerRemoteType(fSessionP,aXmitTypeListP->data,aLocalItemTypes,aNewItemTypes,aRelatedDatastoreP);
       // add to list
       aSupportedXmitTypes.push_back(itemtypeP);
     }

@@ -639,6 +639,19 @@ bool const TMultiFieldItem::isAssigned(const char *aFieldName)
 } // TMultiFieldItem::isAssigned
 
 
+TMultiFieldItemType *TMultiFieldItem::getLocalItemType(void)
+{
+  return fItemTypeP && fItemTypeP->isRemoteType() ? fTargetItemTypeP : fItemTypeP;
+} // TMultiFieldItem::getLocalItemType
+
+
+TMultiFieldItemType *TMultiFieldItem::getRemoteItemType(void)
+{
+  return fItemTypeP && fItemTypeP->isRemoteType() ? fItemTypeP : fTargetItemTypeP;
+} // TMultiFieldItem::getRemoteItemType
+
+
+
 // check if field is assigned (exists and has a value)
 bool const TMultiFieldItem::isAssigned(sInt16 aFieldIndex)
 {
@@ -1695,7 +1708,7 @@ sInt16 TMultiFieldItemKey::getFidFor(cAppCharP aName, stringSize aNameSz)
 
 TItemField *TMultiFieldItemKey::getBaseFieldFromFid(sInt16 aFid)
 {
-  if (!fItemP) return false; // no item, no field is accessible
+  if (!fItemP) return NULL; // no item, no field is accessible
   return fItemP->getField(aFid);
 } // TMultiFieldItemKey::getBaseFieldFromFid
 

@@ -223,11 +223,11 @@ bool TRemoteDataStore::setDatastoreDevInf(
     } // if >=DS1.2
     // - analyze supported rx types
     TSyncDataStore *relDsP = getSession()->getSyncMLVersion()>=syncml_vers_1_2 ? this : NULL;
-    fRxPrefItemTypeP=TSyncItemType::registerType(fSessionP,aDataStoreDevInfP->rxpref,aLocalItemTypes,aNewItemTypes,relDsP);
+    fRxPrefItemTypeP=TSyncItemType::registerRemoteType(fSessionP,aDataStoreDevInfP->rxpref,aLocalItemTypes,aNewItemTypes,relDsP);
     fRxItemTypes.push_back(fRxPrefItemTypeP);
     registerTypes(fRxItemTypes,aDataStoreDevInfP->rx,aLocalItemTypes,aNewItemTypes,relDsP);
     // - analyze supported tx types
-    fTxPrefItemTypeP=TSyncItemType::registerType(fSessionP,aDataStoreDevInfP->txpref,aLocalItemTypes,aNewItemTypes,relDsP);
+    fTxPrefItemTypeP=TSyncItemType::registerRemoteType(fSessionP,aDataStoreDevInfP->txpref,aLocalItemTypes,aNewItemTypes,relDsP);
     fTxItemTypes.push_back(fTxPrefItemTypeP);
     registerTypes(fTxItemTypes,aDataStoreDevInfP->tx,aLocalItemTypes,aNewItemTypes,relDsP);
     // - Datastore Memory

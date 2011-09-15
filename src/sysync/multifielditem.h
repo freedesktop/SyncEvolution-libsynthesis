@@ -298,6 +298,8 @@ public:
   // get associated MultiFieldItemType
   TMultiFieldItemType *getItemType(void) { return fItemTypeP; };
   TMultiFieldItemType *getTargetItemType(void) { return fTargetItemTypeP; };
+  TMultiFieldItemType *getLocalItemType(void);
+  TMultiFieldItemType *getRemoteItemType(void);
   // field availability (combined source & target)
   bool isAvailable(sInt16 aFieldIndex);
   bool isAvailable(const char *aFieldName);
