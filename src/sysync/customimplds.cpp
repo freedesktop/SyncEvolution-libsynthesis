@@ -2838,11 +2838,11 @@ bool TCustomImplDS::implProcessItem(
           // request merging current data from the backend with new data before storing.
           augmentedItemP = mergeWithDatabaseVersion(myitemP);
           if (augmentedItemP==NULL)
-            sta = DB_Error; // no item found, DB error 
+            sta = DB_Error; // no item found, DB error
           else {
             sta = apiUpdateItem(*augmentedItemP); // store augmented version back to DB
             // in server case, further process like backend merge (but no need to fetch again, we just keep augmentedItemP)
-            if (IS_SERVER && sta==LOCERR_OK) sta = DB_DataMerged; 
+            if (IS_SERVER && sta==LOCERR_OK) sta = DB_DataMerged;
           }
         }
         if (IS_SERVER) {
@@ -2948,7 +2948,7 @@ bool TCustomImplDS::implProcessItem(
             // request merging current data from the backend with new data before storing.
             augmentedItemP = mergeWithDatabaseVersion(myitemP);
             if (augmentedItemP==NULL)
-              sta = DB_Error; // no item found, DB error 
+              sta = DB_Error; // no item found, DB error
             else {
               sta = apiUpdateItem(*augmentedItemP); // store augmented version back to DB
               delete augmentedItemP; // forget now
