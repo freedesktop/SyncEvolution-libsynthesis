@@ -2525,6 +2525,8 @@ localstatus TCustomImplDS::implStartDataWrite()
         // - resumed slow refreshes must NOT zap the sync set again!
         // - prevent zapping when datastore is in readonly mode!
         if (fRefreshOnly && fSlowSync && !isResuming() && !fReadOnly) {
+          // - make sure we have at least one pev_deleting event, in case app tracks it to see if session caused changes to DB
+          DB_PROGRESS_EVENT(this,pev_deleting,0,0,0);
           // now, we need to zap the DB first
           PDEBUGBLOCKFMTCOLL(("ZapSyncSet","Zapping sync set in database","datastore=%s",getName()));
           SYSYNC_TRY {
@@ -3251,6 +3253,8 @@ localstatus TCustomImplDS::zapSyncSetOneByOne(void)
   else {
     PDEBUGPRINTFX(DBG_DATA,("Zapping datastore with filter: deleting only filter passing items of max %ld items",(long)fSyncSetList.size()));
   }
+  long tot = fSyncSetList.size();
+  long n = 0;
   for (pos=fSyncSetList.begin(); pos!=fSyncSetList.end(); ++pos) {
     if (filteredDelete) {
       // we need to inspect further, as we may NOT delete the entire sync set
@@ -3258,8 +3262,10 @@ localstatus TCustomImplDS::zapSyncSetOneByOne(void)
       getItemFromSyncSetItem(*pos,delitemP);
       // - check filters
       bool passes=postFetchFiltering(delitemP);
-      if (!passes)
+      if (!passes) {
+        tot--; // one less than initially assumed
         continue; // don't delete this one, it does not pass the filter
+      }
       // - delete now
       PDEBUGPRINTFX(DBG_DATA,("- item '%s' passes filter -> deleting",delitemP->getLocalID()));
     }
@@ -3271,6 +3277,8 @@ localstatus TCustomImplDS::zapSyncSetOneByOne(void)
     }
     // delete
     sta = apiDeleteItem(*(static_cast<TMultiFieldItem *>(delitemP)));
+    n++;
+    DB_PROGRESS_EVENT(this,pev_deleting,n,tot,0);
     // forget the item
     delete delitemP;
     // success or "211 - not deleted" is ok.
@@ -3563,6 +3571,9 @@ localstatus TCustomImplDS::zapDatastore(void)
       return sta; // error
   }
   // Zap the sync set in this datastore (will possibly call zapSyncSetOneByOne if there's no more efficient way to do it than one by one)
+  // - make sure we have at least one pev_deleting event, in case app tracks it to see if session caused changes to DB
+  DB_PROGRESS_EVENT(this,pev_deleting,0,0,0);
+  // - now zap
   return apiZapSyncSet();
 } // TCustomImplDS::zapDatastore
 
