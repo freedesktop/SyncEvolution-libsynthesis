@@ -2720,7 +2720,7 @@ localstatus TCustomImplDS::implProcessMap(cAppCharP aRemoteID, cAppCharP aLocalI
 
 /// helper to merge database version of an item with the passed version of the same item;
 /// does age comparison by default, with "local side wins" as fallback
-TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP, bool &aChangedDBVersion)
+TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP, bool &aChangedDBVersion, bool &aChangedNewVersion)
 {
   aChangedDBVersion = false;
 
@@ -2754,16 +2754,15 @@ TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP, 
                 "Incoming item is newer and wins" :
                 "DB item is newer and wins"));
 
-      bool changedNewVersion;
       if (crstrategy==cr_client_wins) {
-        aSyncItemP->mergeWith(*dbVersionItemP, changedNewVersion, aChangedDBVersion, this);
+        aSyncItemP->mergeWith(*dbVersionItemP, aChangedNewVersion, aChangedDBVersion, this);
       } else {
-        dbVersionItemP->mergeWith(*aSyncItemP, aChangedDBVersion, changedNewVersion, this);
+        dbVersionItemP->mergeWith(*aSyncItemP, aChangedDBVersion, aChangedNewVersion, this);
       }
       PDEBUGPRINTFX(DBG_DATA,(
                               "Merged incoming item (%s,relevant,%smodified) with version from database (%s,%s,%smodified)",
                               crstrategy==cr_client_wins ? "winning" : "loosing",
-                              changedNewVersion ? "" : "NOT ",
+                              aChangedNewVersion ? "" : "NOT ",
                               crstrategy==cr_server_wins ? "winning" : "loosing",
                               aChangedDBVersion ? "to-be-replaced" : "to-be-left-unchanged",
                               aChangedDBVersion ? "" : "NOT "
@@ -2839,6 +2838,7 @@ bool TCustomImplDS::implProcessItem(
     }
     // - now perform op
     aStatusCommand.setStatusCode(510); // default DB error
+    bool remoteHasLatestData = false;
     switch (sop) {
       /// @todo sop_copy is now implemented by read/add sequence
       ///       in localEngineDS, but will be moved here later possibly
@@ -2863,8 +2863,8 @@ bool TCustomImplDS::implProcessItem(
         if (sta==DB_Conflict) {
           // DB has detected item conflicts with data already stored in the database and
           // request merging current data from the backend with new data before storing.
-          bool changedDBVersion;
-          augmentedItemP = mergeWithDatabaseVersion(myitemP, changedDBVersion);
+          bool changedDBVersion, changedNewVersion;
+          augmentedItemP = mergeWithDatabaseVersion(myitemP, changedDBVersion, changedNewVersion);
           if (augmentedItemP==NULL)
             sta = DB_Error; // no item found, DB error 
           else {
@@ -2886,6 +2886,10 @@ bool TCustomImplDS::implProcessItem(
                 fLocalItemsUpdated++;
               sta = DB_DataMerged;
             }
+            // in the processing below avoid sending an unnecessare Replace
+            // if the data sent by the peer already was up-to-date
+            if (!changedNewVersion)
+              remoteHasLatestData = true;
           }
         }
         if (IS_SERVER) {
@@ -2935,7 +2939,7 @@ bool TCustomImplDS::implProcessItem(
             }
             // if backend has not replaced, but merely merged data, we're done. Otherwise, client needs to be updated with
             // merged/augmented version of the data
-            if (sta!=DB_DataReplaced) {
+            if (!remoteHasLatestData && sta!=DB_DataReplaced) {
               // now create a replace command to update the item added from the client with the merge result
               // - this is like forcing a conflict, i.e. this loads the item by local/remoteid and adds it to
               //   the to-be-sent list of the server.
@@ -2989,8 +2993,8 @@ bool TCustomImplDS::implProcessItem(
           if (sta==DB_Conflict) {
             // DB has detected item conflicts with data already stored in the database and
             // request merging current data from the backend with new data before storing.
-            bool changedDBVersion;
-            augmentedItemP = mergeWithDatabaseVersion(myitemP, changedDBVersion);
+            bool changedDBVersion, changedNewVersion;
+            augmentedItemP = mergeWithDatabaseVersion(myitemP, changedDBVersion, changedNewVersion);
             if (augmentedItemP==NULL)
               sta = DB_Error; // no item found, DB error 
             else {
