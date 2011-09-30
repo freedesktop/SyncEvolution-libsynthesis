@@ -2718,9 +2718,12 @@ localstatus TCustomImplDS::implProcessMap(cAppCharP aRemoteID, cAppCharP aLocalI
 
 
 
-/// helper to merge database version of an item with the passed version of the same item
-TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP)
+/// helper to merge database version of an item with the passed version of the same item;
+/// does age comparison by default, with "local side wins" as fallback
+TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP, bool &aChangedDBVersion)
 {
+  aChangedDBVersion = false;
+
   TStatusCommand dummy(fSessionP);
   TMultiFieldItem *dbVersionItemP = (TMultiFieldItem *)newItemForRemote(aSyncItemP->getTypeID());
   if (!dbVersionItemP) return NULL;
@@ -2733,13 +2736,39 @@ TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP)
   bool ok=logicRetrieveItemByID(*dbVersionItemP,dummy);
   if (ok && dummy.getStatusCode()!=404) {
     // item found in DB, merge with original item
-    bool changedNewVersion, changedDBVersion;
-    aSyncItemP->mergeWith(*dbVersionItemP, changedNewVersion, changedDBVersion, this);
-    PDEBUGPRINTFX(DBG_DATA,(
-      "Merged incoming item (winning,relevant,%smodified) with version from database (loosing,to-be-replaced,%smodified)",
-      changedNewVersion ? "" : "NOT ",
-      changedDBVersion ? "" : "NOT "
-    ));
+    // TODO (?): make this configurable
+    TConflictResolution crstrategy = cr_newer_wins;
+
+    if (crstrategy==cr_newer_wins) {
+      sInt16 cmpRes = aSyncItemP->compareWith(*dbVersionItemP,
+                                              eqm_nocompare,this
+#ifdef SYDEBUG
+                                              ,PDEBUGTEST(DBG_CONFLICT+DBG_DETAILS) // show age comparisons only if we want to see details
+#endif
+                                              );
+      if (cmpRes==-1) crstrategy=cr_server_wins;
+      else crstrategy=cr_client_wins;
+      PDEBUGPRINTFX(DBG_DATA,(
+                "Newer item determined: %s",
+                crstrategy==cr_client_wins ?
+                "Incoming item is newer and wins" :
+                "DB item is newer and wins"));
+
+      bool changedNewVersion;
+      if (crstrategy==cr_client_wins) {
+        aSyncItemP->mergeWith(*dbVersionItemP, changedNewVersion, aChangedDBVersion, this);
+      } else {
+        dbVersionItemP->mergeWith(*aSyncItemP, aChangedDBVersion, changedNewVersion, this);
+      }
+      PDEBUGPRINTFX(DBG_DATA,(
+                              "Merged incoming item (%s,relevant,%smodified) with version from database (%s,%s,%smodified)",
+                              crstrategy==cr_client_wins ? "winning" : "loosing",
+                              changedNewVersion ? "" : "NOT ",
+                              crstrategy==cr_server_wins ? "winning" : "loosing",
+                              aChangedDBVersion ? "to-be-replaced" : "to-be-left-unchanged",
+                              aChangedDBVersion ? "" : "NOT "
+                              ));
+    }
   }
   else {
     // no item found, we cannot force a conflict
@@ -2834,11 +2863,16 @@ bool TCustomImplDS::implProcessItem(
         if (sta==DB_Conflict) {
           // DB has detected item conflicts with data already stored in the database and
           // request merging current data from the backend with new data before storing.
-          augmentedItemP = mergeWithDatabaseVersion(myitemP);
+          bool changedDBVersion;
+          augmentedItemP = mergeWithDatabaseVersion(myitemP, changedDBVersion);
           if (augmentedItemP==NULL)
             sta = DB_Error; // no item found, DB error 
           else {
-            sta = apiUpdateItem(*augmentedItemP); // store augmented version back to DB
+             // store augmented version back to DB only if modified
+            if (changedDBVersion)
+              sta = apiUpdateItem(*augmentedItemP);
+            else
+              sta = LOCERR_OK;
             // in server case, further process like backend merge (but no need to fetch again, we just keep augmentedItemP)
             if (IS_SERVER && sta==LOCERR_OK) sta = DB_DataMerged; 
           }
@@ -2944,11 +2978,16 @@ bool TCustomImplDS::implProcessItem(
           if (sta==DB_Conflict) {
             // DB has detected item conflicts with data already stored in the database and
             // request merging current data from the backend with new data before storing.
-            augmentedItemP = mergeWithDatabaseVersion(myitemP);
+            bool changedDBVersion;
+            augmentedItemP = mergeWithDatabaseVersion(myitemP, changedDBVersion);
             if (augmentedItemP==NULL)
               sta = DB_Error; // no item found, DB error 
             else {
-              sta = apiUpdateItem(*augmentedItemP); // store augmented version back to DB
+               // store augmented version back to DB only if modified
+              if (changedDBVersion)
+                sta = apiUpdateItem(*augmentedItemP);
+              else
+                sta = LOCERR_OK;
               delete augmentedItemP; // forget now
             }
           }
