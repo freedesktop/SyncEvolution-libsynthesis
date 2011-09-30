@@ -2849,7 +2849,7 @@ bool TCustomImplDS::implProcessItem(
             // while adding, data was merged with pre-existing data from...
             // ..either data external from the sync set, such as augmenting a contact with info from a third-party lookup
             // ..or another item pre-existing in the sync set.
-            PDEBUGPRINTFX(DBG_DATA,("Database adapter indicates that added item was merged with pre-existing data (status 207)"));
+            PDEBUGPRINTFX(DBG_DATA,("Database adapter indicates that added item was merged with pre-existing data (status 207/209/409)"));
             // check if the item resulting from merge is known by the client already (in it's pre-merge form, that is)
             TMapContainer::iterator conflictingMapPos = findMapByLocalID(localID.c_str(), mapentry_normal);
             bool remoteAlreadyKnowsItem = conflictingMapPos!=fMapTable.end();
