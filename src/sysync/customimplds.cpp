@@ -2874,7 +2874,18 @@ bool TCustomImplDS::implProcessItem(
             else
               sta = LOCERR_OK;
             // in server case, further process like backend merge (but no need to fetch again, we just keep augmentedItemP)
-            if (IS_SERVER && sta==LOCERR_OK) sta = DB_DataMerged; 
+            if (IS_SERVER && sta==LOCERR_OK) {
+              // TLocalEngineDS::engProcessRemoteItemAsServer() in
+              // localengineds.cpp already counted the item as added
+              // because it didn't know that special handling would be
+              // needed. Instead of a complicated mechanism to report
+              // back the actual outcome, let's fix the statistics
+              // here.
+              fLocalItemsAdded--;
+              if (changedDBVersion)
+                fLocalItemsUpdated++;
+              sta = DB_DataMerged;
+            }
           }
         }
         if (IS_SERVER) {
