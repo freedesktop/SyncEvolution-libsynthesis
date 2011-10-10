@@ -16,7 +16,7 @@ AM_PROG_CC_C_O
 
 # --enable-warning=min/max/fatal/none
 DK_ARG_ENABLE_WARNINGS([SYNTHESIS_WFLAGS],
-                       [-Wall],
+                       [-Wall -Wno-unknown-pragmas],
                        [-Wall -Wno-unknown-pragmas],
                        [])
 
