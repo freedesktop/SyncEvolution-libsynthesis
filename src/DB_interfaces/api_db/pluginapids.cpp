@@ -948,7 +948,7 @@ bool TPluginApiDS::dsFilteredFetchesFromDB(bool aFilterChanged)
 // requested by aNeedAll)
 localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
 {
-	TSyError dberr=LOCERR_OK;
+  TSyError dberr=LOCERR_OK;
   #ifdef SYDEBUG
   string ts1,ts2;
   #endif
@@ -978,13 +978,13 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
     else if (dberr==LOCERR_NOTIMP)
       dberr=LOCERR_OK; // we just don't have a data plugin, that's ok, inherited (SQL) will handle data
     if (dberr!=LOCERR_OK)
-    	goto endread;
+      goto endread;
   } // binfile active
   #endif // BASED_ON_BINFILE_CLIENT
   #ifndef SDK_ONLY_SUPPORT
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created())
-  	return inherited::apiReadSyncSet(aNeedAll);
+    return inherited::apiReadSyncSet(aNeedAll);
   #endif
 
   // just let plugin know if we want data (if it actually does is the plugin's choice)
@@ -1025,7 +1025,7 @@ localstatus TPluginApiDS::apiReadSyncSet(bool aNeedAll)
   // start the reading phase anyway (to make sure call order is always StartRead/EndRead/StartWrite/EndWrite)
   dberr = fDBApi_Data.StartDataRead(fPreviousToRemoteSyncIdentifier.c_str(),fPreviousSuspendIdentifier.c_str());
   if (dberr!=LOCERR_OK) {
-  	PDEBUGPRINTFX(DBG_ERROR,("DBapi::StartDataRead fatal error: %hd",dberr));
+    PDEBUGPRINTFX(DBG_ERROR,("DBapi::StartDataRead fatal error: %hd",dberr));
     goto endread;
   }
   // we don't need to load the syncset if we are only refreshing from remote
