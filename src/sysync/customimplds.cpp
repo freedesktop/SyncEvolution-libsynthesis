@@ -2723,6 +2723,7 @@ localstatus TCustomImplDS::implProcessMap(cAppCharP aRemoteID, cAppCharP aLocalI
 TMultiFieldItem *TCustomImplDS::mergeWithDatabaseVersion(TSyncItem *aSyncItemP, bool &aChangedDBVersion, bool &aChangedNewVersion)
 {
   aChangedDBVersion = false;
+  aChangedNewVersion = false;
 
   TStatusCommand dummy(fSessionP);
   TMultiFieldItem *dbVersionItemP = (TMultiFieldItem *)newItemForRemote(aSyncItemP->getTypeID());
