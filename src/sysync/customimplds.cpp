@@ -1623,6 +1623,7 @@ localstatus TCustomImplDS::implMakeAdminReady(
           // special case: the database requests a slow sync for internal reasons (like change tracking disabled)
           // - force slow sync by removing last anchor
           fLastRemoteAnchor.erase();
+          sta = LOCERR_OK;
         }
       }
     } // if apiLoadAdminData successful
