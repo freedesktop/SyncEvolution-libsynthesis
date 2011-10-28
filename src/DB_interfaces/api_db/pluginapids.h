@@ -172,6 +172,10 @@ public:
   virtual void dsResetDataStore(void) { InternalResetDataStore(); inherited::dsResetDataStore(); };
   virtual ~TPluginApiDS();
 
+  // override TSyncDataStore: the plugin must be able to return 404
+  // when an item is not found during delete
+  virtual bool dsDeleteDetectsItemPresence() const { return true; }
+
   #ifndef BINFILE_ALWAYS_ACTIVE
   /// @name apiXXXX methods defining the interface from TCustomImplDS to TXXXApi actual API implementations
   /// @{
