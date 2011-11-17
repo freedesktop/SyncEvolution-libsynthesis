@@ -16,8 +16,8 @@ AM_PROG_CC_C_O
 
 # --enable-warning=min/max/fatal/none
 DK_ARG_ENABLE_WARNINGS([SYNTHESIS_WFLAGS],
-                       [-Wall -Wno-unknown-pragmas],
-                       [-Wall -Wno-unknown-pragmas],
+                       [-Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable],
+                       [-Wall -Wno-unknown-pragmas -Wno-unused-but-set-variable],
                        [])
 
 dnl Extract PIC flags from libtool configure for libsynthesissdk.a
