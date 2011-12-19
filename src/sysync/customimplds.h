@@ -477,6 +477,8 @@ public:
   virtual localstatus apiSaveAdminData(bool aSessionFinished, bool aSuccessful) = 0;
   #endif // BINFILE_ALWAYS_ACTIVE
 
+  /// allow early data access start (if datastore is configured for it)
+  virtual localstatus apiEarlyDataAccessStart(void) { return LOCERR_OK; /* nop if not overridden */ };
   /// read sync set IDs and mod dates.
   /// @param[in] if set, all data fields are needed, so ReadSyncSet MAY
   ///   read items here already. Note that ReadSyncSet MAY read items here
@@ -773,7 +775,7 @@ protected:
   //   as a item copy with only finalisation-required fields
   void queueForFinalisation(TMultiFieldItem *aItemP);
   /// helper to merge database version of an item with the passed version of the same item
-  TMultiFieldItem *mergeWithDatabaseVersion(TSyncItem *aSyncItemP);
+  TMultiFieldItem *mergeWithDatabaseVersion(TSyncItem *aSyncItemP, bool &aChangedDBVersion, bool &aChangedNewVersion);
 public:
   // - get last to-remote sync time
   lineartime_t getPreviousToRemoteSyncCmpRef(void) { return fPreviousToRemoteSyncCmpRef; };
