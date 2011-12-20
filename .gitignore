@@ -2,8 +2,11 @@
 .git_*/
 switchgit
 
-#ignore XCode build dir
+# ignore XCode build dir
 src/build/
+
+# ignore XCode user specific settings/schemes
+xcuserdata/
 
 # ignore generated files
 *.o

@@ -1,7 +1,7 @@
 /* SySync entirely global options (affects all targets)
  * ====================================================
  *
- * (c) 2001-2009 by Synthesis AG
+ * (c) 2001-2011 by Synthesis AG + plan44.ch
  *
  */
 

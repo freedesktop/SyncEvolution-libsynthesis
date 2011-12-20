@@ -17,8 +17,11 @@
 // includes
 #ifndef FULLY_STANDALONE
 #include "itemfield.h"
-#endif
 #include "debuglogger.h"
+#else
+#include <string>
+#include "lineartime.h"
+#endif
 
 
 using namespace sysync;
@@ -27,6 +30,7 @@ namespace sysync {
 
 #ifdef FULLY_STANDALONE
 typedef sInt64 fieldinteger_t;
+class TDebugLogger;
 #endif
 
 #ifdef SYSYNC_TOOL
