@@ -2,6 +2,9 @@
 .git_*/
 switchgit
 
+#ignore XCode build dir
+src/build/
+
 # ignore generated files
 *.o
 src/sysync_SDK/bin
