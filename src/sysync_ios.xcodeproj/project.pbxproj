@@ -11,8 +11,6 @@
 		ED4B5EB111523AAB00ECB4A5 /* sysync_utils.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9511523AAB00ECB4A5 /* sysync_utils.h */; };
 		ED4B5EB211523AAB00ECB4A5 /* sysync_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9611523AAB00ECB4A5 /* sysync_utils.cpp */; };
 		ED4B5EB311523AAB00ECB4A5 /* syncexception.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9711523AAB00ECB4A5 /* syncexception.cpp */; };
-		ED4B5EB411523AAB00ECB4A5 /* stringutil.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9811523AAB00ECB4A5 /* stringutil.h */; };
-		ED4B5EB511523AAB00ECB4A5 /* stringutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9911523AAB00ECB4A5 /* stringutil.cpp */; };
 		ED4B5EB611523AAB00ECB4A5 /* lineartime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9A11523AAB00ECB4A5 /* lineartime.cpp */; };
 		ED4B5EB711523AAB00ECB4A5 /* san.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9B11523AAB00ECB4A5 /* san.cpp */; };
 		ED4B5EB811523AAB00ECB4A5 /* san.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9C11523AAB00ECB4A5 /* san.h */; };
@@ -25,8 +23,6 @@
 		ED4B5ECD11523AAB00ECB4A5 /* sysync_utils.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9511523AAB00ECB4A5 /* sysync_utils.h */; };
 		ED4B5ECE11523AAB00ECB4A5 /* sysync_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9611523AAB00ECB4A5 /* sysync_utils.cpp */; };
 		ED4B5ECF11523AAB00ECB4A5 /* syncexception.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9711523AAB00ECB4A5 /* syncexception.cpp */; };
-		ED4B5ED011523AAB00ECB4A5 /* stringutil.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9811523AAB00ECB4A5 /* stringutil.h */; };
-		ED4B5ED111523AAB00ECB4A5 /* stringutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9911523AAB00ECB4A5 /* stringutil.cpp */; };
 		ED4B5ED211523AAB00ECB4A5 /* lineartime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9A11523AAB00ECB4A5 /* lineartime.cpp */; };
 		ED4B5ED311523AAB00ECB4A5 /* san.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9B11523AAB00ECB4A5 /* san.cpp */; };
 		ED4B5ED411523AAB00ECB4A5 /* san.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9C11523AAB00ECB4A5 /* san.h */; };
@@ -565,8 +561,6 @@
 		ED4B5E9511523AAB00ECB4A5 /* sysync_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sysync_utils.h; sourceTree = "<group>"; };
 		ED4B5E9611523AAB00ECB4A5 /* sysync_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sysync_utils.cpp; sourceTree = "<group>"; };
 		ED4B5E9711523AAB00ECB4A5 /* syncexception.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = syncexception.cpp; sourceTree = "<group>"; };
-		ED4B5E9811523AAB00ECB4A5 /* stringutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stringutil.h; sourceTree = "<group>"; };
-		ED4B5E9911523AAB00ECB4A5 /* stringutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stringutil.cpp; sourceTree = "<group>"; };
 		ED4B5E9A11523AAB00ECB4A5 /* lineartime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lineartime.cpp; sourceTree = "<group>"; };
 		ED4B5E9B11523AAB00ECB4A5 /* san.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = san.cpp; sourceTree = "<group>"; };
 		ED4B5E9C11523AAB00ECB4A5 /* san.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = san.h; sourceTree = "<group>"; };
@@ -1075,8 +1069,6 @@
 				ED4B5E9511523AAB00ECB4A5 /* sysync_utils.h */,
 				ED4B5E9611523AAB00ECB4A5 /* sysync_utils.cpp */,
 				ED4B5E9711523AAB00ECB4A5 /* syncexception.cpp */,
-				ED4B5E9811523AAB00ECB4A5 /* stringutil.h */,
-				ED4B5E9911523AAB00ECB4A5 /* stringutil.cpp */,
 				ED4B5E9A11523AAB00ECB4A5 /* lineartime.cpp */,
 				ED4B5E9B11523AAB00ECB4A5 /* san.cpp */,
 				ED4B5E9C11523AAB00ECB4A5 /* san.h */,
@@ -1582,7 +1574,6 @@
 				ED556A51107692F20008C22F /* enginesessiondispatch.h in Headers */,
 				EDDF0814107E435200A119FE /* product_options.h in Headers */,
 				ED4B5ECD11523AAB00ECB4A5 /* sysync_utils.h in Headers */,
-				ED4B5ED011523AAB00ECB4A5 /* stringutil.h in Headers */,
 				ED4B5ED411523AAB00ECB4A5 /* san.h in Headers */,
 				ED4B5ED511523AAB00ECB4A5 /* sysync_md5.h in Headers */,
 				ED4B5ED711523AAB00ECB4A5 /* sysync_b64.h in Headers */,
@@ -1729,7 +1720,6 @@
 				EDE194C81074A04F00439216 /* syncagent.h in Headers */,
 				EDDF0816107E435200A119FE /* product_options.h in Headers */,
 				ED4B5EB111523AAB00ECB4A5 /* sysync_utils.h in Headers */,
-				ED4B5EB411523AAB00ECB4A5 /* stringutil.h in Headers */,
 				ED4B5EB811523AAB00ECB4A5 /* san.h in Headers */,
 				ED4B5EB911523AAB00ECB4A5 /* sysync_md5.h in Headers */,
 				ED4B5EBB11523AAB00ECB4A5 /* sysync_b64.h in Headers */,
@@ -1970,7 +1960,6 @@
 				ED556A50107692F20008C22F /* enginesessiondispatch.cpp in Sources */,
 				ED4B5ECE11523AAB00ECB4A5 /* sysync_utils.cpp in Sources */,
 				ED4B5ECF11523AAB00ECB4A5 /* syncexception.cpp in Sources */,
-				ED4B5ED111523AAB00ECB4A5 /* stringutil.cpp in Sources */,
 				ED4B5ED211523AAB00ECB4A5 /* lineartime.cpp in Sources */,
 				ED4B5ED311523AAB00ECB4A5 /* san.cpp in Sources */,
 				ED4B5ED611523AAB00ECB4A5 /* sysync_md5.cpp in Sources */,
@@ -2108,7 +2097,6 @@
 				EDE194C91074A04F00439216 /* syncagent.cpp in Sources */,
 				ED4B5EB211523AAB00ECB4A5 /* sysync_utils.cpp in Sources */,
 				ED4B5EB311523AAB00ECB4A5 /* syncexception.cpp in Sources */,
-				ED4B5EB511523AAB00ECB4A5 /* stringutil.cpp in Sources */,
 				ED4B5EB611523AAB00ECB4A5 /* lineartime.cpp in Sources */,
 				ED4B5EB711523AAB00ECB4A5 /* san.cpp in Sources */,
 				ED4B5EBA11523AAB00ECB4A5 /* sysync_md5.cpp in Sources */,
@@ -2131,6 +2119,7 @@
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_MASTER_OBJECT_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -2144,6 +2133,7 @@
 					armv6,
 					armv7,
 				);
+				GENERATE_MASTER_OBJECT_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				SDKROOT = iphoneos;
 			};
