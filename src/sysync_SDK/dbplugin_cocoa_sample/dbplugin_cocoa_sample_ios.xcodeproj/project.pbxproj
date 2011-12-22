@@ -10,7 +10,6 @@
 		AA747D9F0F9514B9006C5449 /* dbplugin_cocoa_sample_ios_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* dbplugin_cocoa_sample_ios_Prefix.pch */; };
 		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
 		EDDBA76A13040BB7005913FE /* dbplugin_cocoa.h in Headers */ = {isa = PBXBuildFile; fileRef = EDDBA75F13040BB7005913FE /* dbplugin_cocoa.h */; };
-		EDDBA76B13040BB7005913FE /* dbplugin_cocoa.m in Sources */ = {isa = PBXBuildFile; fileRef = EDDBA76013040BB7005913FE /* dbplugin_cocoa.m */; };
 		EDDBA76C13040BB7005913FE /* dbplugin_cocoa_wrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDDBA76113040BB7005913FE /* dbplugin_cocoa_wrapper.mm */; };
 		EDDBA76D13040BB7005913FE /* SettingsKey.h in Headers */ = {isa = PBXBuildFile; fileRef = EDDBA76213040BB7005913FE /* SettingsKey.h */; };
 		EDDBA76E13040BB7005913FE /* SettingsKey.m in Sources */ = {isa = PBXBuildFile; fileRef = EDDBA76313040BB7005913FE /* SettingsKey.m */; };
@@ -230,7 +229,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EDDBA76B13040BB7005913FE /* dbplugin_cocoa.m in Sources */,
 				EDDBA76C13040BB7005913FE /* dbplugin_cocoa_wrapper.mm in Sources */,
 				EDDBA76E13040BB7005913FE /* SettingsKey.m in Sources */,
 				EDDBA77513040CB7005913FE /* sample_dbplugin1.mm in Sources */,

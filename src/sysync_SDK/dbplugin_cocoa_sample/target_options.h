@@ -6,6 +6,7 @@
 // define platform
 // - we are on MACOSX (but on the mobile variant of it)
 #define MACOSX 1
+#define MOBOSX 1
 
 // this is not the SyncML engine itself
 #undef SYSYNC_ENGINE
