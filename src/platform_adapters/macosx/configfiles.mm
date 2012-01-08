@@ -5,30 +5,9 @@
  *
  *  iPhoneOS Platform adaptor
  *
- *  Copyright (c) 2008 by Synthesis AG
+ *  Copyright (c) 2008-2012 by plan44.ch + Synthesis AG
  *
  *  2008-06-12 : luz : created
- *
- *
- *  CVS:
- *    $Author: luz $
- *    $Date: 2008/10/07 21:29:33 $
- *    $Revision: 1.3 $
- *    $Source: /usr/local/cvsroot/sysync/Source/platform_adapters/macosx/configfiles.mm,v $
- *    $State: Exp $
- *    $Name:  $ (Tag)
- *    $Locker:  $ (who has reserved checkout)
- *  Log:
- *    $Log: configfiles.mm,v $
- *    Revision 1.3  2008/10/07 21:29:33  luz
- *    started adapting for Mac OS X as well, but does not compile with 10.4, so it's not yet used (Mac OS X still uses configfiles.cpp)
- *
- *    Revision 1.2  2008/10/07 19:29:18  luz
- *    Added getSystemTimeZone() routine for Mac OS X and iPhone OS to obtain the current system time zone parameters
- *
- *    Revision 1.1  2008/06/12 16:46:34  luz
- *    Obj-C++ variant for iPhone (needed to be able to access UIDevice)
- *
  *
  */
 

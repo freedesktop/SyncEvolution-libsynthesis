@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		ED16A68E14B9B4E400F24032 /* platform_DLL.h in Headers */ = {isa = PBXBuildFile; fileRef = ED16A68D14B9B4E400F24032 /* platform_DLL.h */; };
+		ED16A68F14B9B4E400F24032 /* platform_DLL.h in Headers */ = {isa = PBXBuildFile; fileRef = ED16A68D14B9B4E400F24032 /* platform_DLL.h */; };
 		ED43DAD70E014BC9000A1E5C /* configfiles.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED43DAD60E014BC9000A1E5C /* configfiles.mm */; };
 		ED4B5EB111523AAB00ECB4A5 /* sysync_utils.h in Headers */ = {isa = PBXBuildFile; fileRef = ED4B5E9511523AAB00ECB4A5 /* sysync_utils.h */; };
 		ED4B5EB211523AAB00ECB4A5 /* sysync_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED4B5E9611523AAB00ECB4A5 /* sysync_utils.cpp */; };
@@ -65,7 +67,6 @@
 		ED55693E10768FAA0008C22F /* platform_time.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DE60D8196BB00470E44 /* platform_time.h */; };
 		ED55693F10768FAA0008C22F /* binfile.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEA0D8196BB00470E44 /* binfile.h */; };
 		ED55694010768FAA0008C22F /* configfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEB0D8196BB00470E44 /* configfiles.h */; };
-		ED55694110768FAA0008C22F /* platform_DLL.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEC0D8196BB00470E44 /* platform_DLL.h */; };
 		ED55694210768FAA0008C22F /* platform_thread.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DED0D8196BB00470E44 /* platform_thread.h */; };
 		ED55694310768FAA0008C22F /* platform_mutex.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEE0D8196BB00470E44 /* platform_mutex.h */; };
 		ED55694410768FAA0008C22F /* platform_file.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEF0D8196BB00470E44 /* platform_file.h */; };
@@ -182,7 +183,6 @@
 		ED5569C110768FAA0008C22F /* platform_thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DDD0D8196BB00470E44 /* platform_thread.cpp */; };
 		ED5569C210768FAA0008C22F /* platform_mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DDE0D8196BB00470E44 /* platform_mutex.cpp */; };
 		ED5569C310768FAA0008C22F /* platform_file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DDF0D8196BB00470E44 /* platform_file.cpp */; };
-		ED5569C410768FAA0008C22F /* platform_DLL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE20D8196BB00470E44 /* platform_DLL.cpp */; };
 		ED5569C510768FAA0008C22F /* platform_exec.c in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE40D8196BB00470E44 /* platform_exec.c */; };
 		ED5569C610768FAA0008C22F /* platform_time.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE70D8196BB00470E44 /* platform_time.cpp */; };
 		ED5569C710768FAA0008C22F /* profiling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE80D8196BB00470E44 /* profiling.cpp */; };
@@ -327,7 +327,6 @@
 		ED60E7870DF54F870087381E /* platform_time.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DE60D8196BB00470E44 /* platform_time.h */; };
 		ED60E7880DF54F870087381E /* binfile.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEA0D8196BB00470E44 /* binfile.h */; };
 		ED60E7890DF54F870087381E /* configfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEB0D8196BB00470E44 /* configfiles.h */; };
-		ED60E78A0DF54F870087381E /* platform_DLL.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEC0D8196BB00470E44 /* platform_DLL.h */; };
 		ED60E78B0DF54F870087381E /* platform_thread.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DED0D8196BB00470E44 /* platform_thread.h */; };
 		ED60E78C0DF54F870087381E /* platform_mutex.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEE0D8196BB00470E44 /* platform_mutex.h */; };
 		ED60E78D0DF54F870087381E /* platform_file.h in Headers */ = {isa = PBXBuildFile; fileRef = ED9D3DEF0D8196BB00470E44 /* platform_file.h */; };
@@ -442,7 +441,6 @@
 		ED60E80B0DF54F870087381E /* platform_thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DDD0D8196BB00470E44 /* platform_thread.cpp */; };
 		ED60E80C0DF54F870087381E /* platform_mutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DDE0D8196BB00470E44 /* platform_mutex.cpp */; };
 		ED60E80D0DF54F870087381E /* platform_file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DDF0D8196BB00470E44 /* platform_file.cpp */; };
-		ED60E80F0DF54F870087381E /* platform_DLL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE20D8196BB00470E44 /* platform_DLL.cpp */; };
 		ED60E8100DF54F870087381E /* platform_exec.c in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE40D8196BB00470E44 /* platform_exec.c */; };
 		ED60E8110DF54F870087381E /* platform_time.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE70D8196BB00470E44 /* platform_time.cpp */; };
 		ED60E8120DF54F870087381E /* profiling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED9D3DE80D8196BB00470E44 /* profiling.cpp */; };
@@ -555,6 +553,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		ED16A68D14B9B4E400F24032 /* platform_DLL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = platform_DLL.h; path = platform_adapters/platform_DLL.h; sourceTree = SOURCE_ROOT; };
 		ED1ECBC31383B0DB00B3DA02 /* libsysync_client_ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsysync_client_ios.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED1ECBC41383B0DB00B3DA02 /* libsysync_combi_ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsysync_combi_ios.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED43DAD60E014BC9000A1E5C /* configfiles.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = configfiles.mm; sourceTree = "<group>"; };
@@ -685,7 +684,6 @@
 		ED9D3DDD0D8196BB00470E44 /* platform_thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = platform_thread.cpp; sourceTree = "<group>"; };
 		ED9D3DDE0D8196BB00470E44 /* platform_mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = platform_mutex.cpp; sourceTree = "<group>"; };
 		ED9D3DDF0D8196BB00470E44 /* platform_file.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = platform_file.cpp; sourceTree = "<group>"; };
-		ED9D3DE20D8196BB00470E44 /* platform_DLL.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = platform_DLL.cpp; sourceTree = "<group>"; };
 		ED9D3DE30D8196BB00470E44 /* platform_exec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_exec.h; sourceTree = "<group>"; };
 		ED9D3DE40D8196BB00470E44 /* platform_exec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = platform_exec.c; sourceTree = "<group>"; };
 		ED9D3DE50D8196BB00470E44 /* platform_headers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_headers.h; sourceTree = "<group>"; };
@@ -695,7 +693,6 @@
 		ED9D3DE90D8196BB00470E44 /* binfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = binfile.cpp; sourceTree = "<group>"; };
 		ED9D3DEA0D8196BB00470E44 /* binfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = binfile.h; sourceTree = "<group>"; };
 		ED9D3DEB0D8196BB00470E44 /* configfiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = configfiles.h; sourceTree = "<group>"; };
-		ED9D3DEC0D8196BB00470E44 /* platform_DLL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_DLL.h; sourceTree = "<group>"; };
 		ED9D3DED0D8196BB00470E44 /* platform_thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_thread.h; sourceTree = "<group>"; };
 		ED9D3DEE0D8196BB00470E44 /* platform_mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_mutex.h; sourceTree = "<group>"; };
 		ED9D3DEF0D8196BB00470E44 /* platform_file.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_file.h; sourceTree = "<group>"; };
@@ -1171,7 +1168,6 @@
 				ED9D3DE90D8196BB00470E44 /* binfile.cpp */,
 				ED9D3DEA0D8196BB00470E44 /* binfile.h */,
 				ED9D3DEB0D8196BB00470E44 /* configfiles.h */,
-				ED9D3DEC0D8196BB00470E44 /* platform_DLL.h */,
 				ED9D3DED0D8196BB00470E44 /* platform_thread.h */,
 				ED9D3DEE0D8196BB00470E44 /* platform_mutex.h */,
 				ED9D3DEF0D8196BB00470E44 /* platform_file.h */,
@@ -1198,7 +1194,7 @@
 			children = (
 				ED5B87FA0F8559C40042779A /* platform_timezones.mm */,
 				ED43DAD60E014BC9000A1E5C /* configfiles.mm */,
-				ED9D3DE20D8196BB00470E44 /* platform_DLL.cpp */,
+				ED16A68D14B9B4E400F24032 /* platform_DLL.h */,
 				ED9D3DE30D8196BB00470E44 /* platform_exec.h */,
 				ED9D3DE40D8196BB00470E44 /* platform_exec.c */,
 				ED9D3DE50D8196BB00470E44 /* platform_headers.h */,
@@ -1469,7 +1465,6 @@
 				ED55693E10768FAA0008C22F /* platform_time.h in Headers */,
 				ED55693F10768FAA0008C22F /* binfile.h in Headers */,
 				ED55694010768FAA0008C22F /* configfiles.h in Headers */,
-				ED55694110768FAA0008C22F /* platform_DLL.h in Headers */,
 				ED55694210768FAA0008C22F /* platform_thread.h in Headers */,
 				ED55694310768FAA0008C22F /* platform_mutex.h in Headers */,
 				ED55694410768FAA0008C22F /* platform_file.h in Headers */,
@@ -1580,6 +1575,7 @@
 				ED4B5ED911523AAB00ECB4A5 /* syncexception.h in Headers */,
 				ED4B5EDA11523AAB00ECB4A5 /* lineartime.h in Headers */,
 				EDDAFD0911A0989D003E33D5 /* rawdataitemtype.h in Headers */,
+				ED16A68F14B9B4E400F24032 /* platform_DLL.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1620,7 +1616,6 @@
 				ED60E7870DF54F870087381E /* platform_time.h in Headers */,
 				ED60E7880DF54F870087381E /* binfile.h in Headers */,
 				ED60E7890DF54F870087381E /* configfiles.h in Headers */,
-				ED60E78A0DF54F870087381E /* platform_DLL.h in Headers */,
 				ED60E78B0DF54F870087381E /* platform_thread.h in Headers */,
 				ED60E78C0DF54F870087381E /* platform_mutex.h in Headers */,
 				ED60E78D0DF54F870087381E /* platform_file.h in Headers */,
@@ -1726,6 +1721,7 @@
 				ED4B5EBD11523AAB00ECB4A5 /* syncexception.h in Headers */,
 				ED4B5EBE11523AAB00ECB4A5 /* lineartime.h in Headers */,
 				EDDAFD0511A0989D003E33D5 /* rawdataitemtype.h in Headers */,
+				ED16A68E14B9B4E400F24032 /* platform_DLL.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1852,7 +1848,6 @@
 				ED5569C110768FAA0008C22F /* platform_thread.cpp in Sources */,
 				ED5569C210768FAA0008C22F /* platform_mutex.cpp in Sources */,
 				ED5569C310768FAA0008C22F /* platform_file.cpp in Sources */,
-				ED5569C410768FAA0008C22F /* platform_DLL.cpp in Sources */,
 				ED5569C510768FAA0008C22F /* platform_exec.c in Sources */,
 				ED5569C610768FAA0008C22F /* platform_time.cpp in Sources */,
 				ED5569C710768FAA0008C22F /* profiling.cpp in Sources */,
@@ -1991,7 +1986,6 @@
 				ED60E80B0DF54F870087381E /* platform_thread.cpp in Sources */,
 				ED60E80C0DF54F870087381E /* platform_mutex.cpp in Sources */,
 				ED60E80D0DF54F870087381E /* platform_file.cpp in Sources */,
-				ED60E80F0DF54F870087381E /* platform_DLL.cpp in Sources */,
 				ED60E8100DF54F870087381E /* platform_exec.c in Sources */,
 				ED60E8110DF54F870087381E /* platform_time.cpp in Sources */,
 				ED60E8120DF54F870087381E /* profiling.cpp in Sources */,
