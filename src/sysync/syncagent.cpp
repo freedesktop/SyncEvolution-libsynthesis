@@ -3338,7 +3338,17 @@ TSyError TSyncAgent::ClientSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
           // check content type now
           MemPtr_t data = NULL;
           MemSize_t datasize;
-          smlPeekMessageBuffer(getSmlWorkspaceID(), false, &data, &datasize);
+          if (smlPeekMessageBuffer(getSmlWorkspaceID(), false, &data, &datasize) != SML_ERR_OK) {
+            // SyncML TK has a problem when asked to store an empty message:
+            // it then returns SML_ERR_WRONG_USAGE in smlPeekMessageBuffer and
+            // leaves datasize unset. Happened after an application bug.
+            //
+            // Avoid undefined behavior and proceed without data (easier than
+            // introducing an additional, untested error path).
+            data = NULL;
+            datasize = 0;
+          }
+
           // check content type
           SmlEncoding_t enc = TSyncAppBase::encodingFromData(data, datasize);
           if (enc!=getEncoding()) {
