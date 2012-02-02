@@ -3512,6 +3512,7 @@ localstatus TLocalEngineDS::engGenerateClientSyncAlert(
   if (!fRemoteRecordFilterQuery.empty() || false /* %%% field level filter */) {
     if (fSessionP->getSyncMLVersion()<syncml_vers_1_2) {
       PDEBUGPRINTFX(DBG_ERROR,("Filter specified, but SyncML version is < 1.2"));
+      engAbortDataStoreSync(406, true, false); // can't continue sync
       return 406; // feature not supported
     }
     SmlFilterPtr_t filterP = SML_NEW(SmlFilter_t);
