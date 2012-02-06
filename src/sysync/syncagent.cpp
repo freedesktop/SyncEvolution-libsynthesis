@@ -1438,6 +1438,26 @@ bool TSyncAgent::ClientMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand 
 } // TSyncAgent::ClientMessageStarted
 
 
+bool TSyncAgent::checkAllFromClientOnly()
+{
+  bool allFromClientOnly=false;
+  // Note: the map phase will not take place, if all datastores are in
+  //       send-to-server-only mode and we are not in non-conformant old
+  //       synthesis-compatible fCompleteFromClientOnly mode.
+  if (!fCompleteFromClientOnly) {
+    // let all local datastores know that message has ended
+    allFromClientOnly=true;
+    for (TLocalDataStorePContainer::iterator pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
+      // check sync modes
+      if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
+        allFromClientOnly=false;
+        break;
+      }
+    }
+  }
+  return allFromClientOnly;
+}
+
 // determines new package states and sets fInProgress
 void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
 {
@@ -1469,20 +1489,7 @@ void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
   }
   else {
     fInProgress=true; // assume we need to continue
-    // Note: the map phase will not take place, if all datastores are in
-    //       send-to-server-only mode and we are not in non-conformant old
-    //       synthesis-compatible fCompleteFromClientOnly mode.
-    if (!fCompleteFromClientOnly) {
-      // let all local datastores know that message has ended
-      allFromClientOnly=true;
-      for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-        // check sync modes
-        if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
-          allFromClientOnly=false;
-          break;
-        }
-      }
-    }
+    allFromClientOnly=checkAllFromClientOnly();
     // new outgoing state is determined by the incomingState of this message
     // (which is the answer to the <final/> message of the previous outgoing package)
     if (fNewOutgoingPackage && fIncomingState!=psta_idle) {
@@ -1947,16 +1954,7 @@ void TSyncAgent::ServerMessageEnded(bool aIncomingFinal)
     //       no next phase anyway
     // find out if this is a shortened session (no map phase) due to
     // from-client-only in all datastores
-    if (!fCompleteFromClientOnly) {
-      allFromClientOnly=true;
-      for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-        // check sync modes
-        if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
-          allFromClientOnly=false;
-          break;
-        }
-      }
-    }
+    allFromClientOnly=checkAllFromClientOnly();
     // determine what package comes next
     switch (fIncomingState) {
       case psta_init :

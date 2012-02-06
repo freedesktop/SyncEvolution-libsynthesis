@@ -493,6 +493,10 @@ protected:
   bool fAbortRequested;
   #endif // ENGINE_LIBRARY
 
+  // true if all active stores are in "from client only" mode and
+  // the engine is not in the fCompleteFromClientOnly mode
+  // => map phase can be skipped
+  bool checkAllFromClientOnly();
 }; // TSyncAgent
 
 
