@@ -139,6 +139,7 @@ public:
   TConflictResolution fFirstTimeStrategy;
   // - options
   bool fReadOnly;          // if set, datastore will not write any data (only maps) to local DB (but fake successful status to remote)
+  bool fCanRestart;        // if set, then the datastore is able to participate in multiple sync sessions; in other words after a successful read/write cycle it is possible to restart at the reading phase
   bool fReportUpdates;     // if set(normal case), updates of server items will be sent to client (can be set to false for example for emails)
   bool fResendFailing;     // if set, items that receive a failure status from the remote will be resent in the next session (if DS 1.2 suspend marks supported by the DB)
   bool fDeleteWins;        // if set, in a replace/delete conflict the delete wins (also see DELETEWINS())
@@ -577,6 +578,7 @@ public:
   bool isResuming(void) { return fResuming; }; ///< true if resuming a previous session
   bool isRefreshOnly(void) { return fRefreshOnly; }; ///< true if only refreshing with data from remote (no send to remote)
   bool isReadOnly(void) { return fReadOnly; }; ///< true if only reading from local datastore (and ignoring any updates from remote)
+  bool canRestart(void) { return fDSConfigP && fDSConfigP->fCanRestart; }
   /// get remote datastore related to this datastore
   TRemoteDataStore *getRemoteDatastore(void) { return fRemoteDatastoreP; };
   /// return remote view of local URI (might be different from what we might think it is locally)
