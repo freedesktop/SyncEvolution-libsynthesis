@@ -558,6 +558,10 @@ public:
   // called for >=SyncML 1.1 if remote wants number of changes.
   // Must return -1 if no NOC value can be returned
   virtual sInt32 getNumberOfChanges(void) { return -1; /* no NOC supported */ };
+  /// Called at end of sync to determine whether the store already knows
+  /// that it has more changes for the server in the next sync session.
+  /// For example, the TBinFileImplDS looks at its change log to determine that.
+  virtual bool hasPendingChangesForNextSync() { return false; }
   /// test abort status, datastore is aborted also when session is just suspended
   bool isAborted(void);
   /// abort status code with local error code prefix if cause was local

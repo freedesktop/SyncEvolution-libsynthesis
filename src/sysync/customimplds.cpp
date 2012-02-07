@@ -1113,6 +1113,9 @@ localstatus TCustomImplDS::dsAfterStateChange(TLocalEngineDSState aOldState,TLoc
     fAgentP->fScriptContextDatastore=this;
     TScriptContext::execute(fScriptContextP,fConfigP->fSyncEndScript,fConfigP->getDSFuncTableP(),fAgentP);
     #endif
+    // reset in case that we restart
+    DeleteSyncSet();
+    fSyncSetLoaded=false;
   }
   // let inherited do its stuff as well
   return inherited::dsAfterStateChange(aOldState,aNewState);

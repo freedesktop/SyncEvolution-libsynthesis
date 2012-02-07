@@ -837,6 +837,9 @@ protected:
   virtual localstatus checkRemoteSpecifics(SmlDevInfDevInfPtr_t aDevInfP, SmlDevInfDevInfPtr_t *aOverrideDevInfP);
   // - remote device is analyzed, possibly save status
   virtual void remoteAnalyzed(void) { /* nop */ };
+  // - tell session whether it may accept an <Alert> in the map
+  //   phase and restart the sync
+  virtual bool allowAlertAfterMap() { return false; }
   // SyncML Toolkit interface
   InstanceID_t fSmlWorkspaceID; // SyncML toolkit workspace instance ID
   SmlEncoding_t fEncoding;      // Current encoding type in SyncML toolkit instance
