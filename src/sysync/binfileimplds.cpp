@@ -1907,6 +1907,7 @@ bool TBinfileImplDS::implProcessItem(
   bool ok;
   bool receiveOnly=false; // default to normal two-way
   bool reportAsChangedInNextSync=false;
+  bool reportAsDeletedInNextSync=false;
   TMultiFieldItem *augmentedItemP = NULL;
 
   SYSYNC_TRY {
@@ -1936,18 +1937,30 @@ bool TBinfileImplDS::implProcessItem(
             if (augmentedItemP==NULL)
               sta = DB_Error; // no item found, DB error
             else {
-              // if merged version differs from what was received, we'll need to
-              // sync it back in next session
-              if (changedNewVersion) reportAsChangedInNextSync = true;
               // store augmented version back to DB only if modified
               if (changedDBVersion) {
                 STR_TO_LOCALID(augmentedItemP->getLocalID(),localid);
                 sta = updateItemByID(localid,augmentedItemP);
+                // we'll need to sync it back in the next session,
+                // because the server's copy is now older than the
+                // client's copy
+                if (sta == LOCERR_OK) reportAsChangedInNextSync = true;
               }
               else {
                 sta = LOCERR_OK;
               }
             }
+            // The server now has two items where the client only has
+            // one. If we were to tell the server the same local ID
+            // for both of the server's items, it would get confused.
+            // For example, the Synthesis engine then sent a Delete
+            // request with empty client and server ID.
+            //
+            // Instead, let the rest of the code below proceed (to get
+            // the state of the existing local item right), and then
+            // create a unique, fake local ID that we assign to the
+            // item and copy into the change log as "deleted item".
+            if (sta == LOCERR_OK) reportAsDeletedInNextSync = true;
           }
           else {
             statuscode=sta;
@@ -2090,6 +2103,44 @@ bool TBinfileImplDS::implProcessItem(
       #endif
       // Note: changeLogPostflight() will check these for temporary localids and finalize them when needed
       fChangeLog.newRecord(affectedentryP);
+    }
+    if (reportAsDeletedInNextSync) {
+      #ifdef NUMERIC_LOCALIDS
+      // assumes that valid local IDs are positive
+      // and can hold values in the range of -1 to -RAND_MAX-1
+      localid_t fakelocalid = -rand() - 1;
+      #else
+      // TODO: check for collisions with other fake IDs
+      char fakelocalid[STRING_LOCALID_MAXLEN];
+      sprintf(fakelocalid, "fake-%d", rand());
+      #endif
+      memset(&newentry, 0, sizeof(newentry));
+      ASSIGN_LOCALID_TO_FLD(newentry.dbrecordid,fakelocalid);
+      ASSIGN_LOCALID_TO_ITEM(*aItemP,fakelocalid);
+      newentry.flags = chgl_deleted;
+      // send during next sync
+      newentry.modcount_created =
+        newentry.modcount = fCurrentModCount+1;
+      #ifdef NUMERIC_LOCALIDS
+      DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+        "fake new entry %ld : localID=%ld, flags=0x%X, modcount=modcount_created=%ld, new dataCRC=0x%hX",
+        (long)fChangeLog.getNumRecords(),
+        newentry.dbrecordid,
+        (int)newentry.flags,
+        (long)newentry.modcount,
+        newentry.dataCRC
+      ));
+      #else
+      DEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+        "fake new entry %ld : localID='%s', flags=0x%X, modcount=modcount_created=%ld, new dataCRC=0x%hX",
+        (long)fChangeLog.getNumRecords(),
+        newentry.dbrecordid,
+        (int)newentry.flags,
+        (long)newentry.modcount,
+        newentry.dataCRC
+      ));
+      #endif
+      fChangeLog.newRecord(&newentry);
     }
     // done
     ok=true;
