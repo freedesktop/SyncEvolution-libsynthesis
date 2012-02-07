@@ -331,6 +331,7 @@ TBinfileImplDS::TBinfileImplDS(
   // no changelog loaded yet (needed here because InternalResetDataStore will test it)
   fLoadedChangeLog=NULL;
   fLoadedChangeLogEntries=0; // just to make sure
+  fHasPendingChanges=false;
   fPreviousToRemoteModCount=0;
   fPreviousSuspendModCount=0;
   fCurrentModCount=0;
@@ -363,6 +364,8 @@ void TBinfileImplDS::InternalResetDataStore(void)
   fPreflighted=false;
   // forget loaded changelog
   forgetChangeLog();
+  // no pending changes known yet
+  fHasPendingChanges=0;
   // unknown number of changes
   fNumberOfLocalChanges=-1;
 } // TBinfileImplDS::InternalResetDataStore
@@ -398,6 +401,11 @@ localstatus TBinfileImplDS::dsBeforeStateChange(TLocalEngineDSState aOldState,TL
 /// inform logic of happened state change
 localstatus TBinfileImplDS::dsAfterStateChange(TLocalEngineDSState aOldState,TLocalEngineDSState aNewState)
 {
+  if (aNewState == dssta_completed) {
+    // free resources which are not valid when restarting,
+    // in particular the change log
+    InternalResetDataStore();
+  }
   return inherited::dsAfterStateChange(aOldState, aNewState);
 } // TBinfileImplDS::dsAfterStateChange
 
@@ -1107,6 +1115,51 @@ sInt32 TBinfileImplDS::getNumberOfChanges(void)
   // otherwise, let base class handle it (server and client w/o binfile)
   return inherited::getNumberOfChanges();
 }
+
+bool TBinfileImplDS::hasPendingChangesForNextSync()
+{
+  if (binfileDSActive() && IS_CLIENT) {
+    // shortcut?
+    if (fHasPendingChanges) {
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,("sync session known to be incomplete"));
+      return true;
+    }
+    // also check change log, just to be sure;
+    // note that new entries in the change log that were
+    // added during the current sync session are not yet loaded,
+    // and that entries in memory may still need to be flushed
+    // to disk
+    if (fLoadedChangeLog) {
+      for (uInt32 si=0; si<fLoadedChangeLogEntries; si++) {
+        if (fLoadedChangeLog[si].modcount > fCurrentModCount) {
+#ifdef NUMERIC_LOCALIDS
+          PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+            "%ld : localID=%ld, flags=0x%X, modcount=%ld, modcount_created=%ld => pending change",
+            (long)si,
+            fLoadedChangeLog[si].dbrecordid,
+            (int)fLoadedChangeLog[si].flags,
+            (long)fLoadedChangeLog[si].modcount,
+            (long)fLoadedChangeLog[si].modcount_created
+          ));
+#else
+          PDEBUGPRINTFX(DBG_ADMIN+DBG_DBAPI+DBG_EXOTIC,(
+            "%ld : localID='%s', flags=0x%X, modcount=%ld, modcount_created=%ld => pending change",
+            (long)si,
+            fLoadedChangeLog[si].dbrecordid,
+            (int)fLoadedChangeLog[si].flags,
+            (long)fLoadedChangeLog[si].modcount,
+            (long)fLoadedChangeLog[si].modcount_created
+          ));
+#endif
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  return inherited::getNumberOfChanges();
+}
+
 
 
 /// sync login (into this database)
@@ -2058,6 +2111,7 @@ bool TBinfileImplDS::implProcessItem(
       // make sure NEXT sync will catch this again, as stored version is different
       // from what we received (merged with pre-existing duplicate)
       affectedentryP->modcount=fCurrentModCount+1;
+      fHasPendingChanges=true;
     }
     else {
       // just current mod count
@@ -2105,6 +2159,7 @@ bool TBinfileImplDS::implProcessItem(
       fChangeLog.newRecord(affectedentryP);
     }
     if (reportAsDeletedInNextSync) {
+      fHasPendingChanges=true;
       #ifdef NUMERIC_LOCALIDS
       // assumes that valid local IDs are positive
       // and can hold values in the range of -1 to -RAND_MAX-1

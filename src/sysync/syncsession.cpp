@@ -4893,6 +4893,15 @@ TSmlCommand *TSyncSession::processAlertItem(
     // Sync resume alert
     case 225: {
       // Synchronisation initialisation alerts
+      bool restarting = false;
+      if (allowAlertAfterMap() && fIncomingState==psta_map) {
+        // reset to state that allows a sync to start
+        PDEBUGPRINTFX(DBG_HOT,("process alert: restart sync"));
+        fIncomingState = psta_init;
+        fOutgoingState = psta_init;
+        restarting = true;
+      }
+
       // - test if context is ok
       if (fIncomingState!=psta_init && fIncomingState!=psta_initsync) {
         // Sync alert only allowed in init package or combined init/sync
@@ -4937,6 +4946,10 @@ TSmlCommand *TSyncSession::processAlertItem(
         // - let datastore process alert and generate additional alert if needed
         //   NOTE: this might generate a PUT command if remote needs to see our
         //         devInf (config changed since last sync)
+        if (restarting) {
+          // reset datastore first
+          datastoreP->engFinishDataStoreSync(LOCERR_OK);
+        }
         alertresponsecmdP=datastoreP->engProcessSyncAlert(
           NULL,            // not as subdatastore
           aAlertCode,       // the alert code
