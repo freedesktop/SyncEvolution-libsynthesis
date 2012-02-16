@@ -936,6 +936,8 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
     expectEnum(sizeof(fFirstTimeStrategy),&fFirstTimeStrategy,conflictStrategyNames,numConflictStrategies);
   else if (strucmp(aElementName,"readonly")==0)
     expectBool(fReadOnly);
+  else if (strucmp(aElementName,"canrestart")==0)
+    expectBool(fCanRestart);
   else if (strucmp(aElementName,"reportupdates")==0)
     expectBool(fReportUpdates);
   else if (strucmp(aElementName,"deletewins")==0)
