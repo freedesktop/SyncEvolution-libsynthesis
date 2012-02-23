@@ -1195,10 +1195,11 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
     // - mustSendDevInf() returns true signalling an external condition that suggests sending devInf (like changed config)
     // - any datastore is doing first time sync
     // - fPutDevInfAtSlowSync is true and any datastore is doing slow sync
-    if (
-      mustSendDevInf() ||
-      anyfirstsyncs ||
-      (anyslowsyncs && static_cast<TAgentConfig *>(getRootConfig()->fAgentConfigP)->fPutDevInfAtSlowSync)
+    // - not already sent (can be true here in later sync cycles)
+    if (!fRemoteGotDevinf &&
+        (mustSendDevInf() ||
+         anyfirstsyncs ||
+         (anyslowsyncs && static_cast<TAgentConfig *>(getRootConfig()->fAgentConfigP)->fPutDevInfAtSlowSync))
     ) {
       TDevInfPutCommand *putcmdP = new TDevInfPutCommand(this);
       issueRootPtr(putcmdP);
