@@ -578,7 +578,6 @@ public:
   bool isResuming(void) { return fResuming; }; ///< true if resuming a previous session
   bool isRefreshOnly(void) { return fRefreshOnly; }; ///< true if only refreshing with data from remote (no send to remote)
   bool isReadOnly(void) { return fReadOnly; }; ///< true if only reading from local datastore (and ignoring any updates from remote)
-  bool canRestart(void) { return fDSConfigP && fDSConfigP->fCanRestart; }
   /// get remote datastore related to this datastore
   TRemoteDataStore *getRemoteDatastore(void) { return fRemoteDatastoreP; };
   /// return remote view of local URI (might be different from what we might think it is locally)
