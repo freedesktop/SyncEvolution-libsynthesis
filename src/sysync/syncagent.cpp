@@ -969,11 +969,10 @@ bool TSyncAgent::restartSync()
 {
   if (IS_CLIENT) {
     // Restarting needs to be done if:
-    // - server supports it (currently assumed to be possible in non-standard
-    //   fCompleteFromClientOnly mode - TODO: introduce DevInf extension for this)
     // - we only have one datastore (intentional simplification for now)
     // - that datastore supports restarting a sync (= multiple read/write cycles)
-    //   one client and server side (TODO: DevInf extension for server side)
+    //   on client and server side (expected not be set if the engine itself on
+    //   either side doesn't support it, so that is not checked separately)
     // - datastore hasn't failed in current iteration
     // - client has pending changes:
     //   - server temporarily rejected a change, queued for resending
@@ -981,8 +980,7 @@ bool TSyncAgent::restartSync()
     //     item locally (might have an updated queued, need to send delete)
     //   - change on client failed temporarily
     //   - the app or a datastore asked for a restart via the "restartsync"
-    if (fCompleteFromClientOnly &&
-        !getenv("LIBSYNTHESIS_NO_RESTART")) {
+    if (!getenv("LIBSYNTHESIS_NO_RESTART")) {
       bool restartPossible=true; // ... unless proven otherwise below
       bool restartNecessary=fRestartSyncOnce; // one reason for restarting: requested by app
       int numActive = 0;
@@ -1006,6 +1004,14 @@ bool TSyncAgent::restartSync()
           }
           if (localDS->isAborted()) {
             PDEBUGPRINTFX(DBG_SESSION,("cannot restart, %s faileed",
+                                       localDS->getName()));
+            restartPossible=false;
+            break;
+          }
+          if (!localDS->getRemoteDatastore() ||
+              !localDS->getRemoteDatastore()->canRestart()) {
+            PDEBUGPRINTFX(DBG_SESSION,("cannot restart, remote datastore %s matching with %s does not support it",
+                                       localDS->getRemoteDatastore()->getName(),
                                        localDS->getName()));
             restartPossible=false;
             break;

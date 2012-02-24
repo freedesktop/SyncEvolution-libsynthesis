@@ -1160,6 +1160,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fRefreshOnly=false;
   fReadOnly=false;
   fReportUpdates=fDSConfigP->fReportUpdates; // update reporting according to what is configured
+  fCanRestart=fDSConfigP->fCanRestart;
   fServerAlerted=false;
   fResuming=false;
   #ifdef SUPERDATASTORES
@@ -3765,6 +3766,14 @@ SmlDevInfSyncCapPtr_t TLocalEngineDS::newDevInfSyncCap(uInt32 aSyncCapMask)
       synctypeP=newPCDataLong(k);
       addPCDataToList(synctypeP,&(synccapP->synctype));
     }
+  }
+  // Now add non-standard synccaps.
+  // From the spec: "Other values can also be specified."
+  // Values are PCDATA, so we can use plain strings.
+  // Corresponding code in TRemoteDataStore::setDatastoreDevInf().
+  if (canRestart()) {
+    synctypeP=newPCDataString("X-SYNTHESIS-RESTART");
+    addPCDataToList(synctypeP,&(synccapP->synctype));
   }
   // return it
   return synccapP;
