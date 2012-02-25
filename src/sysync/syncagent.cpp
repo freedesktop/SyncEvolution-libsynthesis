@@ -636,6 +636,8 @@ TSyncAgent::TSyncAgent(
   fIncomingBytes = 0;
   fOutgoingBytes = 0;
   #endif
+  fRestartSyncOnce = false;
+  fRestartingSync = false;
 
   // Specific for Client or Server
   if (IS_CLIENT) {
@@ -963,7 +965,80 @@ localstatus TSyncAgent::processAnswer(void)
   return LOCERR_OK;
 } // TSyncAgentBase::processAnswer
 
+bool TSyncAgent::restartSync()
+{
+  if (IS_CLIENT) {
+    // Restarting needs to be done if:
+    // - server supports it (currently assumed to be possible in non-standard
+    //   fCompleteFromClientOnly mode - TODO: introduce DevInf extension for this)
+    // - we only have one datastore (intentional simplification for now)
+    // - that datastore supports restarting a sync (= multiple read/write cycles)
+    //   one client and server side (TODO: DevInf extension for server side)
+    // - datastore hasn't failed in current iteration
+    // - client has pending changes:
+    //   - server temporarily rejected a change, queued for resending
+    //   - an item added by the server was merged with another
+    //     item locally (might have an updated queued, need to send delete)
+    //   - change on client failed temporarily
+    //   - the app or a datastore asked for a restart via the "restartsync"
+    if (fCompleteFromClientOnly &&
+        !getenv("LIBSYNTHESIS_NO_RESTART")) {
+      bool restartPossible=true; // ... unless proven otherwise below
+      bool restartNecessary=fRestartSyncOnce; // one reason for restarting: requested by app
+      int numActive = 0;
 
+      // clear the flag after we checked it
+      fRestartSyncOnce=false;
+      if (fRestartSyncOnce)
+        PDEBUGPRINTFX(DBG_SESSION,("try to restart sync as requested by app"));
+
+      for (TLocalDataStorePContainer::iterator pos=fLocalDataStores.begin();
+           pos!=fLocalDataStores.end();
+           ++pos) {
+        TLocalEngineDS *localDS = *pos;
+        if (localDS->isActive()) {
+          numActive++;
+          if (!localDS->canRestart()) {
+            PDEBUGPRINTFX(DBG_SESSION,("cannot restart, %s does not support it",
+                                       localDS->getName()));
+            restartPossible=false;
+            break;
+          }
+          if (localDS->isAborted()) {
+            PDEBUGPRINTFX(DBG_SESSION,("cannot restart, %s faileed",
+                                       localDS->getName()));
+            restartPossible=false;
+            break;
+          }
+        }
+        // check for pending local changes in the client
+        if (localDS->numUnsentMaps() > 0) {
+          PDEBUGPRINTFX(DBG_SESSION,("try to restart, %s has pending map entries",
+                                     localDS->getName()));
+          restartNecessary=true;
+        }
+        // TODO: detect temporarily failed items (server sent an add/update/delete
+        // that we had to reject temporarily and where we expect the server to
+        // resend the request)
+        // detect pending changes (for example, 409 handling in binfile client)
+        if (localDS->hasPendingChangesForNextSync()) {
+          PDEBUGPRINTFX(DBG_SESSION,("try to restart, %s has pending changes",
+                                     localDS->getName()));
+          restartNecessary=true;
+        }
+      }
+
+      if (numActive > 1) {
+        PDEBUGPRINTFX(DBG_SESSION,("cannot restart, %d data stores active", numActive));
+        restartPossible=false;
+      }
+
+      return restartPossible && restartNecessary;
+    }
+  }
+
+  return false;
+}
 
 // let session produce (or finish producing) next message into
 // SML workspace
@@ -1344,15 +1419,33 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
     fOutgoingAlert222Count = 0;
   }
 
-  // send custom end-of session puts
+  // Normally the package will be closed normally when the client is
+  // ready. The exception is if we might want to restart the sync
+  // session. This is checked below.
+  bool finalprevented = false;
+
+  // send custom end-of session puts or restart session
   if (!isSuspending() && outgoingfinal && fOutgoingState==psta_map) {
     // End of outgoing map package; let custom PUTs which may transmit some session statistics etc. happen now
+    // TODO: this code is not reached when fOutgoingState==psta_map is skipped
+    // by ClientMessageEnded() (see "All datastores in from-client-only mode, and no need to answer: skip map phase").
+    // A bug? For restarting a sync, the problem is avoided by
+    // disabling the standard-compliant "skip map phase" in favor
+    // of "let client enter map phase" mode (fCompleteFromClientOnly).
     issueCustomEndPut();
+
+    if (restartSync()) {
+      // don't allow <Final> if we are going to restart sync in
+      // ClientMessageEnded(), also remember that we did that
+      finalprevented=true;
+      // flag for TSyncAgent::ClientMessageEnded()
+      fRestartingSync=true;
+    }
   }
   // message complete, now finish it
   FinishMessage(
     outgoingfinal, // allowed if possible
-    false // final not prevented
+    finalprevented // final not allowed when restarting sync
   );
   // Note, now fNewOutgoingPackage is set (by FinishMessage())
   // if next message will be responded to with a new package
@@ -1438,6 +1531,26 @@ bool TSyncAgent::ClientMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand 
 } // TSyncAgent::ClientMessageStarted
 
 
+bool TSyncAgent::checkAllFromClientOnly()
+{
+  bool allFromClientOnly=false;
+  // Note: the map phase will not take place, if all datastores are in
+  //       send-to-server-only mode and we are not in non-conformant old
+  //       synthesis-compatible fCompleteFromClientOnly mode.
+  if (!fCompleteFromClientOnly) {
+    // let all local datastores know that message has ended
+    allFromClientOnly=true;
+    for (TLocalDataStorePContainer::iterator pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
+      // check sync modes
+      if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
+        allFromClientOnly=false;
+        break;
+      }
+    }
+  }
+  return allFromClientOnly;
+}
+
 // determines new package states and sets fInProgress
 void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
 {
@@ -1469,20 +1582,7 @@ void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
   }
   else {
     fInProgress=true; // assume we need to continue
-    // Note: the map phase will not take place, if all datastores are in
-    //       send-to-server-only mode and we are not in non-conformant old
-    //       synthesis-compatible fCompleteFromClientOnly mode.
-    if (!fCompleteFromClientOnly) {
-      // let all local datastores know that message has ended
-      allFromClientOnly=true;
-      for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-        // check sync modes
-        if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
-          allFromClientOnly=false;
-          break;
-        }
-      }
-    }
+    allFromClientOnly=checkAllFromClientOnly();
     // new outgoing state is determined by the incomingState of this message
     // (which is the answer to the <final/> message of the previous outgoing package)
     if (fNewOutgoingPackage && fIncomingState!=psta_idle) {
@@ -1519,7 +1619,11 @@ void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
     }
     // New incoming state is simply derived from the incoming state of
     // this message
-    if (aIncomingFinal && fIncomingState!=psta_idle) {
+    if (fRestartingSync) {
+      PDEBUGPRINTFX(DBG_HOT,("MessageEnded: restart sync"));
+      fOutgoingState=psta_init;
+      fIncomingState=psta_init;
+    } else if (aIncomingFinal && fIncomingState!=psta_idle) {
       if (fIncomingState==psta_init) {
         // switch to sync
         fIncomingState=psta_sync;
@@ -1555,20 +1659,36 @@ void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
   ));
   // let all local datastores know that message has ended
   for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
+    TLocalEngineDS *localDS = *pos;
     // let them know
-    (*pos)->engEndOfMessage();
+    localDS->engEndOfMessage();
+    if (fRestartingSync) {
+      // finish current session as far as the datastore is concerned
+      localDS->engFinishDataStoreSync(LOCERR_OK);
+
+      // and start again
+      localDS->changeState(dssta_adminready);
+      localDS->fFirstTimeSync = false;
+
+      // unsetting flow sync leads to new sync mode:
+      // - slow sync -> two-way sync or one-way if data direction was limited
+      // - refresh sync -> one-way sync in same direction
+      // - one-way sync -> do it again
+      localDS->fSlowSync = false;
+    }
     // Show state of local datastores
     PDEBUGPRINTFX(DBG_HOT,(
       "Local Datastore '%s': %sState=%s, %s%s sync, %s%s",
-      (*pos)->getName(),
-      (*pos)->isAborted() ? "ABORTED - " : "",
-      (*pos)->getDSStateName(),
-      (*pos)->isResuming() ? "RESUMED " : "",
-      (*pos)->isSlowSync() ? "SLOW" : "normal",
-      SyncModeDescriptions[(*pos)->getSyncMode()],
-      (*pos)->fServerAlerted ? ", Server-Alerted" : ""
+      localDS->getName(),
+      localDS->isAborted() ? "ABORTED - " : "",
+      localDS->getDSStateName(),
+      localDS->isResuming() ? "RESUMED " : "",
+      localDS->isSlowSync() ? "SLOW" : "normal",
+      SyncModeDescriptions[localDS->getSyncMode()],
+      localDS->fServerAlerted ? ", Server-Alerted" : ""
     ));
   }
+  fRestartingSync = false;
   // thread might end here, so stop profiling
   TP_STOP(fTPInfo);
 } // TSyncAgent::ClientMessageEnded
@@ -1947,16 +2067,7 @@ void TSyncAgent::ServerMessageEnded(bool aIncomingFinal)
     //       no next phase anyway
     // find out if this is a shortened session (no map phase) due to
     // from-client-only in all datastores
-    if (!fCompleteFromClientOnly) {
-      allFromClientOnly=true;
-      for (pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-        // check sync modes
-        if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
-          allFromClientOnly=false;
-          break;
-        }
-      }
-    }
+    allFromClientOnly=checkAllFromClientOnly();
     // determine what package comes next
     switch (fIncomingState) {
       case psta_init :
@@ -3760,6 +3871,57 @@ static TSyError readDisplayAlert(
 
 #endif // SYSYNC_CLIENT
 
+static TSyError readRestartSync(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  appPointer aBuffer, memSize aBufSize, memSize &aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  return TStructFieldsKey::returnInt(mykeyP->fAgentP->fRestartSyncOnce, sizeof(bool), aBuffer, aBufSize, aValSize);
+} // readRestartsync
+
+
+// - write respURI enable flag
+static TSyError writeRestartSync(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  mykeyP->fAgentP->fRestartSyncOnce = *((uInt8P)aBuffer);
+  return LOCERR_OK;
+} // writeRestartSync
+
+
+// - write error message into session log
+TSyError writeErrorMsg(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  string msg;
+  msg.assign((cAppCharP)aBuffer, aValSize);
+  POBJDEBUGPRINTFX(mykeyP->fAgentP,DBG_ERROR,("external Error: %s",msg.c_str()));
+  return LOCERR_OK;
+} // writeErrorMsg
+
+
+// - write debug message into session log
+TSyError writeDebugMsg(
+  TStructFieldsKey *aStructFieldsKeyP, const TStructFieldInfo *aFldInfoP,
+  cAppPointer aBuffer, memSize aValSize
+)
+{
+  TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
+  string msg;
+  msg.assign((cAppCharP)aBuffer, aValSize);
+  POBJDEBUGPRINTFX(mykeyP->fAgentP,DBG_HOT,("external Message: %s",msg.c_str()));
+  return LOCERR_OK;
+} // writeDebugMsg
+
+
+
 
 // accessor table for server session key
 static const TStructFieldInfo ServerParamFieldInfos[] =
@@ -3784,6 +3946,11 @@ static const TStructFieldInfo ServerParamFieldInfos[] =
   { "displayalert", VALTYPE_TEXT, false, 0, 0, &readDisplayAlert, NULL },
   #endif
   #endif
+  // write into debug log
+  { "errorMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeErrorMsg },  
+  { "debugMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeDebugMsg }, 
+  // restart sync
+  { "restartsync", VALTYPE_INT8, true, 0, 0, &readRestartSync, &writeRestartSync }
 };
 
 // get table describing the fields in the struct

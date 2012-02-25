@@ -936,6 +936,8 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
     expectEnum(sizeof(fFirstTimeStrategy),&fFirstTimeStrategy,conflictStrategyNames,numConflictStrategies);
   else if (strucmp(aElementName,"readonly")==0)
     expectBool(fReadOnly);
+  else if (strucmp(aElementName,"canrestart")==0)
+    expectBool(fCanRestart);
   else if (strucmp(aElementName,"reportupdates")==0)
     expectBool(fReportUpdates);
   else if (strucmp(aElementName,"deletewins")==0)
@@ -3512,6 +3514,7 @@ localstatus TLocalEngineDS::engGenerateClientSyncAlert(
   if (!fRemoteRecordFilterQuery.empty() || false /* %%% field level filter */) {
     if (fSessionP->getSyncMLVersion()<syncml_vers_1_2) {
       PDEBUGPRINTFX(DBG_ERROR,("Filter specified, but SyncML version is < 1.2"));
+      engAbortDataStoreSync(406, true, false); // can't continue sync
       return 406; // feature not supported
     }
     SmlFilterPtr_t filterP = SML_NEW(SmlFilter_t);
