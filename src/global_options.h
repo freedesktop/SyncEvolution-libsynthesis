@@ -37,8 +37,8 @@
 #endif
 // global expiry date (usually applies for unregistered demos or regular products in trial mode)
 #ifndef EXPIRY_YEAR
-  #define EXPIRY_DATE_STRING "2012-03-31"
-  #define EXPIRY_YEAR 2012
+  #define EXPIRY_DATE_STRING "2013-03-31"
+  #define EXPIRY_YEAR 2013
   #define EXPIRY_MONTH 3
   #define EXPIRY_DAY 31
 #endif
