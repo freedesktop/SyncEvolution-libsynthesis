@@ -2416,7 +2416,7 @@ bool TSyncAgent::EndRequest(bool &aHasData, string &aRespURI, uInt32 aReqBytes)
         (long)t,
         (long)fRequestMinTime-t
       ));
-      CONSOLEPRINTF(("  ...delaying response by %ld seconds because requestmintime is set to %ld",fRequestMinTime,fRequestMinTime-t));
+      CONSOLEPRINTF(("  ...delaying response by %ld seconds because requestmintime is set to %ld",(long)fRequestMinTime,(long)(fRequestMinTime-t)));
       sleepLineartime((lineartime_t)(fRequestMinTime-t)*secondToLinearTimeFactor);
     }
   }

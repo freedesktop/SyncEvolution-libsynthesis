@@ -4548,16 +4548,16 @@ void TLocalEngineDS::showStatistics(void)
     else {
       CONSOLEPRINTF(("                               on Client   on Server"));
     }
-    CONSOLEPRINTF(("  Added:                       %9ld   %9ld",fLocalItemsAdded,fRemoteItemsAdded));
-    CONSOLEPRINTF(("  Deleted:                     %9ld   %9ld",fLocalItemsDeleted,fRemoteItemsDeleted));
-    CONSOLEPRINTF(("  Updated:                     %9ld   %9ld",fLocalItemsUpdated,fRemoteItemsUpdated));
-    CONSOLEPRINTF(("  Rejected with error:         %9ld   %9ld",fLocalItemsError,fRemoteItemsError));
+    CONSOLEPRINTF(("  Added:                       %9ld   %9ld",(long)fLocalItemsAdded,(long)fRemoteItemsAdded));
+    CONSOLEPRINTF(("  Deleted:                     %9ld   %9ld",(long)fLocalItemsDeleted,(long)fRemoteItemsDeleted));
+    CONSOLEPRINTF(("  Updated:                     %9ld   %9ld",(long)fLocalItemsUpdated,(long)fRemoteItemsUpdated));
+    CONSOLEPRINTF(("  Rejected with error:         %9ld   %9ld",(long)fLocalItemsError,(long)fRemoteItemsError));
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
-      CONSOLEPRINTF(("  SlowSync Matches:            %9ld",fSlowSyncMatches));
-      CONSOLEPRINTF(("  Server won Conflicts:        %9ld",fConflictsServerWins));
-      CONSOLEPRINTF(("  Client won Conflicts:        %9ld",fConflictsClientWins));
-      CONSOLEPRINTF(("  Conflicts with Duplication:  %9ld",fConflictsDuplicated));
+      CONSOLEPRINTF(("  SlowSync Matches:            %9ld",(long)fSlowSyncMatches));
+      CONSOLEPRINTF(("  Server won Conflicts:        %9ld",(long)fConflictsServerWins));
+      CONSOLEPRINTF(("  Client won Conflicts:        %9ld",(long)fConflictsClientWins));
+      CONSOLEPRINTF(("  Conflicts with Duplication:  %9ld",(long)fConflictsDuplicated));
     }
     #endif
   }
