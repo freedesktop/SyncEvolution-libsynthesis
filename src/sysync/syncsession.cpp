@@ -1565,6 +1565,7 @@ void TSyncSession::InternalResetSessionEx(bool terminationCall)
   fIncomingState=psta_idle; // no incoming package status yet
   fCmdIncomingState=psta_idle;
   fOutgoingState=psta_idle; // no outgoing package status yet
+  fRestarting=false;
   fNextMessageRequests=0; // no pending next message requests
   fFakeFinalFlag=false; // special flag to work around broken resume implementations
   fNewOutgoingPackage=true; // first message will be first in outgoing package
@@ -4893,13 +4894,12 @@ TSmlCommand *TSyncSession::processAlertItem(
     // Sync resume alert
     case 225: {
       // Synchronisation initialisation alerts
-      bool restarting = false;
       if (allowAlertAfterMap() && fIncomingState==psta_map) {
         // reset to state that allows a sync to start
         PDEBUGPRINTFX(DBG_HOT,("process alert: restart sync"));
         fIncomingState = psta_init;
         fOutgoingState = psta_init;
-        restarting = true;
+        fRestarting = true;
       }
 
       // - test if context is ok
@@ -4942,14 +4942,14 @@ TSmlCommand *TSyncSession::processAlertItem(
         const char *sourceURI = smlSrcTargLocURIToCharP(aItemP->source);
         // get Filter
         SmlFilterPtr_t targetFilter = aItemP->target ? aItemP->target->filter : NULL;
+        if (fRestarting) {
+          // reset datastore first
+          datastoreP->engFinishDataStoreSync(LOCERR_OK);
+        }
         // alert datastore of requested sync
         // - let datastore process alert and generate additional alert if needed
         //   NOTE: this might generate a PUT command if remote needs to see our
         //         devInf (config changed since last sync)
-        if (restarting) {
-          // reset datastore first
-          datastoreP->engFinishDataStoreSync(LOCERR_OK);
-        }
         alertresponsecmdP=datastoreP->engProcessSyncAlert(
           NULL,            // not as subdatastore
           aAlertCode,       // the alert code
