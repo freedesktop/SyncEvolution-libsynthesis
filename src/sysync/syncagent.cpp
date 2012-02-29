@@ -969,17 +969,17 @@ bool TSyncAgent::restartSync()
 {
   if (IS_CLIENT) {
     // Restarting needs to be done if:
-    // - we only have one datastore (intentional simplification for now)
-    // - that datastore supports restarting a sync (= multiple read/write cycles)
+    // - all datastores support restarting a sync (= multiple read/write cycles)
     //   on client and server side (expected not be set if the engine itself on
     //   either side doesn't support it, so that is not checked separately)
-    // - datastore hasn't failed in current iteration
+    // - no datastore has failed in current iteration
     // - client has pending changes:
     //   - server temporarily rejected a change, queued for resending
     //   - an item added by the server was merged with another
     //     item locally (might have an updated queued, need to send delete)
     //   - change on client failed temporarily
     //   - the app or a datastore asked for a restart via the "restartsync"
+    //     session variable
     if (!getenv("LIBSYNTHESIS_NO_RESTART")) {
       bool restartPossible=true; // ... unless proven otherwise below
       bool restartNecessary=fRestartSyncOnce; // one reason for restarting: requested by app
@@ -1032,11 +1032,6 @@ bool TSyncAgent::restartSync()
                                      localDS->getName()));
           restartNecessary=true;
         }
-      }
-
-      if (numActive > 1) {
-        PDEBUGPRINTFX(DBG_SESSION,("cannot restart, %d data stores active", numActive));
-        restartPossible=false;
       }
 
       return restartPossible && restartNecessary;
@@ -1249,7 +1244,10 @@ localstatus TSyncAgent::NextMessage(bool &aDone)
       }
     }
     // append sync phase if we have combined init/sync
-    if (fOutgoingState==psta_initsync) fOutgoingState=psta_sync;
+    if (fOutgoingState==psta_initsync) {
+      fOutgoingState=psta_sync;
+      fRestarting=false;
+    }
   }
   // process sync/syncop/map generating phases after init
   if (!isSuspending()) {
@@ -1599,6 +1597,7 @@ void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
         // so client enters sync state now (but holds back sync until server
         // has finished init)
         fOutgoingState=psta_sync;
+        fRestarting=false;
       }
       else if (fIncomingState==psta_sync || fIncomingState==psta_initsync) {
         // server has started (or already finished) sending statuses for our
@@ -2237,6 +2236,7 @@ void TSyncAgent::ServerMessageEnded(bool aIncomingFinal)
       //       will set outgoing state from init to init-sync while processing message,
       //       so no transition needs to be detected here
       newoutgoingstate=psta_sync;
+      fRestarting=false;
     }
     // - sync to map
     else if (
