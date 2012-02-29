@@ -880,6 +880,7 @@ void TLocalDSConfig::clear(void)
   // options
   fLocalDBTypeID=0;
   fReadOnly=false;
+  fCanRestart=false;
   fReportUpdates=true;
   fDeleteWins=false; // replace wins over delete by default
   fResendFailing=true; // resend failing items in next session by default
