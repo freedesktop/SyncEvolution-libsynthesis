@@ -880,6 +880,7 @@ void TLocalDSConfig::clear(void)
   // options
   fLocalDBTypeID=0;
   fReadOnly=false;
+  fCanRestart=false;
   fReportUpdates=true;
   fDeleteWins=false; // replace wins over delete by default
   fResendFailing=true; // resend failing items in next session by default
@@ -936,6 +937,8 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
     expectEnum(sizeof(fFirstTimeStrategy),&fFirstTimeStrategy,conflictStrategyNames,numConflictStrategies);
   else if (strucmp(aElementName,"readonly")==0)
     expectBool(fReadOnly);
+  else if (strucmp(aElementName,"canrestart")==0)
+    expectBool(fCanRestart);
   else if (strucmp(aElementName,"reportupdates")==0)
     expectBool(fReportUpdates);
   else if (strucmp(aElementName,"deletewins")==0)
@@ -1158,6 +1161,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fRefreshOnly=false;
   fReadOnly=false;
   fReportUpdates=fDSConfigP->fReportUpdates; // update reporting according to what is configured
+  fCanRestart=fDSConfigP->fCanRestart;
   fServerAlerted=false;
   fResuming=false;
   #ifdef SUPERDATASTORES
@@ -3763,6 +3767,14 @@ SmlDevInfSyncCapPtr_t TLocalEngineDS::newDevInfSyncCap(uInt32 aSyncCapMask)
       synctypeP=newPCDataLong(k);
       addPCDataToList(synctypeP,&(synccapP->synctype));
     }
+  }
+  // Now add non-standard synccaps.
+  // From the spec: "Other values can also be specified."
+  // Values are PCDATA, so we can use plain strings.
+  // Corresponding code in TRemoteDataStore::setDatastoreDevInf().
+  if (canRestart()) {
+    synctypeP=newPCDataString("X-SYNTHESIS-RESTART");
+    addPCDataToList(synctypeP,&(synccapP->synctype));
   }
   // return it
   return synccapP;
