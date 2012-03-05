@@ -880,6 +880,7 @@ void TLocalDSConfig::clear(void)
   // options
   fLocalDBTypeID=0;
   fReadOnly=false;
+  fCanRestart=false;
   fReportUpdates=true;
   fDeleteWins=false; // replace wins over delete by default
   fResendFailing=true; // resend failing items in next session by default
@@ -1160,6 +1161,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fRefreshOnly=false;
   fReadOnly=false;
   fReportUpdates=fDSConfigP->fReportUpdates; // update reporting according to what is configured
+  fCanRestart=fDSConfigP->fCanRestart;
   fServerAlerted=false;
   fResuming=false;
   #ifdef SUPERDATASTORES
@@ -3767,6 +3769,14 @@ SmlDevInfSyncCapPtr_t TLocalEngineDS::newDevInfSyncCap(uInt32 aSyncCapMask)
       addPCDataToList(synctypeP,&(synccapP->synctype));
     }
   }
+  // Now add non-standard synccaps.
+  // From the spec: "Other values can also be specified."
+  // Values are PCDATA, so we can use plain strings.
+  // Corresponding code in TRemoteDataStore::setDatastoreDevInf().
+  if (canRestart()) {
+    synctypeP=newPCDataString("X-SYNTHESIS-RESTART");
+    addPCDataToList(synctypeP,&(synccapP->synctype));
+  }
   // return it
   return synccapP;
 } // TLocalEngineDS::newDevInfSyncCap
@@ -4548,16 +4558,16 @@ void TLocalEngineDS::showStatistics(void)
     else {
       CONSOLEPRINTF(("                               on Client   on Server"));
     }
-    CONSOLEPRINTF(("  Added:                       %9ld   %9ld",fLocalItemsAdded,fRemoteItemsAdded));
-    CONSOLEPRINTF(("  Deleted:                     %9ld   %9ld",fLocalItemsDeleted,fRemoteItemsDeleted));
-    CONSOLEPRINTF(("  Updated:                     %9ld   %9ld",fLocalItemsUpdated,fRemoteItemsUpdated));
-    CONSOLEPRINTF(("  Rejected with error:         %9ld   %9ld",fLocalItemsError,fRemoteItemsError));
+    CONSOLEPRINTF(("  Added:                       %9ld   %9ld",(long)fLocalItemsAdded,(long)fRemoteItemsAdded));
+    CONSOLEPRINTF(("  Deleted:                     %9ld   %9ld",(long)fLocalItemsDeleted,(long)fRemoteItemsDeleted));
+    CONSOLEPRINTF(("  Updated:                     %9ld   %9ld",(long)fLocalItemsUpdated,(long)fRemoteItemsUpdated));
+    CONSOLEPRINTF(("  Rejected with error:         %9ld   %9ld",(long)fLocalItemsError,(long)fRemoteItemsError));
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
-      CONSOLEPRINTF(("  SlowSync Matches:            %9ld",fSlowSyncMatches));
-      CONSOLEPRINTF(("  Server won Conflicts:        %9ld",fConflictsServerWins));
-      CONSOLEPRINTF(("  Client won Conflicts:        %9ld",fConflictsClientWins));
-      CONSOLEPRINTF(("  Conflicts with Duplication:  %9ld",fConflictsDuplicated));
+      CONSOLEPRINTF(("  SlowSync Matches:            %9ld",(long)fSlowSyncMatches));
+      CONSOLEPRINTF(("  Server won Conflicts:        %9ld",(long)fConflictsServerWins));
+      CONSOLEPRINTF(("  Client won Conflicts:        %9ld",(long)fConflictsClientWins));
+      CONSOLEPRINTF(("  Conflicts with Duplication:  %9ld",(long)fConflictsDuplicated));
     }
     #endif
   }
