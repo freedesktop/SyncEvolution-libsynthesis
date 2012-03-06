@@ -3756,8 +3756,14 @@ static TSyError readConnectHost(
 )
 {
   TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
-  string host;
-  splitURL(mykeyP->fAgentP->getSendURI(),NULL,&host,NULL,NULL,NULL);
+  string host, port;
+  splitURL(mykeyP->fAgentP->getSendURI(),NULL,&host,NULL,NULL,NULL,&port,NULL);
+  // old semantic of splitURL was to include port in host string,
+  // continue doing that
+  if (!port.empty()) {
+    host += ':';
+    host += port;
+  }
   return TStructFieldsKey::returnString(
     host.c_str(),
     aBuffer,aBufSize,aValSize
@@ -3772,8 +3778,14 @@ static TSyError readConnectDoc(
 )
 {
   TAgentParamsKey *mykeyP = static_cast<TAgentParamsKey *>(aStructFieldsKeyP);
-  string doc;
-  splitURL(mykeyP->fAgentP->getSendURI(),NULL,NULL,&doc,NULL,NULL);
+  string doc, query;
+  splitURL(mykeyP->fAgentP->getSendURI(),NULL,NULL,&doc,NULL,NULL,NULL,&query);
+  // old semantic of splitURL was to include query in document string,
+  // continue doing that
+  if (!query.empty()) {
+    doc += '?';
+    doc += query;
+  }
   return TStructFieldsKey::returnString(
     doc.c_str(),
     aBuffer,aBufSize,aValSize
