@@ -2163,12 +2163,16 @@ bool TBinfileImplDS::implProcessItem(
       #ifdef NUMERIC_LOCALIDS
       // assumes that valid local IDs are positive
       // and can hold values in the range of -1 to -RAND_MAX-1
-      localid_t fakelocalid = -rand() - 1;
+      localid_t fakelocalid = -(rand() & 0x7FFFFFFF) - 1;
       #else
-      // TODO: check for collisions with other fake IDs
       char fakelocalid[STRING_LOCALID_MAXLEN];
-      sprintf(fakelocalid, "fake-%d", rand());
+      static unsigned int fakeidcounter;
+      sprintf(fakelocalid, "fake-%u-%d", ++fakeidcounter, rand());
       #endif
+      // Checking for collisions with other fake IDs would be nice,
+      // but isn't easy because new entries in fChangeLog are not
+      // in memory. We have to trust the random number generator
+      // and the sequence counter (for string IDs).
       memset(&newentry, 0, sizeof(newentry));
       ASSIGN_LOCALID_TO_FLD(newentry.dbrecordid,fakelocalid);
       ASSIGN_LOCALID_TO_ITEM(*aItemP,fakelocalid);
