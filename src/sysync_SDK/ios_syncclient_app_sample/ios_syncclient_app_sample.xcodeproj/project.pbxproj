@@ -487,7 +487,7 @@
 					"$(SYNCMLPLUGINS)",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SYNCMLLIB = sysync_combi_ios;
+				SYNCMLLIB = sysync_client_ios;
 				SYNCMLPLUGINS = dbplugin_cocoa_sample_ios;
 				WRAPPER_EXTENSION = app;
 			};
@@ -506,7 +506,7 @@
 					"$(SYNCMLPLUGINS)",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SYNCMLLIB = sysync_combi_ios;
+				SYNCMLLIB = sysync_client_ios;
 				SYNCMLPLUGINS = dbplugin_cocoa_sample_ios;
 				WRAPPER_EXTENSION = app;
 			};
