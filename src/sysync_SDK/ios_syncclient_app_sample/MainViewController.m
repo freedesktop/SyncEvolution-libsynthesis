@@ -8,6 +8,7 @@
 
 #import "MainViewController.h"
 
+#include "AppDelegate.h"
 
 @interface MainViewController ()
 // private methods declaration
@@ -292,9 +293,9 @@
   
   // use global status label for "Last Sync" title
   self.globalStatusLabel.text = @"Last Synchronisation:";
-  // show the time of last sync of the datastore with ID 1001
-  // we need to open the current profile, and find the target with ID 1001 (this is the <dbtypeid> of
-  // the  datastore as configured in the xml config file)
+  // show the time of last sync of the datastore with ID SYNCML_TARGET_DBID
+  // we need to open the current profile, and find the target with ID SYNCML_TARGET_DBID
+  // (this is the <dbtypeid> of the  datastore as configured in the xml config file)
   
   SettingsKey *profileKey = [self.syncmlClient newProfileKeyForID:PROFILEID_FIRST];
   if (profileKey) {
@@ -305,7 +306,7 @@
       // successfully opened targets container
       // - now open the target we are interested in, which is that for the address book
       //   by its ID 1001
-      SettingsKey *targetKey = [targetsKey newOpenSubKeyByID:1001 withMode:0 err:&sta];
+      SettingsKey *targetKey = [targetsKey newOpenSubKeyByID:SYNCML_TARGET_DBID withMode:0 err:&sta];
       if (sta==LOCERR_OK) {
         // get the date of last sync
         NSDate *lastSync = [targetKey dateValueByName:"lastSync"];
