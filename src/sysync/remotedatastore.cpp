@@ -251,12 +251,12 @@ bool TRemoteDataStore::setDatastoreDevInf(
       PDEBUGPRINTFX(DBG_REMOTEINFO,("DevInf provides DSMem: MaxMem=" PRINTF_LLD ", MaxID=" PRINTF_LLD,PRINTF_LLD_ARG(fFreeMemory),PRINTF_LLD_ARG(fMaxID)));
     }
     // - SyncCap - standard types currently ignored, only
-    // out own extensions are relevant.
-    // Corresponding code in TLocalEngineDS::newDevInfSyncCap()
+    //   our own extensions are relevant.
+    //   Corresponding code in TLocalEngineDS::newDevInfSyncCap()
     if (aDataStoreDevInfP->synccap) {
       SmlPcdataListPtr_t stlP = aDataStoreDevInfP->synccap->synctype;
       // loop through list
-      PDEBUGBLOCKDESC("RemoteSyncTypes", "Analyzing remote types listed in datastore level SyncCap");
+      PDEBUGBLOCKDESC("RemoteSyncTypes", "Analyzing remote sync types listed in datastore level SyncCap");
       while (stlP) {
         if (stlP->data) {
           const char *type = smlPCDataToCharP(stlP->data);
