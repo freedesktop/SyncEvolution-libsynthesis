@@ -256,7 +256,7 @@ bool TRemoteDataStore::setDatastoreDevInf(
     if (aDataStoreDevInfP->synccap) {
       SmlPcdataListPtr_t stlP = aDataStoreDevInfP->synccap->synctype;
       // loop through list
-      PDEBUGBLOCKDESC("RemoteSyncTypes", "Analyzing remote sync types listed in datastore level SyncCap");
+      PDEBUGBLOCKDESCCOLL("RemoteSyncTypes", "Analyzing remote sync types listed in datastore level SyncCap");
       while (stlP) {
         if (stlP->data) {
           const char *type = smlPCDataToCharP(stlP->data);
