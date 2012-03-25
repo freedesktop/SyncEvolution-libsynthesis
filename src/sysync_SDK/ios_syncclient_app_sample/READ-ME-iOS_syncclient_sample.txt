@@ -38,24 +38,6 @@ The "SyncMLClientSample" application is based on the "Utility Application" XCode
 template which is part of the iPhone OS SDK. It includes libsynthesis and
 the 4 dummy DB plugins as subprojects.
 
-A few modifications were made to the basic template generated project as
-follows (you don't need to understand these to give the SDK a try and
-compile the sample as is, but it's probably useful information if you
-want to use the library in your own app):
-
-1) We added a user-defined build setting on the target level called
-   SYNCMLLIB which defines the library to use. In the sample project, this
-   is set to "sysync_client_ios" which means using the client-only library.
-   This settings is the place to edit when you want to use another build of
-   libsynthesis (such as the combined client+server library "sysync_combi_ios").
-   Note that you also need to change subproject target dependencies accordingly.
-
-4) The Debug target build configuration has a GCC_PREPROCESSOR_DEFINITIONS
-   setting DEBUG=1. The DEBUG symbol is used to switch on some extra debug
-   information to the console. Make sure you DONT have
-   DEBUG defined in release builds!
-
-
 To build and run the SyncMLClientSample iPhone application, take the following
 steps:
 
@@ -76,6 +58,33 @@ steps:
    "Start Synchronisation" to start a sync session synchronizing the
    contents of TAB separated text files in the /Documents directory of
    the app's sandbox to a SyncML server.
+
+
+Linking information
+-------------------
+
+libsynthesis and the plugins are linked as static libraries (iOS does not
+allow dylibs).
+
+For that, the library projects are included as subprojects into the sample app
+project.
+Two settings need to be made to have XCode build and link everything (these
+are already set up in the sample project, but are important to understand in case
+you want to use another libsynthesis target or another plugin library)
+
+1) In the app's target settings under "build phases", "target dependencies"
+   need to be defined for the libsynthesis target you want to use and for
+   the plugin library target.
+
+2) Also in the app's target settings, under "build phases", "link binary
+   with libraries" the actual library builds (.a files) need to be
+   selected. When you press "+", the first folder presented is called
+   "workspace" and lists the libraries available.
+
+Note: The Debug target build configuration has a GCC_PREPROCESSOR_DEFINITIONS
+      setting DEBUG=1. The DEBUG symbol is used to switch on some extra debug
+      information to the console. Make sure you DONT have
+      DEBUG defined in release builds!
 
 
 The Cocoa wrapper classes for the Sync Engine, Settings Keys, and DB Plugins
