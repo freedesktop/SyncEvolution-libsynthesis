@@ -235,19 +235,29 @@
 {
   // add setting of SyncML engine configuration variables here.
   // These will be set before the XML config is loaded
-  // pre-set some config vars
-  /*
   TSyError sta;
   SettingsKey *configVarsKey = [aSyncEngine newOpenKeyByPath:"/configvars" withMode:0 err:&sta];
   if (sta==LOCERR_OK) {
+    #if DEBUG
+    // In debug builds, direct XML configuration errors to console (stdout)
+    [configVarsKey setStringValueByName:"conferrpath" toValue:@"console"];
+    #endif
+    /* %%% enable these if you want a custom model or hardcoded URL
     // custom devInf model string
     [configVarsKey setStringValueByName:"custmodel" toValue:@"" CUSTOM_DEVINF_MODEL];    
     // custom predefined (fixed) URL
-    [configVarsKey setStringValueByName:"serverurl" toValue:@"" CUSTOM_SERVER_URL];    
+    [configVarsKey setStringValueByName:"serverurl" toValue:@"" CUSTOM_SERVER_URL];
+    */
   }
   // done with config vars
-  [configVarsKey release];    
-  */
+  [configVarsKey release];
+  // if debug build, create the log subdirectory in the sandbox' tmp/, such that
+  // the syncml engine will write detailed HTML logs. The engine checks the presence of
+  // the log directory and disables logging if it is not present.
+  // Note: this has to be in sync with the definition of "logpath" in the XML config 
+  #if DEBUG
+  [[NSFileManager defaultManager] createDirectoryAtPath:[NSHomeDirectory() stringByAppendingPathComponent:@"tmp/sysynclogs"] withIntermediateDirectories:NO attributes:nil error:NULL];
+  #endif
 }
 
  
