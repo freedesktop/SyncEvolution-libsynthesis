@@ -3771,9 +3771,14 @@ SmlDevInfSyncCapPtr_t TLocalEngineDS::newDevInfSyncCap(uInt32 aSyncCapMask)
   // Now add non-standard synccaps.
   // From the spec: "Other values can also be specified."
   // Values are PCDATA, so we can use plain strings.
+  // But the Funambol server expects integer numbers and
+  // throws a parser error when sent a string. So better
+  // stick to a semi-random number (hopefully no-one else
+  // is using it).
+  //
   // Corresponding code in TRemoteDataStore::setDatastoreDevInf().
   if (canRestart()) {
-    synctypeP=newPCDataString("X-SYNTHESIS-RESTART");
+    synctypeP=newPCDataString("390001");
     addPCDataToList(synctypeP,&(synccapP->synctype));
   }
   // return it
