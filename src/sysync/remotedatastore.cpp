@@ -261,7 +261,7 @@ bool TRemoteDataStore::setDatastoreDevInf(
         if (stlP->data) {
           const char *type = smlPCDataToCharP(stlP->data);
           PDEBUGPRINTFX(DBG_REMOTEINFO,("SyncType='%s'", type));
-          if (!strcmp(type, "X-SYNTHESIS-RESTART")) {
+          if (!strcmp(type, "390001")) {
             fCanRestart = true;
           }
         }
