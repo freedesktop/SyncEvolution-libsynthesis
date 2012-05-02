@@ -250,6 +250,16 @@ TSuperDataStore::~TSuperDataStore()
 // Methods overriding TLocalEngineDS
 // ----------------------------------
 
+bool TSuperDataStore::canRestart()
+{
+  TSubDSLinkList::iterator pos;
+  for (pos=fSubDSLinks.begin();pos!=fSubDSLinks.end();pos++) {
+    if (!pos->fDatastoreLinkP->canRestart()) {
+      return false;
+    }
+  }
+  return true;
+}
 
 // obtain Sync Cap mask, must be lowest common mask of all subdatastores
 uInt32 TSuperDataStore::getSyncCapMask(void)
