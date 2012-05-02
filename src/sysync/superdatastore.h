@@ -166,6 +166,8 @@ public:
 
   // Abstracts of TLocalEngineDS
 protected:
+  // check if all subdatastores can restart
+  bool canRestart();
   // obtain Sync Cap mask, must be lowest common mask of all subdatastores
   virtual uInt32 getSyncCapMask(void);
   // Internal events during sync for derived classes
