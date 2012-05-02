@@ -939,7 +939,13 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
     expectBool(fReadOnly);
   else if (strucmp(aElementName,"canrestart")==0)
     expectBool(fCanRestart);
-  else if (strucmp(aElementName,"reportupdates")==0)
+  else if (strucmp(aElementName,"syncmode")==0) {
+    if (!fSyncModeBuffer.empty()) {
+      fSyncModes.insert(fSyncModeBuffer);
+      fSyncModeBuffer.clear();
+    }
+    expectString(fSyncModeBuffer);
+  } else if (strucmp(aElementName,"reportupdates")==0)
     expectBool(fReportUpdates);
   else if (strucmp(aElementName,"deletewins")==0)
     expectBool(fDeleteWins);
@@ -1012,6 +1018,11 @@ bool TLocalDSConfig::localStartElement(const char *aElementName, const char **aA
 // resolve
 void TLocalDSConfig::localResolve(bool aLastPass)
 {
+  if (!fSyncModeBuffer.empty()) {
+    fSyncModes.insert(fSyncModeBuffer);
+    fSyncModeBuffer.clear();
+  }
+
   if (aLastPass) {
     #ifdef SCRIPT_SUPPORT
     TScriptContext *sccP = NULL;
@@ -1162,6 +1173,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fReadOnly=false;
   fReportUpdates=fDSConfigP->fReportUpdates; // update reporting according to what is configured
   fCanRestart=fDSConfigP->fCanRestart;
+  fSyncModes=fDSConfigP->fSyncModes;
   fServerAlerted=false;
   fResuming=false;
   #ifdef SUPERDATASTORES
@@ -3782,6 +3794,18 @@ SmlDevInfSyncCapPtr_t TLocalEngineDS::newDevInfSyncCap(uInt32 aSyncCapMask)
     synctypeP=newPCDataString("390001");
     addPCDataToList(synctypeP,&(synccapP->synctype));
   }
+
+  // Finally add non-standard synccaps that are outside of the
+  // engine's control.
+  set<string> modes;
+  getSyncModes(modes);
+  for (set<string>::const_iterator it = modes.begin();
+       it != modes.end();
+       ++it) {
+    synctypeP=newPCDataString(*it);
+    addPCDataToList(synctypeP,&(synccapP->synctype));
+  }
+
   // return it
   return synccapP;
 } // TLocalEngineDS::newDevInfSyncCap

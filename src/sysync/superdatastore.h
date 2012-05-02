@@ -170,6 +170,9 @@ protected:
   bool canRestart();
   // obtain Sync Cap mask, must be lowest common mask of all subdatastores
   virtual uInt32 getSyncCapMask(void);
+  // intersection of all sync mode sets in the subdatastores
+  virtual bool syncModeSupported(const std::string &mode);
+  virtual void getSyncModes(set<string> &modes);
   // Internal events during sync for derived classes
   // Note: local DB authorisation must be established already before calling these
   // - prepares for Sync with this datastore
