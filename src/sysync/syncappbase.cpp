@@ -729,7 +729,11 @@ void TDebugConfig::localResolve(bool aLastPass)
       // XML config - user options settings are parsed into fSessionDbgLoggerOptions
       // - by default, global logging has same options as configured for session...
       fGlobalDbgLoggerOptions = fSessionDbgLoggerOptions;
-      // ...but we have a few hard-coded things for global logging:
+      if (fLogSessionsToGlobal) {
+        // ... and these settings are used as they are, if session and global
+        // logging are identical...
+      } else {
+        // ...but when they are different, we have a few hard-coded things for global logging:
       #ifdef MULTITHREAD_PIPESERVER
         // - for pipe server, global logs should be per-thread
         fGlobalDbgLoggerOptions.fFlushMode=dbgflush_flush; // flush every log line
@@ -745,6 +749,7 @@ void TDebugConfig::localResolve(bool aLastPass)
           fGlobalDbgLoggerOptions.fThreadIDForAll=true; // thread ID for each message
         #endif
       #endif
+      }
     #endif
     // initialize global debug logging options
     getSyncAppBase()->fAppLogger.setMask(fDebug); // set initial debug mask from config
