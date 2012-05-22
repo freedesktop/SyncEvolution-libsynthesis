@@ -4676,8 +4676,27 @@ TSyncOpCommand *TLocalEngineDS::newSyncOpCommand(
     if (syncop==sop_add || syncop==sop_wants_add)
       aSyncItemP->clearRemoteID(); // no remote ID
     else {
-      if (!fDSConfigP->fAlwaysSendLocalID) {
-        // only if localID may not be included in all syncops
+      if (!fDSConfigP->fAlwaysSendLocalID &&
+          aSyncItemP->hasRemoteID()) {
+        // only if localID may not be included in all syncops,
+        // and not if the item has no remote ID yet
+        //
+        // The second case had to be added to solve an issue
+        // during suspended syncs:
+        // - server tries to add a new item and uses the Replace op for it
+        // - pending Replace is added to map
+        // - next sync resends the Replace, but with empty IDs and thus
+        //   cannot be processed by client
+        //
+        // Log from such a failed sync:
+        // Item localID='328' already has map entry: remoteid='', mapflags=0x1, changed=0, deleted=0, added=0, markforresume=0, savedmark=1
+        // Resuming and found marked-for-resume -> send replace
+        // ...
+        // Command 'Replace': is 1-th counted cmd, cmdsize(+tags needed to end msg)=371, available=130664 (maxfree=299132, freeaftersend=298761, notUsableBufferBytes()=168468)
+        // Item remoteID='', localID='', datasize=334
+        // Replace: issued as (outgoing MsgID=2, CmdID=4), now queueing for status
+        // ...
+        // Status 404: Replace target not found on client -> silently ignore but remove map in server (item will be added in next session),
         aSyncItemP->clearLocalID(); // no local ID
       }
     }
