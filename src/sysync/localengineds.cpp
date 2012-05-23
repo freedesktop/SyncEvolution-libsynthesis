@@ -3528,6 +3528,7 @@ localstatus TLocalEngineDS::engGenerateClientSyncAlert(
   if (!fRemoteRecordFilterQuery.empty() || false /* %%% field level filter */) {
     if (fSessionP->getSyncMLVersion()<syncml_vers_1_2) {
       PDEBUGPRINTFX(DBG_ERROR,("Filter specified, but SyncML version is < 1.2"));
+      engAbortDataStoreSync(406, true, false); // can't continue sync
       return 406; // feature not supported
     }
     SmlFilterPtr_t filterP = SML_NEW(SmlFilter_t);
@@ -4586,16 +4587,16 @@ void TLocalEngineDS::showStatistics(void)
     else {
       CONSOLEPRINTF(("                               on Client   on Server"));
     }
-    CONSOLEPRINTF(("  Added:                       %9ld   %9ld",fLocalItemsAdded,fRemoteItemsAdded));
-    CONSOLEPRINTF(("  Deleted:                     %9ld   %9ld",fLocalItemsDeleted,fRemoteItemsDeleted));
-    CONSOLEPRINTF(("  Updated:                     %9ld   %9ld",fLocalItemsUpdated,fRemoteItemsUpdated));
-    CONSOLEPRINTF(("  Rejected with error:         %9ld   %9ld",fLocalItemsError,fRemoteItemsError));
+    CONSOLEPRINTF(("  Added:                       %9ld   %9ld",(long)fLocalItemsAdded,(long)fRemoteItemsAdded));
+    CONSOLEPRINTF(("  Deleted:                     %9ld   %9ld",(long)fLocalItemsDeleted,(long)fRemoteItemsDeleted));
+    CONSOLEPRINTF(("  Updated:                     %9ld   %9ld",(long)fLocalItemsUpdated,(long)fRemoteItemsUpdated));
+    CONSOLEPRINTF(("  Rejected with error:         %9ld   %9ld",(long)fLocalItemsError,(long)fRemoteItemsError));
     #ifdef SYSYNC_SERVER
     if (IS_SERVER) {
-      CONSOLEPRINTF(("  SlowSync Matches:            %9ld",fSlowSyncMatches));
-      CONSOLEPRINTF(("  Server won Conflicts:        %9ld",fConflictsServerWins));
-      CONSOLEPRINTF(("  Client won Conflicts:        %9ld",fConflictsClientWins));
-      CONSOLEPRINTF(("  Conflicts with Duplication:  %9ld",fConflictsDuplicated));
+      CONSOLEPRINTF(("  SlowSync Matches:            %9ld",(long)fSlowSyncMatches));
+      CONSOLEPRINTF(("  Server won Conflicts:        %9ld",(long)fConflictsServerWins));
+      CONSOLEPRINTF(("  Client won Conflicts:        %9ld",(long)fConflictsClientWins));
+      CONSOLEPRINTF(("  Conflicts with Duplication:  %9ld",(long)fConflictsDuplicated));
     }
     #endif
   }
