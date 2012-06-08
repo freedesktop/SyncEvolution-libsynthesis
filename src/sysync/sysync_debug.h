@@ -110,7 +110,7 @@ TDebugLogger *getDbgLogger(void);
   // Because a lot of libs log to stderr, include a unique prefix.
   // Assumes that all printf format strings are plain strings.
   #define CONSOLEPUTS(m) CONSOLE_PRINTF_VARARGS("%s", (m))
-#define CONSOLE_PRINTF_VARARGS(_m, _args...) fprintf(stderr, "SYSYNC " _m "\n", ##_args)
+  #define CONSOLE_PRINTF_VARARGS(_m, _args...) SySync_ConsolePrintf(stderr, "SYSYNC " _m "\n", ##_args)
   #define CONSOLEPRINTF(m) CONSOLE_PRINTF_VARARGS m
 # else // CONSOLEINFO_LIBC
   #define CONSOLEPUTS(m) ConsolePuts(m)
