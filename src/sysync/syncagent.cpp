@@ -3161,6 +3161,15 @@ TSyError TSyncAgent::ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
   // handle pre-processed step command according to current engine state
   switch (fServerEngineState) {
 
+    // Almost done state
+    case ses_almostdone:
+      // everything done, except for termination of session
+      // - do it now
+      TerminateSession();
+      // - now done
+      fServerEngineState = ses_done;
+      // fall through to done state
+    
     // Done state
     case ses_done :
       // session done, nothing happens any more
@@ -3337,12 +3346,10 @@ TSyError TSyncAgent::ServerGeneratingStep(uInt16 &aStepCmd, TEngineProgressInfo 
     // no more data to send
     aStepCmd = STEPCMD_OK; // need one more step to finish
   }
-  // in any case, if done, all susequent steps will return STEPCMD_DONE
+  // in any case, if done, subsequent steps will terminate the session and return STEPCMD_DONE
   if (done) {
-    // Session is done
-    TerminateSession();
     // subsequent steps will all return STEPCMD_DONE
-    fServerEngineState = ses_done;
+    fServerEngineState = ses_almostdone;
   }
   // request reset
   fRequestSize = 0;
