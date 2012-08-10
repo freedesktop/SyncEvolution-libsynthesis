@@ -1550,8 +1550,8 @@ bool TTimestampField::setAsRFC822date(cAppCharP aRFC822String, timecontext_t aDe
       }
     }
     else if (isalpha(*p)) {
-      // could be time zone name (if not, ignore zone spec)
-      aIgnoreZone = !TimeZoneNameToContext(p,fTimecontext,fGZonesP);
+      // could be time zone name, internal or olson name (if not, ignore zone spec)
+      aIgnoreZone = !TimeZoneNameToContext(p,fTimecontext,fGZonesP,true);
     }
   }
   // if no valid zone, use default
@@ -2136,8 +2136,8 @@ TSyError TItemFieldKey::SetValueInternal(
           sval.assign((cAppCharP)aBuffer,aValSize);
           tctx = TCTX_UNKNOWN;
           if (!sval.empty()) {
-            // convert
-            if (!TimeZoneNameToContext(sval.c_str(), tctx, tsFldP->getGZones()))
+            // convert (internal or olson names allowed)
+            if (!TimeZoneNameToContext(sval.c_str(), tctx, tsFldP->getGZones(), true))
               return LOCERR_BADPARAM; // bad timezone name
           }
           // set context

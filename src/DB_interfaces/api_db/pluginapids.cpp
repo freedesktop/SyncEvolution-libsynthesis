@@ -401,7 +401,7 @@ bool TPluginApiDS::storeField(
             if (paramScan(aParams,"TZNAME",s)) {
               // convert to time zone context
               timecontext_t tctx;
-              TimeZoneNameToContext(s.c_str(), tctx, tsfP->getGZones());
+              TimeZoneNameToContext(s.c_str(), tctx, tsfP->getGZones(), true);
               tsfP->moveToContext(tctx, true); // move to new context, bind floating (and float fixed, if TZNAME=FLOATING)
             }
           }

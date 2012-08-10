@@ -3687,8 +3687,8 @@ bool TCustomImplDS::storeField(
     timecontext_t tctx = TCTX_UNKNOWN;
     // modify time zone if params contain a TZNAME
     if (paramScan(aParams,"TZNAME",s)) {
-      // convert to time zone context
-      TimeZoneNameToContext(s.c_str(), tctx, tsfP->getGZones());
+      // convert to time zone context (olson allowed)
+      TimeZoneNameToContext(s.c_str(), tctx, tsfP->getGZones(), true);
     }
     // now parse text string into field
     tsfP->setAsISO8601(aValue, tctx, false);
