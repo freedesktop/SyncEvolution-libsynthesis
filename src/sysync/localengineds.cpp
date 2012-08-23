@@ -360,6 +360,22 @@ public:
   }; // func_SetRefreshOnly
 
 
+  // integer CACHEDATA()
+  // returns true if sync is refreshing local data in caching mode (without deleting everything beforehand)
+  static void func_CacheData(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    aTermP->setAsBoolean(
+      static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext())->isCacheData()
+    );
+  }; // func_CacheData
+  static void func_SetCacheData(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    static_cast<TLocalEngineDS *>(aFuncContextP->getCallerContext())->engSetCacheData(
+      aFuncContextP->getLocalVar(0)->getAsBoolean()
+    );
+  }; // func_SetCacheData
+
+
   // integer READONLY()
   // returns true if sync is read-only (only reading from local datastore)
   static void func_ReadOnly(TItemField *&aTermP, TScriptContext *aFuncContextP)
@@ -564,6 +580,8 @@ const TBuiltInFuncDef DBFuncDefs[] = {
   { "FORCESLOWSYNC", TLDSfuncs::func_ForceSlowSync, fty_none, 0, NULL },
   { "REFRESHONLY", TLDSfuncs::func_RefreshOnly, fty_integer, 0, NULL },
   { "SETREFRESHONLY", TLDSfuncs::func_SetRefreshOnly, fty_none, 1, param_IntArg },
+  { "CACHEDATA", TLDSfuncs::func_CacheData, fty_integer, 0, NULL },
+  { "SETCACHEDATA", TLDSfuncs::func_SetCacheData, fty_none, 1, param_IntArg },
   { "READONLY", TLDSfuncs::func_ReadOnly, fty_integer, 0, NULL },
   { "SETREADONLY", TLDSfuncs::func_SetReadOnly, fty_none, 1, param_IntArg },
   { "FIRSTTIMESYNC", TLDSfuncs::func_FirstTimeSync, fty_integer, 0, NULL },
@@ -1170,6 +1188,7 @@ void TLocalEngineDS::InternalResetDataStore(void)
   fForceSlowSync=false;
   fSlowSync=false;
   fRefreshOnly=false;
+  fCacheData=false;
   fReadOnly=false;
   fReportUpdates=fDSConfigP->fReportUpdates; // update reporting according to what is configured
   fCanRestart=fDSConfigP->fCanRestart;
@@ -2468,6 +2487,7 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
     if (IS_SERVER) {
       // server case: initially we are not in refresh only mode. Alert code or alert script could change this
       fRefreshOnly=false;
+      fCacheData=false;
     }
 
     // save it for suspend and reference in scripts
@@ -2630,12 +2650,13 @@ TAlertCommand *TLocalEngineDS::engProcessSyncAlert(
       }
       // - datastore state is now dss_alerted
       PDEBUGPRINTFX(DBG_HOT,(
-        "Alerted (code=%hd) for %s%s %s%s%s ",
+        "Alerted (code=%hd) for %s%s %s%s%s%s ",
         aAlertCode,
         fResuming ? "Resumed " : "",
         SyncModeDescriptions[fSyncMode],
         fSlowSync ? (fSyncMode==smo_twoway ? "Slow Sync" : "Refresh") : "Normal Sync",
         fReadOnly ? " (Readonly)" : "",
+        fCacheData ? " (Cache)" : "",
         fRefreshOnly ? " (Refreshonly)" : ""
       ));
       CONSOLEPRINTF((
