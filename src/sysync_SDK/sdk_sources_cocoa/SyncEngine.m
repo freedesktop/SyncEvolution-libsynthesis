@@ -9,7 +9,7 @@
 
 - (id)initWithCI:(UI_Call_In)aCI andSessionHandle:(SessionH)aSessionH;
 {
-  if ([super init]!=nil) {
+  if ((self = [super init])) {
     fCI = aCI;
     fSessionH = aSessionH;
     // also prepare tunnel wrapper
@@ -301,7 +301,7 @@
   // empty prefix if none specified
   if (aEntryPointPrefix==nil) aEntryPointPrefix = @"";
   // init superclass and DLL
-  if (self == [super init]) {
+  if ((self = [super init])) {
     ConnectEngine_Func ConnectEngine_Var = NULL;
     #ifdef SYSYNC_ENGINE_STATIC
     // static: just directly use the entry point.
