@@ -5652,6 +5652,10 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
             PDEBUGPRINTFX(DBG_DATA,("Read-Only or IgnoreUpdate: server always wins"));
             crstrategy=cr_server_wins;
           }
+          else if (fCacheData) {
+            PDEBUGPRINTFX(DBG_DATA,("Caching data: client always wins"));
+            crstrategy=cr_client_wins;
+          }
           else {
             // two-way
             crstrategy = fItemConflictStrategy; // get conflict strategy pre-set for this item
@@ -5849,7 +5853,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
             aStatusCommand.setStatusCode(208); // client wins
             fConflictsClientWins++;
             // - attempt to merge data from loosing item (accumulating fields)
-            if (!deleteconflict) {
+            if (!fCacheData && !deleteconflict) {
               aSyncItemP->mergeWith(*conflictingItemP,changedincoming,changedexisting,this);
             }
             if (changedincoming) {
@@ -5977,11 +5981,19 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
             }
             // if adds prevented, we cannot duplicate, let server win
             if (fPreventAdd && crstrategy==cr_duplicate) crstrategy=cr_server_wins;
+            else if (fCacheData) crstrategy=cr_client_wins;
             // now execute chosen strategy
             if (crstrategy==cr_client_wins) {
-              // - merge server's data into client item
-              PDEBUGPRINTFX(DBG_DATA,("Trying to merge some data from loosing server item into winning client item"));
-              aSyncItemP->mergeWith(*matchingItemP,changedincoming,changedexisting,this);
+              if (fCacheData) {
+                // - merge server's data into client item
+                PDEBUGPRINTFX(DBG_DATA,("Caching: copying winning client item into loosing server item"));
+                aSyncItemP->mergeWith(*matchingItemP,changedincoming,changedexisting,this,
+                                      TSyncItem::MERGE_OPTION_CHANGE_OTHER);
+              } else {
+                // - merge server's data into client item
+                PDEBUGPRINTFX(DBG_DATA,("Trying to merge some data from loosing server item into winning client item"));
+                aSyncItemP->mergeWith(*matchingItemP,changedincoming,changedexisting,this);
+              }
               // only count if server gets updated
               if (changedexisting) fConflictsClientWins++;
               // Note: changedexisting will cause needserverupdate to be set below
