@@ -880,15 +880,16 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsServer(
     syncopcmdP=NULL;
     // possibly, we have a NULL command here (e.g. in case it could not be generated due to MaxObjSize restrictions)
     if (cmdP) {
-      if (!fSessionP->issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) {
-        alldone=false; // issue failed (no room in message), not finished so far
-        break;
-      }
-      // count item sent
+      // We pass the command to the issue mechanism - last chance to count is here.
+      // Note: the command might be queued and actually sent in a subsequent message.
       fItemsSent++; // overall counter for statistics
       itemcount++; // per message counter
-      // send event (but no check for abort)
-      DB_PROGRESS_EVENT(this,pev_itemsent,fItemsSent,getNumberOfChanges(),0);
+      DB_PROGRESS_EVENT(this,pev_itemsent,fItemsSent,getNumberOfChanges(),0); // send event (but no check for abort)
+      // now issue
+      if (!fSessionP->issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) {
+        alldone=false; // issue failed (no room in message), not finished so far
+        break; // stop trying to issue more commands
+      }
     }
   }; // while not aborted and not message full
   // we are not done until all aNextMessageCommands are also out
