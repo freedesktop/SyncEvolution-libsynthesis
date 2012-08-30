@@ -1040,19 +1040,23 @@ bool TStdLogicDS::logicGenerateSyncCommandsAsClient(
     syncopcmdP=NULL;
     // possibly, we have a NULL command here (e.g. in case it could not be generated due to MaxObjSize restrictions)
     if (cmdP) {
-      if (!fSessionP->issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) {
-        alldone=false; // issue failed (no room in message), not finished so far
-        break;
-      }
-      // count item sent
+      // We pass the command to the issue mechanism - last chance to count is here.
+      // Note: the command might be queued and actually sent in a subsequent message.
       fItemsSent++;
-      // send event and check for abort
       #ifdef PROGRESS_EVENTS
+      // send progress event and check for abort
       if (!DB_PROGRESS_EVENT(this,pev_itemsent,fItemsSent,getNumberOfChanges(),0)) {
         implEndDataRead(); // terminate reading
         fSessionP->AbortSession(500,true,LOCERR_USERABORT);
         return false; // error
       }
+      #endif
+      // issue now
+      if (!fSessionP->issuePtr(cmdP,aNextMessageCommands,aInterruptedCommandP)) {
+        alldone=false; // issue failed (no room in message), not finished so far
+        break;
+      }
+      #ifdef PROGRESS_EVENTS
       // check for "soft" suspension
       if (!SESSION_PROGRESS_EVENT(fSessionP,pev_suspendcheck,NULL,0,0,0)) {
         fSessionP->SuspendSession(LOCERR_USERSUSPEND);
