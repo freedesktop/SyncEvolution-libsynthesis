@@ -3480,7 +3480,8 @@ localstatus TLocalEngineDS::engGenerateClientSyncAlert(
     fNextLocalAnchor.c_str()
   ));
   // create appropriate initial alert command
-  uInt16 alertCode = getSyncStateAlertCode(fServerAlerted,true);
+  TAgentConfig *configP = static_cast<TAgentConfig *>(static_cast<TSyncAgent *>(getSession())->getRootConfig()->fAgentConfigP);
+  uInt16 alertCode = getSyncStateAlertCode(fServerAlerted, configP->fPreferSlowSync);
   // check for resume
   if (fResuming) {
     // check if what we resume is same as what we wanted to do
@@ -3784,26 +3785,60 @@ SmlDevInfSyncCapPtr_t TLocalEngineDS::newDevInfSyncCap(uInt32 aSyncCapMask)
   // Now add non-standard synccaps.
   // From the spec: "Other values can also be specified."
   // Values are PCDATA, so we can use plain strings.
+  //
   // But the Funambol server expects integer numbers and
   // throws a parser error when sent a string. So better
   // stick to a semi-random number (hopefully no-one else
   // is using it).
   //
+  // Worse, Nokia phones cancel direct sync sessions with an
+  // OBEX error ("Forbidden") when non-standard sync modes
+  // are included in the SyncCap. As a workaround for that
+  // we use the following logic:
+  // - libsynthesis in a SyncML client will always send
+  //   all the extended sync modes; with the Funambol
+  //   workaround in place that works
+  // - libsynthesis in a SyncML server will only send the
+  //   extended sync modes if the client has sent any
+  //   extended sync modes itself; the 390002 mode is
+  //   sent unconditionally for that purpose
+  //
   // Corresponding code in TRemoteDataStore::setDatastoreDevInf().
-  if (canRestart()) {
-    synctypeP=newPCDataString("390001");
-    addPCDataToList(synctypeP,&(synccapP->synctype));
-  }
+  //
+  if (!IS_SERVER ||
+      fSessionP->receivedSyncModeExtensions()) {
+    bool extended=false;
+    if (canRestart()) {
+      synctypeP=newPCDataString("390001");
+      addPCDataToList(synctypeP,&(synccapP->synctype));
+      extended=true;
+    }
+    // Finally add non-standard synccaps that are outside of the
+    // engine's control.
+    set<string> modes;
+    getSyncModes(modes);
+    for (set<string>::const_iterator it = modes.begin();
+         it != modes.end();
+         ++it) {
+      synctypeP=newPCDataString(*it);
+      addPCDataToList(synctypeP,&(synccapP->synctype));
+      extended=true;
+    }
 
-  // Finally add non-standard synccaps that are outside of the
-  // engine's control.
-  set<string> modes;
-  getSyncModes(modes);
-  for (set<string>::const_iterator it = modes.begin();
-       it != modes.end();
-       ++it) {
-    synctypeP=newPCDataString(*it);
-    addPCDataToList(synctypeP,&(synccapP->synctype));
+    // Add fake mode to signal peer that we support extensions.
+    // Otherwise a server won't send them, to avoid breaking
+    // client's (like Nokia phones) which don't.
+    //
+    // Don't send the fake mode unnecessarily (= when some other
+    // non-standard modes where already added), because Funambol seems
+    // to have a hard-coded limit of 9 entries in the <SyncCap> and
+    // complains with a 513 internal server error (when using WBXML)
+    // or a 'Expected "CTCap" end tag, found "CTType" end tag' (when
+    // using XML).
+    if (!extended) {
+      synctypeP=newPCDataString("390002");
+      addPCDataToList(synctypeP,&(synccapP->synctype));
+    }
   }
 
   // return it
