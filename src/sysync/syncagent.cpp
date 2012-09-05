@@ -3975,7 +3975,7 @@ static const TStructFieldInfo ServerParamFieldInfos[] =
   { "displayalert", VALTYPE_TEXT, false, 0, 0, &readDisplayAlert, NULL },
   #endif
   #endif
-  { "restartsync", VALTYPE_INT8, true, 0, 0, &readRestartSync, &writeRestartSync }
+  { "restartsync", VALTYPE_INT8, true, 0, 0, &readRestartSync, &writeRestartSync },
   // write into debug log
   { "errorMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeErrorMsg },  
   { "debugMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeDebugMsg }, 
