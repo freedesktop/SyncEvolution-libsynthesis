@@ -1404,8 +1404,12 @@ bool TPluginApiDS::dsFinalizeLocalID(string &aLocalID)
   #ifndef SDK_ONLY_SUPPORT
   // only handle here if we are in charge - otherwise let ancestor handle it
   if (!fDBApi_Data.Created()) return inherited::dsFinalizeLocalID(aLocalID);
+  #else
+  // still check for DBAPi to be ready at this point, because when peer messes up protocol, we
+  // can get here before the datastore has been initialized at all
+  if (!fDBApi_Data.Created()) return false; // no dataset loaded -> all localids are final (from last session)
   #endif
-
+  
   TDB_Api_Str finalizedID;
   localstatus sta = fDBApi_Data.FinalizeLocalID(aLocalID.c_str(),finalizedID);
   if (sta==LOCERR_OK && !finalizedID.empty()) {

@@ -3126,7 +3126,7 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
     if (IS_CLIENT) {
       #ifdef SYSYNC_CLIENT
       // - now pending maps (unsent ones)
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMap as mapentry_pendingmap",(long)fPendingAddMaps.size()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMaps as mapentry_pendingmap",(long)fPendingAddMaps.size()));
       for (spos=fPendingAddMaps.begin();spos!=fPendingAddMaps.end();spos++) {
         string locID = (*spos).first;
         dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
