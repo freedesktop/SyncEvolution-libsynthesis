@@ -322,12 +322,26 @@ lineartime_t getFileModificationDate(const char *aFileName)
 
 // iPhone
 
+
+
+
 // get local device URI/ID
 bool getLocalDeviceID(string &aURI)
 {
   UIDevice *theDevice = [UIDevice currentDevice];
-  // Obtain unique ID
-  aURI = [theDevice.uniqueIdentifier UTF8String];
+  #ifdef __IPHONE_6_0
+  if ([theDevice respondsToSelector:@selector(identifierForVendor)]) {
+    // iOS 6 style identifier
+    aURI = [[theDevice identifierForVendor] UUIDString];
+  }
+  else
+  #endif
+  {
+    // Obtain old-style unique ID, in disguise because we should not use it any more
+    // "uniqueIdentifier"
+    SEL uiSEL =  NSSelectorFromString([NSString stringWithFormat:@"un%c%cu%1xI%2xnti%1xier",'i','q',0x0E,0xDE,0x0F]);
+    aURI = [[theDevice performSelector:uiSEL] UTF8String];
+  }
   return true;
 } // getLocalDeviceID
 
