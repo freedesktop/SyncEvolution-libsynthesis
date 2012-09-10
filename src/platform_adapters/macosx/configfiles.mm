@@ -332,7 +332,7 @@ bool getLocalDeviceID(string &aURI)
   #ifdef __IPHONE_6_0
   if ([theDevice respondsToSelector:@selector(identifierForVendor)]) {
     // iOS 6 style identifier
-    aURI = [[theDevice identifierForVendor] UUIDString];
+    aURI = [[[theDevice identifierForVendor] UUIDString] UTF8String];
   }
   else
   #endif
