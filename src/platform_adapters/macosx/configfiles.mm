@@ -320,29 +320,40 @@ lineartime_t getFileModificationDate(const char *aFileName)
 
 #ifdef MOBOSX
 
-// iPhone
-
-
-
+// iOS
 
 // get local device URI/ID
 bool getLocalDeviceID(string &aURI)
 {
   UIDevice *theDevice = [UIDevice currentDevice];
+  NSString *deviceID = nil;
   #ifdef __IPHONE_6_0
   if ([theDevice respondsToSelector:@selector(identifierForVendor)]) {
     // iOS 6 style identifier
-    aURI = [[[theDevice identifierForVendor] UUIDString] UTF8String];
+    NSUUID *ifv = [theDevice identifierForVendor];
+    if (ifv) {
+      deviceID = [ifv UUIDString];
+      if (deviceID && [deviceID isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
+        deviceID = nil; // not valid, forget it!
+      }
+    }
   }
-  else
   #endif
-  {
+  if (deviceID==nil) {
     // Obtain old-style unique ID, in disguise because we should not use it any more
     // "uniqueIdentifier"
     SEL uiSEL =  NSSelectorFromString([NSString stringWithFormat:@"un%c%cu%1xI%2xnti%1xier",'i','q',0x0E,0xDE,0x0F]);
-    aURI = [[theDevice performSelector:uiSEL] UTF8String];
+    deviceID = [theDevice performSelector:uiSEL];
   }
-  return true;
+  // now return if ok
+  if (deviceID) {
+    aURI = [deviceID UTF8String];
+    return true;
+  }
+  else {
+    aURI = "iOSDev-without-unique-ID";
+    return false; // no unique device ID
+  }
 } // getLocalDeviceID
 
 #else
