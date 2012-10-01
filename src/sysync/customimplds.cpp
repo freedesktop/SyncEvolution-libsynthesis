@@ -1115,7 +1115,9 @@ localstatus TCustomImplDS::dsAfterStateChange(TLocalEngineDSState aOldState,TLoc
     #endif
     // reset in case that we restart
     DeleteSyncSet();
+    #ifdef BASED_ON_BINFILE_CLIENT
     fSyncSetLoaded=false;
+    #endif
   }
   // let inherited do its stuff as well
   return inherited::dsAfterStateChange(aOldState,aNewState);

@@ -835,6 +835,31 @@ string TSyncAgent::getDeviceType(void)
 } // TSyncAgent::getDeviceType
 
 
+
+bool TSyncAgent::checkAllFromClientOnly()
+{
+  bool allFromClientOnly=false;
+  // Note: the map phase will not take place, if all datastores are in
+  //       send-to-server-only mode and we are not in non-conformant old
+  //       synthesis-compatible fCompleteFromClientOnly mode.
+  #ifdef SYSYNC_SERVER
+  if (!fCompleteFromClientOnly)
+  #endif
+  {
+    // let all local datastores know that message has ended
+    allFromClientOnly=true;
+    for (TLocalDataStorePContainer::iterator pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
+      // check sync modes
+      if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
+        allFromClientOnly=false;
+        break;
+      }
+    }
+  }
+  return allFromClientOnly;
+}
+
+
 #ifdef SYSYNC_CLIENT
 
 // initialize the client session and link it with the SML toolkit
@@ -1538,26 +1563,6 @@ bool TSyncAgent::ClientMessageStarted(SmlSyncHdrPtr_t aContentP, TStatusCommand 
   return true;
 } // TSyncAgent::ClientMessageStarted
 
-
-bool TSyncAgent::checkAllFromClientOnly()
-{
-  bool allFromClientOnly=false;
-  // Note: the map phase will not take place, if all datastores are in
-  //       send-to-server-only mode and we are not in non-conformant old
-  //       synthesis-compatible fCompleteFromClientOnly mode.
-  if (!fCompleteFromClientOnly) {
-    // let all local datastores know that message has ended
-    allFromClientOnly=true;
-    for (TLocalDataStorePContainer::iterator pos=fLocalDataStores.begin(); pos!=fLocalDataStores.end(); ++pos) {
-      // check sync modes
-      if ((*pos)->isActive() && (*pos)->getSyncMode()!=smo_fromclient) {
-        allFromClientOnly=false;
-        break;
-      }
-    }
-  }
-  return allFromClientOnly;
-}
 
 // determines new package states and sets fInProgress
 void TSyncAgent::ClientMessageEnded(bool aIncomingFinal)
@@ -3172,7 +3177,7 @@ TSyError TSyncAgent::ServerSessionStep(uInt16 &aStepCmd, TEngineProgressInfo *aI
       // - now done
       fServerEngineState = ses_done;
       // fall through to done state
-    
+
     // Done state
     case ses_done :
       // session done, nothing happens any more
@@ -3977,8 +3982,8 @@ static const TStructFieldInfo ServerParamFieldInfos[] =
   #endif
   { "restartsync", VALTYPE_INT8, true, 0, 0, &readRestartSync, &writeRestartSync },
   // write into debug log
-  { "errorMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeErrorMsg },  
-  { "debugMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeDebugMsg }, 
+  { "errorMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeErrorMsg },
+  { "debugMsg", VALTYPE_TEXT, true, 0, 0, NULL, &writeDebugMsg },
 };
 
 // get table describing the fields in the struct
