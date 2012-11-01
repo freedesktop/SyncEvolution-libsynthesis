@@ -1115,7 +1115,9 @@ localstatus TCustomImplDS::dsAfterStateChange(TLocalEngineDSState aOldState,TLoc
     #endif
     // reset in case that we restart
     DeleteSyncSet();
+    #ifdef BASED_ON_BINFILE_CLIENT
     fSyncSetLoaded=false;
+    #endif
   }
   // let inherited do its stuff as well
   return inherited::dsAfterStateChange(aOldState,aNewState);
@@ -3126,7 +3128,7 @@ localstatus TCustomImplDS::SaveAdminData(bool aSessionFinished, bool aSuccessful
     if (IS_CLIENT) {
       #ifdef SYSYNC_CLIENT
       // - now pending maps (unsent ones)
-      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMap as mapentry_pendingmap",(long)fPendingAddMaps.size()));
+      PDEBUGPRINTFX(DBG_ADMIN+DBG_EXOTIC,("SaveAdminData: adding %ld entries from fPendingAddMaps as mapentry_pendingmap",(long)fPendingAddMaps.size()));
       for (spos=fPendingAddMaps.begin();spos!=fPendingAddMaps.end();spos++) {
         string locID = (*spos).first;
         dsFinalizeLocalID(locID); // make sure we have the permanent version in case datastore implementation did deliver temp IDs
@@ -3693,8 +3695,8 @@ bool TCustomImplDS::storeField(
     timecontext_t tctx = TCTX_UNKNOWN;
     // modify time zone if params contain a TZNAME
     if (paramScan(aParams,"TZNAME",s)) {
-      // convert to time zone context
-      TimeZoneNameToContext(s.c_str(), tctx, tsfP->getGZones());
+      // convert to time zone context (olson allowed)
+      TimeZoneNameToContext(s.c_str(), tctx, tsfP->getGZones(), true);
     }
     // now parse text string into field
     tsfP->setAsISO8601(aValue, tctx, false);
