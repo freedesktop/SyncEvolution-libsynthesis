@@ -1,7 +1,7 @@
 /* SySync entirely global options (affects all targets)
  * ====================================================
  *
- * (c) 2001-2011 by Synthesis AG + plan44.ch
+ * (c) 2001-2012 by Synthesis AG + plan44.ch
  *
  */
 
@@ -76,8 +76,8 @@
 #endif
 
 #ifndef SYSYNC_BUILDNUMBER
-#define SYSYNC_BUILDNUMBER          45
-#define SYSYNC_BUILDNUMBER_TXT     "45"
+#define SYSYNC_BUILDNUMBER          46
+#define SYSYNC_BUILDNUMBER_TXT     "46"
 #endif
 
 
