@@ -37,8 +37,8 @@
 #endif
 // global expiry date (usually applies for unregistered demos or regular products in trial mode)
 #ifndef EXPIRY_YEAR
-  #define EXPIRY_DATE_STRING "2014-03-31"
-  #define EXPIRY_YEAR 2014
+  #define EXPIRY_DATE_STRING "2016-03-31"
+  #define EXPIRY_YEAR 2016
   #define EXPIRY_MONTH 3
   #define EXPIRY_DAY 31
 #endif
@@ -76,8 +76,8 @@
 #endif
 
 #ifndef SYSYNC_BUILDNUMBER
-#define SYSYNC_BUILDNUMBER          46
-#define SYSYNC_BUILDNUMBER_TXT     "46"
+#define SYSYNC_BUILDNUMBER          47
+#define SYSYNC_BUILDNUMBER_TXT     "47"
 #endif
 
 
