@@ -19,6 +19,7 @@
 #include "generic_types.h"
 #include "platform_mutex.h"
 #include "sysync.h"
+#include "sysync_noncopyable.h"
 
 namespace sysync {
 
@@ -106,7 +107,7 @@ public:
 
 
 /// @brief Debug output channel
-class TDbgOut {
+class TDbgOut : noncopyable {
   // construction/destruction
 private:
   bool fDestructed; // flag which will be set once destruct() has been called - by the outermost derivate's destructor
@@ -203,7 +204,7 @@ class TDebugLogger;
 class GZones;
 
 /// @brief Debug logger base class (without subthread handling)
-class TDebugLoggerBase {
+class TDebugLoggerBase : noncopyable {
 public:
   // constructor/destructor
   TDebugLoggerBase(GZones *aGZonesP);
