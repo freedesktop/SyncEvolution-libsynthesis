@@ -18,6 +18,7 @@
 
 #include "generic_types.h"
 #include "platform_mutex.h"
+#include "platform_thread.h"
 #include "sysync.h"
 #include "sysync_noncopyable.h"
 
@@ -392,7 +393,7 @@ private:
   /// @brief find or create logger for subthread
   TDebugLoggerBase *getThreadLogger(bool aCreateNew=true);
   // Variables
-  uInt32 fMainThreadID;
+  uIntArch fMainThreadID;
   TSubThreadLog *fSubThreadLogs; // the linked list of active subthreads
   TDebugLoggerBase *fSilentLoggerP; // a silent (inactive) logger required for suppressed subthreads
   #endif

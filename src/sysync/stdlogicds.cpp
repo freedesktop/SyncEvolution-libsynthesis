@@ -474,9 +474,9 @@ bool TStdLogicDS::threadedStartSync(void)
   PDEBUGPRINTFX(DBG_HOT,(
     "******* started &html;<a href=\"%s_%lu%s\" target=\"_blank\">&html;background thread id=%lu&html;</a>&html; for reading sync set",
     getDbgLogger()->getDebugFilename(), // href base
-    fStartSyncThread.getid(), // plus thread
+    (long unsigned)fStartSyncThread.getid(), // plus thread
     getDbgLogger()->getDebugExt(), // plus extension
-    fStartSyncThread.getid()
+    (long unsigned)fStartSyncThread.getid()
   ));
   #endif
   return true; // started ok
@@ -569,7 +569,7 @@ localstatus TStdLogicDS::startDataAccessForServer(void)
       if (fStartSyncThread.waitfor(t<0 ? 0 : t * 1000)) {
         // background thread has terminated
         sta = fStartSyncThread.exitcode();
-        PDEBUGPRINTFX(DBG_HOT,("******* background thread for startSync() terminated with exit code=%ld, status sta=%hd", fStartSyncThread.exitcode(),sta));
+        PDEBUGPRINTFX(DBG_HOT,("******* background thread for startSync() terminated with exit code=%ld, status sta=%hd", (long)fStartSyncThread.exitcode(),sta));
         // initialisation is now complete
         fInitializing=false;
       } // if
