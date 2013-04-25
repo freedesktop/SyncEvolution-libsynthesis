@@ -47,7 +47,7 @@ void* PosixThreadFunc(void *aParam)
   // get Thread Object pointer
   TThreadObject *threadObjP = static_cast<TThreadObject *>(aParam);
   // call thread execution method
-  int retval = (int)threadObjP->execute();
+  uInt32 retval = threadObjP->execute();
   // signal thread termination condition
   pthread_mutex_lock  (&(threadObjP->fDoneCondMutex));
   pthread_cond_signal (&(threadObjP->fDoneCond));
@@ -57,8 +57,10 @@ void* PosixThreadFunc(void *aParam)
   if (threadObjP->fAutoDisposeThreadObj) {
     delete threadObjP;
   }
-  // Exit thread now
-  pthread_exit((void *)retval);
+  // Exit thread now.
+  // Avoid "cast to pointer from integer of different size" warning with
+  // intermediate cast.
+  pthread_exit((void *)(uIntArch)retval);
   return NULL;
 } // PosixThreadFunc
 
