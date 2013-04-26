@@ -154,6 +154,52 @@ void TThreadObject::kill(void)
   }
 } // TThreadObject::kill
 
+static int CondTimedWait(pthread_cond_t *cond, pthread_mutex_t *mutex, bool &aTerminated, long aMilliSecondsToWait)
+{
+  int retval;
+  if (aMilliSecondsToWait<0) {
+    // wait indefinitely
+    retval= pthread_cond_wait(cond, mutex);
+  }
+  else {
+    // wait specified amount of time
+    struct timespec timeout;
+
+    /* this conversion might be implemented in time module later */
+    #define milli 1E-3
+    #define msToLinearTimeFactor (secondToLinearTimeFactor*milli)     // is usually 1 again
+
+    lineartime_t ltm = getSystemNowAs(TCTX_UTC,NULL) - UnixToLineartimeOffset; // starting 1970
+    ltm = (lineartime_t)(ltm/msToLinearTimeFactor);               // as milliSeconds
+    ltm+= aMilliSecondsToWait;                           // add the offset from now
+
+    timeout.tv_sec = (unsigned int)(ltm * milli);
+    timeout.tv_nsec= ( ltm % 1000 )*1000000; // ns
+
+    retval= pthread_cond_timedwait(cond, mutex, &timeout);
+  } /* if */
+
+  return retval;
+}
+
+extern "C"
+{
+  /**
+   * Wait until thread terminates or timeout occurs.
+   *
+   * Can use pthread_cond_[timed]wait with the given condition variable
+   * and mutex to be worken up by the terminating thread. However, aTerminated
+   * must be checked before each such pthread call, because the thread may
+   * already have signaled termination.
+   *
+   * If the implementation does not use pthread_cond_[timed]wait, then it
+   * must unlock the mutex. Otherwise the thread will never be able to lock
+   * it and set aTerminated.
+   *
+   * @param aMilliSecondsToWait  < 0 for infinite wait, otherwise maximum time to wait since entering the function in ms
+   */
+  int (*SySync_CondTimedWait)(pthread_cond_t *cond, pthread_mutex_t *mutex, bool &aTerminated, long aMilliSecondsToWait) = CondTimedWait;
+}
 
 // waits for the thread to stop
 bool TThreadObject::waitfor(sInt32 aMilliSecondsToWait)
@@ -165,27 +211,7 @@ bool TThreadObject::waitfor(sInt32 aMilliSecondsToWait)
   // wait for termination condition of the thread
   pthread_mutex_lock(&fDoneCondMutex);
   if (!fTerminated) { // catch also, if signalled already
-    if (aMilliSecondsToWait<0) {
-      // wait indefinitely
-      retval= pthread_cond_wait(&fDoneCond, &fDoneCondMutex);
-    }
-    else {
-      // wait specified amount of time
-      struct timespec timeout;
-
-      /* this conversion might be implemented in time module later */
-      #define milli 1E-3
-      #define msToLinearTimeFactor (secondToLinearTimeFactor*milli)     // is usually 1 again
-
-      lineartime_t ltm = getSystemNowAs(TCTX_UTC,NULL) - UnixToLineartimeOffset; // starting 1970
-                   ltm = (lineartime_t)(ltm/msToLinearTimeFactor);               // as milliSeconds
-                   ltm+= aMilliSecondsToWait;                           // add the offset from now
-
-      timeout.tv_sec = (unsigned int)(ltm * milli);
-      timeout.tv_nsec= ( ltm % 1000 )*1000000; // ns
-
-      retval= pthread_cond_timedwait(&fDoneCond, &fDoneCondMutex, &timeout);
-    } /* if */
+    retval= SySync_CondTimedWait(&fDoneCond, &fDoneCondMutex, fTerminated, aMilliSecondsToWait);
   } /* if */
   pthread_mutex_unlock(&fDoneCondMutex);
   if (retval!=0) return false; // check if thread has completed => no, not yet
