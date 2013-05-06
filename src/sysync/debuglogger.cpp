@@ -482,6 +482,8 @@ TDebugLoggerBase::TDebugLoggerBase(GZones *aGZonesP) :
   fIndent=0;
   fBlockHistory=NULL; // no Block open yet
   fOutStarted=false; // not yet started
+  fBlockNo=0;
+  fGZonesP=NULL;
   fOutputLoggerP=NULL; // no redirected output yet
 } // TDebugLoggerBase::TDebugLoggerBase
 
