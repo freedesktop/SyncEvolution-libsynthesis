@@ -1482,6 +1482,18 @@ TDebugLogger::~TDebugLogger()
 
 #ifdef MULTI_THREAD_SUPPORT
 
+void TDebugLogger::setOptions(const TDbgOptions *aDbgOptionsP)
+{
+  TDebugLoggerBase::setOptions(aDbgOptionsP);
+  TSubThreadLog* subThreadP = fSubThreadLogs;
+  while (subThreadP) {
+    if (subThreadP->fSubThreadLogger) {
+      subThreadP->fSubThreadLogger->setOptions(aDbgOptionsP);
+    }
+    subThreadP = subThreadP->fNext;
+  }
+}
+
 /// @brief find (and possibly delete) subthread record
 /// @param aAndRemove[in] if set, the subthread record will be removed in a thread safe way
 ///        IF AND ONLY IF aThreadID is the calling thread (i.e. only own thread may be removed from the list)!

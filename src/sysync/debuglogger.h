@@ -220,7 +220,7 @@ public:
   /// @brief check if an output channel is already established other than with default values
   bool outputEstablished(void) { return fOutStarted; };
   /// @brief set debug options
-  void setOptions(const TDbgOptions *aDbgOptionsP) { fDbgOptionsP=aDbgOptionsP; };
+  virtual void setOptions(const TDbgOptions *aDbgOptionsP) { fDbgOptionsP = aDbgOptionsP; };
   /// @brief get debug options pointer
   const TDbgOptions *getOptions(void) { return fDbgOptionsP; };
   // @brief convenience version for getting time
@@ -363,6 +363,8 @@ public:
   virtual ~TDebugLogger();
   // methods
   #ifdef MULTI_THREAD_SUPPORT
+  /// @brief set debug options in this logger and all sub thread loggers
+  virtual void setOptions(const TDbgOptions *aDbgOptionsP);
   virtual void DebugPuts(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aText, stringSize aTextSize=0, bool aPreFormatted=false);
   virtual void DebugVPrintf(TDBG_LOCATION_PROTO uInt32 aDbgMask, cAppCharP aFormat, va_list aArgs);
   virtual void DebugVOpenBlock(TDBG_LOCATION_PROTO cAppCharP aBlockName, cAppCharP aBlockTitle, bool aCollapsed, cAppCharP aBlockFmt, va_list aArgs);
