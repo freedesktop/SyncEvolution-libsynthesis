@@ -39,6 +39,15 @@
 
 using namespace sysync;
 
+namespace sysync {
+void TSmlCommandPContainerClear(TSmlCommandPContainer &aContainer)
+{
+  while (!aContainer.empty()) {
+    delete aContainer.front();
+    aContainer.pop_front();
+  }
+}
+}
 
 /* command name list, used for cmdRef */
 
@@ -374,8 +383,27 @@ void TSmlCommand::issueStatusCommand(TSyError aStatusCode)
 
 TSmlCommand::~TSmlCommand()
 {
+  TSmlCommandPContainerClear(fPendingStatusReplies);
   PDEBUGPRINTFX(DBG_PROTO,("Deleted command '%s' (%s MsgID=%ld, CmdID=%ld)",getName(),fOutgoing ? "outgoing" : "incoming", (long)fMsgID,(long)fCmdID));
 } // TSmlCommand::~TSmlCommand
+
+void TSmlCommand::queueStatusCmd(TSmlCommand *aSyncCommandP)
+{
+  fPendingStatusReplies.push_back(aSyncCommandP);
+}
+
+bool TSmlCommand::hasQueuedStatusCmds() const
+{
+  return !fPendingStatusReplies.empty();
+}
+
+void TSmlCommand::transferQueuedStatusCmds(TSmlCommandPContainer &commands)
+{
+  while (!fPendingStatusReplies.empty()) {
+    commands.push_back(fPendingStatusReplies.front());
+    fPendingStatusReplies.pop_front();
+  }
+}
 
 /* end of TSmlCommand implementation */
 
@@ -2260,6 +2288,24 @@ missingeoc:
   return MISSING_END_OF_CHUNK_ERROR;
 } // TSyncOpCommand::AddNextChunk
 
+
+// SyncOp commands can execute out of order except when they
+// contain chunked items, because then we would have to issue
+// a 213 Status immediately, which would violate the ordering
+// of Status replies.
+bool TSyncOpCommand::canExecuteOutOfOrder()
+{
+  SmlItemListPtr_t *itemnodePP=&(fSyncOpElementP->itemList);
+  while (*itemnodePP) {
+    SmlItemListPtr_t thisitemnode = *itemnodePP;
+    if (thisitemnode->item &&
+        thisitemnode->item->flags & SmlMoreData_f) {
+      return false;
+    }
+    itemnodePP = &(thisitemnode->next);
+  }
+  return true;
+}
 
 // execute command (perform real actions, generate status)
 // returns true if command has executed and can be deleted

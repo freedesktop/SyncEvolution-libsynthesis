@@ -35,7 +35,6 @@ class TRemoteDataStore;
 // default command size
 #define DEFAULTCOMMANDSIZE 200;
 
-
 // Command Types (Note: not only strictly commands, but all
 // SyncML protocol items that need command-like processin
 // are wrapped in a command, too, e.g. "SyncHdr"
@@ -91,6 +90,9 @@ public:
   #endif
   // - analyze command (but do not yet execute)
   virtual bool analyze(TPackageStates aPackageState) { fPackageState=aPackageState; return true; }; // returns false if command is bad and cannot be executed
+  // - execute() can be called even if there are other already queued commands.
+  //   True by default, exceptions must be defined explicitly.
+  virtual bool canExecuteOutOfOrder() { return true; }
   // - execute command (perform real actions, generate status)
   virtual bool execute(void); // returns true if command could execute, false if it must be queued for later finishing (next message)
   // - get number of bytes that will be still available in the workspace after
@@ -159,6 +161,9 @@ public:
   virtual bool isSyncOp(void) { return false; };
   virtual bool neverIgnore(void) { return false; }; // normal commands should be ignored when in fIgnoreIncomingCommands state
   virtual bool statusEssential(void) { return true; }; // normal commands MUST receive status
+  void queueStatusCmd(TSmlCommand *aSyncCommandP); // to be called by TSyncSession::issuePtr()
+  bool hasQueuedStatusCmds() const;
+  void transferQueuedStatusCmds(TSmlCommandPContainer &commands); // transfer ownership of pending commands to caller
 protected:
   // helper methods for derived classes
   // - get name of certain command
@@ -207,6 +212,7 @@ protected:
   bool fAllowFailure;
 private:
   uInt16 fWaitingForStatus; // count for how many statuses a command is waiting
+  TSmlCommandPContainer fPendingStatusReplies; // Status commands which could not be sent yet.
 }; // TSmlCommand
 
 
@@ -410,6 +416,7 @@ public:
   virtual ~TSyncOpCommand();
   virtual bool isSyncOp() { return true; };
   virtual bool analyze(TPackageStates aPackageState);
+  virtual bool canExecuteOutOfOrder();
   virtual bool execute(void);
   #ifndef USE_SML_EVALUATION
   // - get (approximated) message size required for sending it

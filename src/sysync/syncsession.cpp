@@ -1021,6 +1021,7 @@ TSyncSession::TSyncSession(
   #ifdef SYNCSTATUS_AT_SYNC_CLOSE
   fSyncCloseStatusCommandP=NULL;
   #endif
+  fCmdIncoming=NULL;
   // we do not know anything about remote datastores yet
   fRemoteDevInfKnown=false;
   fRemoteDataStoresKnown=false;
@@ -1568,6 +1569,7 @@ void TSyncSession::InternalResetSessionEx(bool terminationCall)
   // reset session status
   fIncomingState=psta_idle; // no incoming package status yet
   fCmdIncomingState=psta_idle;
+  fCmdIncoming=NULL;
   fOutgoingState=psta_idle; // no outgoing package status yet
   fRestarting=false;
   fNextMessageRequests=0; // no pending next message requests
@@ -1944,6 +1946,16 @@ bool TSyncSession::issuePtr(
       "Cmd=%s",
       aSyncCommandP->getName()
     ));
+    if (fCmdIncoming &&
+        aSyncCommandP->getCmdType()==scmd_status) {
+      // Queue instead of sending immediately, see TSyncSession::process().
+      fCmdIncoming->queueStatusCmd(aSyncCommandP);
+      DEBUGPRINTFX(DBG_PROTO,("%s: queue reply to %s because of pending commands",
+        aSyncCommandP->getName(),
+        fCmdIncoming->getName()
+      ));
+      goto endissue;
+    }
     SYSYNC_TRY {
       // check for not-to-be-sent commands
       if (aSyncCommandP->getDontSend()) {
@@ -2537,13 +2549,35 @@ Ret_t TSyncSession::process(TSmlCommand *aSyncCommandP)
             delayExecUntilNextRequest(aSyncCommandP);
           }
           else {
+            if (fDelayedExecutionCommands.size()>0 &&
+                !aSyncCommandP->canExecuteOutOfOrder()) {
+              PDEBUGPRINTFX(DBG_SESSION,("%s: command cannot be executed with other commands already delayed -> flush queue",aSyncCommandP->getName()));
+              fCmdIncoming = NULL;
+              tryDelayedExecutionCommands();
+            }
+
             // command is ok, execute it
             fCmdIncomingState=aSyncCommandP->getPackageState();
+            // Queue Status commands issued during execute()?
+            if (fDelayedExecutionCommands.size()>0 &&
+                aSyncCommandP->getCmdType()!=scmd_status &&
+                aSyncCommandP->getCmdType()!=scmd_alert) {
+              // Yes, let issueRootPtr() attach to queue in aSyncCommandP and issue later
+              // in tryDelayedExecutionCommands() resp. executeDelayedCmd().
+              fCmdIncoming=aSyncCommandP;
+            } else {
+              fCmdIncoming=NULL;
+            }
             if (aSyncCommandP->execute()) {
               // execution finished, can be deleted
               if (aSyncCommandP->finished()) {
-                PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",aSyncCommandP->getName()));
-                delete aSyncCommandP;
+                if (aSyncCommandP->hasQueuedStatusCmds()) {
+                  PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution with pending Status replies -> queue command",aSyncCommandP->getName()));
+                  delayExecUntilNextRequest(aSyncCommandP);
+                } else {
+                  PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",aSyncCommandP->getName()));
+                  delete aSyncCommandP;
+                }
               }
               else {
                 PDEBUGPRINTFX(DBG_SESSION,("%s: command NOT finished execution, NOT deleting now",aSyncCommandP->getName()));
@@ -2557,9 +2591,11 @@ Ret_t TSyncSession::process(TSmlCommand *aSyncCommandP)
             }
           } // if not ignored
           // successfully processed
+          fCmdIncoming=NULL;
           PDEBUGENDBLOCK("processCmd");
         } // try
         SYSYNC_CATCH (...)
+          fCmdIncoming=NULL;
           PDEBUGENDBLOCK("processCmd");
           SYSYNC_RETHROW;
         SYSYNC_ENDCATCH
@@ -2760,11 +2796,11 @@ bool TSyncSession::onlyItemChangesPending()
 
 bool TSyncSession::tryDelayedExecutionCommands()
 {
-  TSmlCommandPContainer::iterator pos=fDelayedExecutionCommands.begin();
   bool syncEndAfterSyncPackageEnd=false;
-  while (pos!=fDelayedExecutionCommands.end()) {
+  // Always try issuing the first command until queue is empty.
+  while (!fDelayedExecutionCommands.empty()) {
     // execute again
-    TSmlCommand *cmdP = (*pos);
+    TSmlCommand *cmdP = fDelayedExecutionCommands.front();
     // command ok so far (has cmdid, so we can refer to it)
     PDEBUGBLOCKFMT(("executeDelayedCmd","Re-executing command from delayed queue",
       "Cmd=%s|IncomingMsgID=%ld|CmdID=%ld",
@@ -2774,7 +2810,7 @@ bool TSyncSession::tryDelayedExecutionCommands()
     ));
     SYSYNC_TRY {
       fCmdIncomingState=cmdP->getPackageState();
-      if (cmdP->execute()) {
+      if (executeDelayedCmd(cmdP)) {
         // check if this was a syncend which was now executed AFTER the end of the incoming sync package
         if (cmdP->getCmdType()==scmd_syncend) {
           fDelayedExecSyncEnds--; // count executed syncend
@@ -2784,8 +2820,8 @@ bool TSyncSession::tryDelayedExecutionCommands()
         // execution finished, can be deleted
         PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",cmdP->getName()));
         delete cmdP;
-        // delete from queue and get next
-        pos=fDelayedExecutionCommands.erase(pos);
+        // delete from queue
+        fDelayedExecutionCommands.pop_front();
       }
       else {
         // command has not finished execution, must be retried after next incoming message
@@ -2802,6 +2838,39 @@ bool TSyncSession::tryDelayedExecutionCommands()
     SYSYNC_ENDCATCH
   }
   return syncEndAfterSyncPackageEnd;
+}
+
+bool TSyncSession::executeDelayedCmd(TSmlCommand *aCmdP)
+{
+  if (aCmdP->hasQueuedStatusCmds()) {
+    // The only way how such a command can end up in the queue is
+    // if it has finished earlier. Now we can try to issue the
+    // queued status replies, because all previous commands have
+    // been dealt with.
+    //
+    // Take over ownership of all queued status commands.
+    TSmlCommandPContainer statusCmds;
+    aCmdP->transferQueuedStatusCmds(statusCmds);
+    SYSYNC_TRY {
+      while (!statusCmds.empty()) {
+        TSmlCommand *statusCmdP=statusCmds.front();
+        statusCmds.pop_front();
+        // All commands for which we might queue statuses send
+        // them with default parameters (see synccommand.cpp).
+        // Therefore we can do the same here, without having to
+        // store the parameters.
+        issueRootPtr(statusCmdP);
+      }
+    }
+    SYSYNC_CATCH (...)
+    TSmlCommandPContainerClear(statusCmds);
+    SYSYNC_RETHROW;
+    SYSYNC_ENDCATCH
+    TSmlCommandPContainerClear(statusCmds);
+    return true;
+  } else {
+    return aCmdP->execute();
+  }
 }
 
 #ifdef __PALM_OS__
