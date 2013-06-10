@@ -2648,47 +2648,7 @@ Ret_t TSyncSession::processHeader(TSyncHeader *aSyncHdrP)
               delete aSyncHdrP;
               // now execute delayed commands (before executing new ones)
               PDEBUGPRINTFX(DBG_SESSION,("New message: Executing %ld delayed commands",(long)fDelayedExecutionCommands.size()));
-              TSmlCommandPContainer::iterator pos=fDelayedExecutionCommands.begin();
-              bool syncEndAfterSyncPackageEnd=false;
-              while (pos!=fDelayedExecutionCommands.end()) {
-                // execute again
-                TSmlCommand *cmdP = (*pos);
-                // command ok so far (has cmdid, so we can refer to it)
-                PDEBUGBLOCKFMT(("executeDelayedCmd","Re-executing command from delayed queue",
-                  "Cmd=%s|IncomingMsgID=%ld|CmdID=%ld",
-                  cmdP->getName(),
-                  (long)cmdP->getMsgID(),
-                  (long)cmdP->getCmdID()
-                ));
-                SYSYNC_TRY {
-                  fCmdIncomingState=cmdP->getPackageState();
-                  if (cmdP->execute()) {
-                    // check if this was a syncend which was now executed AFTER the end of the incoming sync package
-                    if (cmdP->getCmdType()==scmd_syncend) {
-                      fDelayedExecSyncEnds--; // count executed syncend
-                      if (cmdP->getPackageState()!=fIncomingState)
-                        syncEndAfterSyncPackageEnd=true; // remember that we had at least one
-                    }
-                    // execution finished, can be deleted
-                    PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",cmdP->getName()));
-                    delete cmdP;
-                    // delete from queue and get next
-                    pos=fDelayedExecutionCommands.erase(pos);
-                  }
-                  else {
-                    // command has not finished execution, must be retried after next incoming message
-                    PDEBUGPRINTFX(DBG_SESSION,("%s: command STILL NOT finished execution -> keep it (and all follwoing) in queue ",cmdP->getName()));
-                    // keep this and all subsequent commands in the queue
-                    PDEBUGENDBLOCK("executeDelayedCmd");
-                    break;
-                  }
-                  PDEBUGENDBLOCK("executeDelayedCmd");
-                } // try
-                SYSYNC_CATCH (...)
-                  PDEBUGENDBLOCK("executeDelayedCmd");
-                  SYSYNC_RETHROW;
-                SYSYNC_ENDCATCH
-              }
+              bool syncEndAfterSyncPackageEnd=tryDelayedExecutionCommands();
               // check if all delayed commands are executed now
               if (fDelayedExecSyncEnds<=0 && syncEndAfterSyncPackageEnd) {
                 // there was at least one queued syncend executed AFTER end of incoming sync package
@@ -2769,6 +2729,53 @@ Ret_t TSyncSession::processHeader(TSyncHeader *aSyncHdrP)
   PDEBUGENDBLOCK("processHdr");
   return SML_ERR_OK;
 } // TSyncSession::processHeader
+
+
+bool TSyncSession::tryDelayedExecutionCommands()
+{
+  TSmlCommandPContainer::iterator pos=fDelayedExecutionCommands.begin();
+  bool syncEndAfterSyncPackageEnd=false;
+  while (pos!=fDelayedExecutionCommands.end()) {
+    // execute again
+    TSmlCommand *cmdP = (*pos);
+    // command ok so far (has cmdid, so we can refer to it)
+    PDEBUGBLOCKFMT(("executeDelayedCmd","Re-executing command from delayed queue",
+      "Cmd=%s|IncomingMsgID=%ld|CmdID=%ld",
+      cmdP->getName(),
+      (long)cmdP->getMsgID(),
+      (long)cmdP->getCmdID()
+    ));
+    SYSYNC_TRY {
+      fCmdIncomingState=cmdP->getPackageState();
+      if (cmdP->execute()) {
+        // check if this was a syncend which was now executed AFTER the end of the incoming sync package
+        if (cmdP->getCmdType()==scmd_syncend) {
+          fDelayedExecSyncEnds--; // count executed syncend
+          if (cmdP->getPackageState()!=fIncomingState)
+            syncEndAfterSyncPackageEnd=true; // remember that we had at least one
+        }
+        // execution finished, can be deleted
+        PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",cmdP->getName()));
+        delete cmdP;
+        // delete from queue and get next
+        pos=fDelayedExecutionCommands.erase(pos);
+      }
+      else {
+        // command has not finished execution, must be retried after next incoming message
+        PDEBUGPRINTFX(DBG_SESSION,("%s: command STILL NOT finished execution -> keep it (and all follwoing) in queue ",cmdP->getName()));
+        // keep this and all subsequent commands in the queue
+        PDEBUGENDBLOCK("executeDelayedCmd");
+        break;
+      }
+      PDEBUGENDBLOCK("executeDelayedCmd");
+    } // try
+    SYSYNC_CATCH (...)
+      PDEBUGENDBLOCK("executeDelayedCmd");
+      SYSYNC_RETHROW;
+    SYSYNC_ENDCATCH
+  }
+  return syncEndAfterSyncPackageEnd;
+}
 
 #ifdef __PALM_OS__
 #pragma segment session2
