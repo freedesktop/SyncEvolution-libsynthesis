@@ -2520,7 +2520,13 @@ Ret_t TSyncSession::process(TSmlCommand *aSyncCommandP)
             delete aSyncCommandP;
           }
           else if (
-            fStrictExecOrdering &&
+                   // Be extra careful: even if fStrictExecOrdering=false, still delay
+                   // further commands if they would overtake non-trivial commands in the
+                   // delay queue. This solves a particular problem where the Sync command
+                   // gets delayed due to slow TStdLogicDS::startDataAccessForServer().
+                   // The server then sees a second (fake?!) Sync command (incoming MsgID=2, CmdID=0)
+                   // which it must delay instead of executing it.
+            (fStrictExecOrdering || !onlyItemChangesPending()) &&
             fDelayedExecutionCommands.size()>0 &&
             aSyncCommandP->getCmdType()!=scmd_status &&
             aSyncCommandP->getCmdType()!=scmd_alert
@@ -2730,6 +2736,27 @@ Ret_t TSyncSession::processHeader(TSyncHeader *aSyncHdrP)
   return SML_ERR_OK;
 } // TSyncSession::processHeader
 
+bool TSyncSession::onlyItemChangesPending()
+{
+  TSmlCommandPContainer::iterator pos=fDelayedExecutionCommands.begin();
+  while (pos!=fDelayedExecutionCommands.end()) {
+    TSmlCommand *cmdP = *pos;
+    switch (cmdP->getCmdType()) {
+      // A white-list of commands perform simple data changes.
+      // These commands can be overtaken by the execution of
+      // other commands, see TSyncSession::process().
+    case scmd_add:
+    case scmd_delete:
+    case scmd_replace:
+    case scmd_copy:
+      break;
+    default:
+      return false;
+    }
+    ++pos;
+  }
+  return true;
+}
 
 bool TSyncSession::tryDelayedExecutionCommands()
 {
@@ -3856,10 +3883,16 @@ bool TSyncSession::processSyncOpItem(
   ));
   // now let datastore handle it
   bool regular = fLocalSyncDatastoreP->engProcessSyncOpItem(aSyncOp, aItemP, aMetaP, aStatusCommand);
+  TSyError statuscode = aStatusCommand.getStatusCode();
+  if (statuscode == LOCERR_AGAIN) {
+    PDEBUGPRINTFX(DBG_DATA,("Queueing  %s-operation for later.", SyncOpNames[aSyncOp]));
+    aQueueForLater=true; // re-execute later...
+    return true; // ...but otherwise ok
+  }
   #ifdef SCRIPT_SUPPORT
-  // let script check status code
+  // let script check status code if the operation completed
   TErrorFuncContext errctx;
-  errctx.statuscode = aStatusCommand.getStatusCode();
+  errctx.statuscode = statuscode;
   errctx.newstatuscode = errctx.statuscode;
   errctx.syncop = aSyncOp;
   errctx.datastoreP = fLocalSyncDatastoreP;
@@ -5385,6 +5418,27 @@ Ret_t TSyncSession::EndMessage(Boolean_t final)
   // Now dump XML translation of incoming message
   XMLTranslationIncomingEnd();
   #endif
+  // Flush pending item change commands?
+  //
+  // Don't retry other commands here (like a pending Sync), because
+  // the whole purpose of delaying Sync is to give a preliminary
+  // answer to the peer before finishing the command.
+  //
+  // Delaying them although we are expected to finish (final set!)
+  // would have two drawbacks:
+  // - Requires another message roundtrip.
+  // - More complex state transitions which is known to not work:
+  //   Synthesis<->Synthesis sync did not complete correctly when the
+  //   server forced the client to send another message, because client
+  //   and server did not agree on the end of the session.  (see
+  //   "[os-libsynthesis] temporary local ID + FinalizeLocalID").
+  if (final && onlyItemChangesPending() && !fDelayedExecutionCommands.empty()) {
+    // TODO: tell stores explicitly that we really need the results now
+    // instead of relying on the indirect semantic of "second call must
+    // succeed".
+    tryDelayedExecutionCommands();
+  }
+
   // End of incoming message
   PDEBUGPRINTFX(DBG_HOT,(
     "=================> Finished processing incoming message #%ld (%sfinal), request=%ld",
