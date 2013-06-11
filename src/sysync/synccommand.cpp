@@ -2672,6 +2672,9 @@ bool TSyncOpCommand::execute(void)
         thisitemnode->next=NULL; // disconnect subsequent nodes
         thisitemnode->item=NULL; // disconnect item (which is now in tobequeueditems list)
         smlFreeItemList(thisitemnode); // dispose of node
+        // - and the status command
+        delete statusCmdP;
+        statusCmdP = NULL;
       }
       else {
         // count incoming net data
