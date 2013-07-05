@@ -260,7 +260,16 @@ public:
     }
   }; // func_CompareFields
 
-
+  // int MERGEMODE()
+  // returns mode of merging, see MERGEFIELDS()
+  static void func_MergeMode(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    TMultiFieldItemType *mfitP = static_cast<TMultiFieldItemType *>(aFuncContextP->getCallerContext());
+    if (!mfitP->fFirstItemP) aTermP->unAssign(); // no merging
+    else {
+      aTermP->setAsInteger(mfitP->fMergeMode);
+    }
+  }; // func_MergeMode
 
   #endif
 
@@ -369,6 +378,7 @@ const TBuiltInFuncDef DataTypeFuncDefs[] = {
   { "SETLOOSINGCHANGED", TMFTypeFuncs::func_SetLoosingChanged, fty_none, 1, param_IntArg },
   { "COMPAREFIELDS", TMFTypeFuncs::func_CompareFields, fty_integer, 0, NULL },
   { "COMPARISONMODE", TMFTypeFuncs::func_ComparisonMode, fty_string, 0, NULL },
+  { "MERGEMODE", TMFTypeFuncs::func_MergeMode, fty_integer, 0, NULL },
   #endif
   { "SYNCOP", TMFTypeFuncs::func_SyncOp, fty_string, 0, NULL },
   { "REJECTITEM", TMFTypeFuncs::func_RejectItem, fty_none, 1, param_IntArg },
@@ -796,18 +806,19 @@ void TMultiFieldItemType::mergeItems(
   TMultiFieldItem &aLoosingItem,
   bool &aChangedWinning,
   bool &aChangedLoosing,
-  TLocalEngineDS *aDatastoreP
+  TLocalEngineDS *aDatastoreP,
+  int mode
 )
 {
   #ifndef SCRIPT_SUPPORT
   // just do standard merge
-  aWinningItem.standardMergeWith(aLoosingItem,aChangedWinning,aChangedLoosing);
+  aWinningItem.standardMergeWith(aLoosingItem,aChangedWinning,aChangedLoosing,mode);
   return;
   #else
   // if no script use standard merging
   string &script = static_cast<TMultiFieldTypeConfig *>(fTypeConfigP)->fMergeScript;
   if (script.empty()) {
-    aWinningItem.standardMergeWith(aLoosingItem,aChangedWinning,aChangedLoosing);
+    aWinningItem.standardMergeWith(aLoosingItem,aChangedWinning,aChangedLoosing,mode);
     return;
   }
   // execute script to perform merge
@@ -818,6 +829,7 @@ void TMultiFieldItemType::mergeItems(
   fChangedFirst = aChangedWinning;
   fChangedSecond = aChangedLoosing;
   fCurrentSyncOp = fDsP->fCurrentSyncOp;
+  fMergeMode = mode;
   TScriptContext::execute(
     aDatastoreP->fReceivingTypeScriptContextP ?
       aDatastoreP->fReceivingTypeScriptContextP :
