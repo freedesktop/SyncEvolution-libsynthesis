@@ -195,9 +195,11 @@ public:
   static void func_MergeFields(TItemField *&aTermP, TScriptContext *aFuncContextP)
   {
     TMultiFieldItemType *mfitP = static_cast<TMultiFieldItemType *>(aFuncContextP->getCallerContext());
-    if (mfitP->fFirstItemP)
+    if (mfitP->fFirstItemP) {
+      TItemField *argP = aFuncContextP->getLocalVar(0);
       mfitP->fFirstItemP->standardMergeWith(*(mfitP->fSecondItemP),mfitP->fChangedFirst,mfitP->fChangedSecond,
-                                            aFuncContextP->getLocalVar(0)->getAsInteger());
+                                            (argP && argP->isAssigned()) ? argP->getAsInteger() : 0);
+    }
   }; // func_MergeFields
 
 
@@ -360,7 +362,7 @@ const TBuiltInFuncDef DataTypeFuncDefs[] = {
   { "DELETEWINS", TMFTypeFuncs::func_DeleteWins, fty_none, 0, NULL },
   { "PREVENTADD", TMFTypeFuncs::func_PreventAdd, fty_none, 0, NULL },
   { "IGNOREUPDATE", TMFTypeFuncs::func_IgnoreUpdate, fty_none, 0, NULL },
-  { "MERGEFIELDS", TMFTypeFuncs::func_MergeFields, fty_none, 0, NULL },
+  { "MERGEFIELDS", TMFTypeFuncs::func_MergeFields, fty_none, 1, param_oneOptInteger },
   { "WINNINGCHANGED", TMFTypeFuncs::func_WinningChanged, fty_integer, 0, NULL },
   { "LOOSINGCHANGED", TMFTypeFuncs::func_LoosingChanged, fty_integer, 0, NULL },
   { "SETWINNINGCHANGED", TMFTypeFuncs::func_SetWinningChanged, fty_none, 1, param_IntArg },
