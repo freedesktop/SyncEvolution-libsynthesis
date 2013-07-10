@@ -348,6 +348,9 @@ public:
   // - mark any syncitems (or other data) for resume. Called for pending commands
   //   when a Suspend alert is received or whenever a resumable state must be saved
   virtual void markPendingForResume(TLocalEngineDS *aForDatastoreP, bool aUnsent);
+
+  void setLocalDatastore(TLocalEngineDS *aLocalDataStoreP) { fLocalDataStoreP=aLocalDataStoreP; }
+  TLocalEngineDS *getLocalDatastore() const { return fLocalDataStoreP; }
 protected:
   virtual void FreeSmlElement(void);
   SmlSyncPtr_t fSyncElementP;
