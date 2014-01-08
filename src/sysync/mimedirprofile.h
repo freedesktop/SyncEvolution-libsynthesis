@@ -241,7 +241,7 @@ public:
 class TPropertyDefinition : noncopyable {
 public:
   // constructor/destructor
-  TPropertyDefinition(const char* aName, sInt16 aNumVals, bool aMandatory, bool aShowInCTCap, bool aSuppressEmpty, uInt16 aDelayedProcessing, char aValuesep, char aAltValuesep, uInt16 aPropertyGroupID, bool aCanFilter, TMimeDirMode aModeDep, sInt16 aGroupFieldID, bool aAllowFoldAtSep);
+  TPropertyDefinition(const char* aName, sInt16 aNumVals, bool aMandatory, bool aShowInCTCap, bool aSuppressEmpty, uInt16 aDelayedProcessing, char aValuesep, char aAltValuesep, uInt16 aPropertyGroupID, bool aCanFilter, TMimeDirMode aModeDep, sInt16 aGroupFieldID, bool aAllowFoldAtSep) SYSYNC_NONNULL((2));
   ~TPropertyDefinition();
   // tools
   TParameterDefinition *addParam(const char *aName, bool aDefault, bool aExtendsName, bool aShowNonEmpty=false, bool aShowInCTCap=false, TMimeDirMode aModeDep=numMimeModes);

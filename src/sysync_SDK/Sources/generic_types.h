@@ -139,6 +139,27 @@ typedef unsigned long CVersion;
 typedef sInt32 ssize_t;
 #endif
 
+/* - function attributes, to be used only for declarations */
+#ifdef __GNUC__
+# ifdef __clang_analyzer__
+/*
+ * Mark one or more parameters as not allowing NULL ptr.
+ * Example: SYSYNC_NONNULL(1,3) - first and third parameter must not be NULL.
+ *
+ * Because this is getting added late in the SyncEvolution release cycle,
+ * it is only active when doing static code analysis with clang's scan-build.
+ * The compiler is not told about it when generating code, because the result
+ * might be different.
+ *
+ * TODO: enable unconditionally also for code generation.
+ */
+#  define SYSYNC_NONNULL(_x) __attribute__((nonnull _x))
+# else
+#  define SYSYNC_NONNULL(_x)
+# endif
+#else
+# define SYSYNC_NONNULL(_x)
+#endif
 
 #ifdef __cplusplus
   } // namespace
