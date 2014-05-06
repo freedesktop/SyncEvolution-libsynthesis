@@ -504,7 +504,9 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
       bool defparam=false;
       bool shownonempty=false; // don't show properties that have only param values, but no main value
       bool showinctcap=false; // don't show parameter in CTCap by default
+      bool sharedfield=false; // assume traditional, unshared field for parameter
       if (
+        !getAttrBool(aAttributes,"sharedfield",sharedfield,true) ||
         !getAttrBool(aAttributes,"positional",positional,true) ||
         !getAttrBool(aAttributes,"default",defparam,true) ||
         !getAttrBool(aAttributes,"shownonempty",shownonempty,true) ||
@@ -513,7 +515,7 @@ bool TMIMEProfileConfig::localStartElement(const char *aElementName, const char 
       )
         return fail("bad boolean value");
       // - add parameter
-      fOpenParameter = fOpenProperty->addParam(nam,defparam,positional,shownonempty,showinctcap,modeDep);
+      fOpenParameter = fOpenProperty->addParam(nam,defparam,positional,shownonempty,showinctcap,modeDep,sharedfield);
       #ifndef NO_REMOTE_RULES
       const char *depRuleName = getAttr(aAttributes,"rule");
       TCFG_ASSIGN(fOpenParameter->dependencyRuleName,depRuleName); // save name for later resolving
@@ -936,13 +938,14 @@ void TConversionDef::addEnumNameExt(TPropertyDefinition *aProp, const char *aEnu
 
 TParameterDefinition::TParameterDefinition(
   const char *aName, bool aDefault, bool aExtendsName, bool aShowNonEmpty, bool aShowInCTCap, TMimeDirMode aModeDep
-) {
+, bool aSharedField) {
   next=NULL;
   TCFG_ASSIGN(paramname,aName);
   defaultparam=aDefault;
   extendsname=aExtendsName;
   shownonempty=aShowNonEmpty;
   showInCTCap=aShowInCTCap;
+  sharedField=aSharedField;
   modeDependency=aModeDep;
   #ifndef NO_REMOTE_RULES
   ruleDependency=NULL;
@@ -1087,11 +1090,11 @@ void TPropertyDefinition::addNameExt(TProfileDefinition *aRootProfile, // for pr
 
 TParameterDefinition *TPropertyDefinition::addParam(
   const char *aName, bool aDefault, bool aExtendsName, bool aShowNonEmpty, bool aShowInCTCap, TMimeDirMode aModeDep
-)
+, bool aSharedField)
 {
   TParameterDefinition **paramPP = &parameterDefs;
   while(*paramPP!=NULL) paramPP=&((*paramPP)->next); // find last in chain
-  *paramPP = new TParameterDefinition(aName,aDefault,aExtendsName,aShowNonEmpty,aShowInCTCap, aModeDep);
+  *paramPP = new TParameterDefinition(aName,aDefault,aExtendsName,aShowNonEmpty,aShowInCTCap, aModeDep, aSharedField);
   return *paramPP;
 } // TPropertyDefinition::addParam
 
@@ -4154,6 +4157,37 @@ bool TMimeDirProfileHandler::parseProperty(
                   else
                     dostore = true; // at least one field exists, we might store
                 }
+                // - check if shared fields used for parameters are available;
+                //   must be enabled explicitly with <parameter ... sharedfield="yes">
+                const TParameterDefinition *paramP = aPropP->parameterDefs;
+                while (paramP) {
+                  if (paramP->sharedField &&
+                      mimeModeMatch(paramP->modeDependency)
+#ifndef NO_REMOTE_RULES
+                      && (!paramP->ruleDependency || isActiveRule(paramP->ruleDependency))
+#endif
+                      ) {
+                    if (paramP->convdef.fieldid==FID_NOT_SUPPORTED)
+                      continue; // no field, no need to check it
+                    sInt16 e_fid = paramP->convdef.fieldid /* +baseoffset */;
+                    sInt16 e_rep = repoffset;
+                    aItem.adjustFidAndIndex(e_fid,e_rep);
+                    // - get base field
+                    TItemField *e_basefldP = aItem.getField(e_fid);
+                    TItemField *e_fldP = NULL;
+                    if (e_basefldP)
+                      e_fldP=e_basefldP->getArrayField(e_rep,true); // get leaf field, if it exists
+                    if (!e_basefldP || e_fldP) {
+                      // base field or leaf field is already in use
+                      // (unassigned is not good enough, otherwise we might end up adding information
+                      // to some other, previously parsed property using the same array field)
+                      // -> skip that repetition
+                      dostore=false;
+                      break;
+                    }
+                  }
+                  paramP=paramP->next;
+                }
                 // check if we can test more repetitions
                 if (!dostore) {
                   if (aRepArray[repid]+1<maxrep || maxrep==REP_ARRAY) {
@@ -4289,6 +4323,21 @@ bool TMimeDirProfileHandler::parseProperty(
         // requesting the pointer creates the field if it does not already exist
         aItem.getArrayFieldAdjusted(fid+baseoffset,repoffset,false);
       }
+    }
+    const TParameterDefinition *paramP = aPropP->parameterDefs;
+    while (paramP) {
+      if (paramP->sharedField &&
+          mimeModeMatch(paramP->modeDependency)
+#ifndef NO_REMOTE_RULES
+          && (!paramP->ruleDependency || isActiveRule(paramP->ruleDependency))
+#endif
+          ) {
+        sInt16 fid=paramP->convdef.fieldid;
+        if (fid>=0) {
+          aItem.getArrayFieldAdjusted(fid+baseoffset,repoffset,false);
+        }
+      }
+      paramP=paramP->next;
     }
   }
   if (!valuelist && repid>=0 && (notempty || !overwriteempty) && !repoffsByGroup) {
