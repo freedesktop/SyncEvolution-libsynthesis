@@ -2359,6 +2359,34 @@ sInt16 TMimeDirProfileHandler::generateValue(
             }
             // - val is now translated enum (or original value if value does not match any enum text)
             valsiz+=val.size();
+            // We have two choices for parameter values:
+            // - quoted string in double quotes
+            // - a simple string without
+            //
+            // Line breaks and control characters are not supported
+            // either way; the backslash escape mechanism is not used
+            // unless explicitly specified otherwise for specific
+            // parameters (like TYPE).
+            //
+            // We pick the simple string option only if the value
+            // contains only alphanumeric characters plus hyphen and
+            // underscore. Spaces are allowed by the RFC, but are
+            // known to cause issues in other parsers (EDS before
+            // 3.10) unless used in a quoted string, therefore we
+            // are more conservative than the RFC.
+            bool quotedstring = false;
+            if (aParamValue) {
+              for (const char *p=val.c_str();(c=*p)!=0;p++) {
+                if (!(isalnum(c) ||
+                      c == '-' ||
+                      c == '_')) {
+                  quotedstring = true;
+                  outval+='"';
+                  break;
+                }
+              }
+            }
+
             // perform escaping and determine need for encoding
             bool spaceonly = true;
             bool firstchar = true;
@@ -2380,24 +2408,26 @@ sInt16 TMimeDirProfileHandler::generateValue(
               // escape reserved chars
               switch (c) {
                 case '"':
-                  if (firstchar && aParamValue && aMimeMode==mimo_standard) goto do_escape; // if param value starts with a double quote, we need to escape it because param value can be in double-quote-enclosed form
+                  if (aParamValue) { c = '\''; goto add_char; } // replace double quotes with single quotes
+                  // if (firstchar && aParamValue && aMimeMode==mimo_standard) goto do_escape; // if param value starts with a double quote, we need to escape it because param value can be in double-quote-enclosed form
                   goto add_char; // otherwise, just add
                 case ',':
                   // in MIME-DIR, always escape commas, in pre-MIME-DIR only if usage in value list requires it
-                  if (!aCommaEscape && aMimeMode==mimo_old) goto add_char;
+                  if ((!aCommaEscape && aMimeMode==mimo_old) || quotedstring) goto add_char;
                   goto do_escape;
                 case ':':
                   // always escape colon in parameters
-                  if (!aParamValue) goto add_char;
+                  if (!aParamValue || quotedstring) goto add_char;
                   goto do_escape;
                 case '\\':
+                  if (quotedstring) goto add_char;
                   // Backslash must always be escaped
                   // - for MIMO-old: at least Nokia 9210 does it this way
                   // - for MIME-DIR: specified in the standard
                   goto do_escape;
                 case ';':
                   // in MIME-DIR, always escape semicolons, in pre-MIME-DIR only in parameters and structured values
-                  if (!aParamValue && !aStructured && aMimeMode==mimo_old) goto add_char;
+                  if ((!aParamValue && !aStructured && aMimeMode==mimo_old) || quotedstring) goto add_char;
                 do_escape:
                   if (!aEscapeOnlyLF) {
                     // escape chars with backslash
@@ -2408,6 +2438,7 @@ sInt16 TMimeDirProfileHandler::generateValue(
                   // ignore returns
                   break;
                 case '\n':
+                  if (quotedstring) { c = ' '; goto add_char; }
                   // quote linefeeds
                   if (aMimeMode==mimo_old) {
                     if (aEncoding==enc_none) {
@@ -2435,6 +2466,12 @@ sInt16 TMimeDirProfileHandler::generateValue(
                   break;
               }
             } // for all chars in val item
+
+            // terminate quoted string parameter value
+            if (quotedstring) {
+              outval+='"';
+            }
+
             // go to next item in the val list (if any)
             if (*lp!=0) {
               // more items in the list
@@ -3710,7 +3747,7 @@ bool TMimeDirProfileHandler::parseValue(
             break;
           }
           // check for escaped chars
-          if (c=='\\') {
+          if (!aParamValue && c=='\\') {
             p++;
             c=*p;
             if (!c) break; // half escape sequence, ignore
@@ -3914,19 +3951,6 @@ bool TMimeDirProfileHandler::parseProperty(
         else {
           // not within double quoted value
           if (c==':' || c==';') break; // end of value
-          // check escaped characters
-          if (c=='\\') {
-            // escape char, do not check next char for end-of-value (but DO NOT expand \-escaped chars here!!)
-            vp=nextunfolded(vp,aMimeMode);
-            c=*vp; // get next
-            if (c) {
-              val+='\\'; // keep the escaped sequence for later when value is actually processed!
-            }
-            else {
-              // half-finished escape at end of value, ignore
-              break;
-            }
-          }
         }
         val+=c;
         // cancel QP softbreaks if encoding is already switched to QP at this point
