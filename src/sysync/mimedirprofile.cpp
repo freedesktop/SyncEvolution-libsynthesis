@@ -2389,7 +2389,6 @@ sInt16 TMimeDirProfileHandler::generateValue(
 
             // perform escaping and determine need for encoding
             bool spaceonly = true;
-            bool firstchar = true;
             for (const char *p=val.c_str();(c=*p)!=0 && (c!=aConvDefP->combineSep);p++) {
               // process char
               // - check for whitespace
@@ -2409,7 +2408,6 @@ sInt16 TMimeDirProfileHandler::generateValue(
               switch (c) {
                 case '"':
                   if (aParamValue) { c = '\''; goto add_char; } // replace double quotes with single quotes
-                  // if (firstchar && aParamValue && aMimeMode==mimo_standard) goto do_escape; // if param value starts with a double quote, we need to escape it because param value can be in double-quote-enclosed form
                   goto add_char; // otherwise, just add
                 case ',':
                   // in MIME-DIR, always escape commas, in pre-MIME-DIR only if usage in value list requires it
@@ -2462,7 +2460,6 @@ sInt16 TMimeDirProfileHandler::generateValue(
                   if ((uInt8)c > 0x7F) aNonASCII=true;
                   // just copy to output
                   outval+=c;
-                  firstchar = false; // first char is out
                   break;
               }
             } // for all chars in val item
@@ -4154,7 +4151,6 @@ bool TMimeDirProfileHandler::parseProperty(
               // - calculate repeat offset to be used
               repinc=propnameextP->repeatInc;
               // note: repArray will be updated below (if property not empty or !overwriteempty)
-              dostore=true; // we can store
               do {
                 repoffset = aRepArray[repid]*repinc;
                 // - set flag if repeat offset should be incremented after storing an empty property or not
