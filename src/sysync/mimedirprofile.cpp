@@ -4168,8 +4168,11 @@ bool TMimeDirProfileHandler::parseProperty(
                   TItemField *e_fldP = NULL;
                   if (e_basefldP)
                     e_fldP=e_basefldP->getArrayField(e_rep,true); // get leaf field, if it exists
-                  if (!e_basefldP || (e_fldP && e_fldP->isAssigned())) {
-                    // base field of one of the main fields does not exist or leaf field is already assigned
+                  if (!e_basefldP || (e_fldP && e_fldP->isAssigned()) ||
+                      (aPropP->groupFieldID!=FID_NOT_SUPPORTED && !valuelist &&
+                       aItem.getArrayFieldAdjusted(aPropP->groupFieldID+baseoffset,e_rep,true))) {
+                    // base field of one of the main fields does not exist or leaf field is already assigned,
+                    // or the group field entry is already in use (doesn't matter whether it is empty)
                     // -> skip that repetition
                     dostore = false;
                     break;
