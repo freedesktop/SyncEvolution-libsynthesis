@@ -1792,6 +1792,8 @@ public:
     (*tempP)=(*p1);
     (*p1)=(*p2);
     (*p2)=(*tempP);
+
+    delete tempP;
   }; // func_Swap
 
 
