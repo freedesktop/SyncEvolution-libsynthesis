@@ -2846,7 +2846,9 @@ bool TCustomImplDS::implProcessItem(
       aux->fRemoteID = remoteID ? remoteID : "";
       aux->fRemoteIDSet = remoteID != NULL;
       aux->fSop = sop;
+      // cppcheck-suppress uninitvar
       aux->fRemoteHasLatestData = remoteHasLatestData;
+      // cppcheck-suppress uninitvar
       aux->fOp = op;
 
       aStatusCommand.setStatusCode(LOCERR_AGAIN);

@@ -5121,7 +5121,9 @@ bool TLocalEngineDS::engProcessSyncOpItem(
       aux = new SyncOpItemAux;
     }
     aItemP->aux = aux;
+    // cppcheck-suppress uninitvar
     aux->remoteTypeP = remoteTypeP;
+    // cppcheck-suppress uninitvar
     aux->localTypeP = localTypeP;
     aux->fmt = fmt;
     aux->syncitemP = syncitemP;
@@ -5525,16 +5527,23 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
       aSyncItemP->setAux(TSyncItem::LOCAL_ENGINE, aux);
     }
 
+    // cppcheck-suppress uninitvar
     aux->fConflictingItemP = conflictingItemP;
+    // cppcheck-suppress uninitvar
     aux->fEchoItemP = echoItemP;
+    // cppcheck-suppress uninitvar
     aux->fDelItemP = delitemP;
     aux->fMatchingItemP = matchingItemP;
+    // cppcheck-suppress uninitvar
     aux->fChangedIncoming = changedincoming;
+    // cppcheck-suppress uninitvar
     aux->fChangedExisting = changedexisting;
+    // cppcheck-suppress uninitvar
     aux->fRemainsVisible = remainsvisible;
     aux->fSyncOp = syncop;
     aux->fItemTypeID = itemtypeid;
     aux->fRemoteID = remoteid;
+    // cppcheck-suppress uninitvar
     aux->fOp = op;
 
     aux->fCurrentSyncOp = fCurrentSyncOp;
@@ -6546,9 +6555,11 @@ bool TLocalEngineDS::engProcessRemoteItemAsClient(
       aSyncItemP->setAux(TSyncItem::LOCAL_ENGINE, aux);
     }
 
+    // cppcheck-suppress uninitvar
     aux->fRemainsVisible = remainsvisible;
     aux->fSyncOp = syncop;
     aux->fRemoteID = remoteid;
+    // cppcheck-suppress uninitvar
     aux->fOp = op;
 
     aux->fCurrentSyncOp = fCurrentSyncOp;

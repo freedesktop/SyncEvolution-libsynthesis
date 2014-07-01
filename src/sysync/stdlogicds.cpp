@@ -1275,6 +1275,7 @@ bool TStdLogicDS::logicProcessRemoteItem(
         aux->fShouldBeVisible = shouldbevisible;
         aux->fVisibleInSyncset = aVisibleInSyncset;
         aux->fSyncItemP = syncitemP;
+        // cppcheck-suppress uninitvar
         aux->fOp = op;
         aStatusCommand.setStatusCode(LOCERR_AGAIN);
         return false;
