@@ -42,7 +42,7 @@ TStdLogicDS::TStdLogicDS(
 ) :
   TLocalEngineDS(aDSConfigP, aSessionP, aName, aCommonSyncCapMask)
   #ifdef MULTI_THREAD_DATASTORE
-  ,fMultiThread(NULL)
+  ,fMultiThread(false)
   ,fStartSyncStatus(aSessionP) // a thread-private status command to store status ocurring during threaded startDataAccessForServer()
   #endif
 {
