@@ -603,7 +603,7 @@ const TFuncTable DBFuncTable = {
 #ifdef SYSYNC_CLIENT
 
 const uInt8 param_OneStr[] = { VAL(fty_string) };
-const uInt8 param_OneInt[] = { VAL(fty_integer) };
+// const uInt8 param_OneInt[] = { VAL(fty_integer) };
 const uInt8 param_TwoInt[] = { VAL(fty_integer), VAL(fty_integer) };
 const uInt8 param_SetRecordFilter[] = { VAL(fty_string), VAL(fty_integer) };
 
