@@ -2838,8 +2838,12 @@ bool TSyncSession::tryDelayedExecutionCommands()
             syncEndAfterSyncPackageEnd=true; // remember that we had at least one
         }
         // execution finished, can be deleted
-        PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",cmdP->getName()));
-        delete cmdP;
+        if (fIncompleteDataCommandP == cmdP) {
+          PDEBUGPRINTFX(DBG_SESSION,("%s: command incomplete -> keeping it for next message",cmdP->getName()));
+        } else {
+          PDEBUGPRINTFX(DBG_SESSION,("%s: command finished execution -> deleting",cmdP->getName()));
+          delete cmdP;
+        }
         // delete from queue
         fDelayedExecutionCommands.pop_front();
       }
