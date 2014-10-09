@@ -189,19 +189,171 @@ public:
   }; // func_IgnoreUpdate
 
 
-  // void MERGEFIELDS(mode = 0)
+  // void MERGEFIELDS(mode = 0, ignoreFields = "")
   // Optional mode parameter determines the result of the merge.
   // 0 = according to config, 1 = loosing item is overwritten, 2 = winning item is overwritten
+  // Any field names in the space separated ignoreFields parameter will be skipped.
+  // The assumption is that the calling script has already dealt with these fields.
   static void func_MergeFields(TItemField *&aTermP, TScriptContext *aFuncContextP)
   {
     TMultiFieldItemType *mfitP = static_cast<TMultiFieldItemType *>(aFuncContextP->getCallerContext());
     if (mfitP->fFirstItemP) {
       TItemField *argP = aFuncContextP->getLocalVar(0);
+      int mode = (argP && argP->isAssigned()) ? argP->getAsInteger() : 0;
+      // Split optional string into set of field names.
+      argP = aFuncContextP->getLocalVar(1);
+      std::string fields;
+      if (argP && argP->isAssigned()) {
+        argP->getAsString(fields);
+      }
+      std::set<std::string> ignoreFields;
+      size_t offset = 0;
+      while (offset < fields.size()) {
+        while (offset < fields.size() && isspace(fields[offset])) offset++;
+        size_t start = offset;
+        while (offset < fields.size() && !isspace(fields[offset])) offset++;
+        size_t len = offset - start;
+        if (len)
+          ignoreFields.insert(fields.substr(start, len));
+      }
       mfitP->fFirstItemP->standardMergeWith(*(mfitP->fSecondItemP),mfitP->fChangedFirst,mfitP->fChangedSecond,
-                                            (argP && argP->isAssigned()) ? argP->getAsInteger() : 0);
+                                            mode, ignoreFields);
     }
   }; // func_MergeFields
 
+  enum ArrayEntriesState {
+    ALL_UNSET, // All arrays have no entries at the array index -> past end of valid entries.
+    ALL_EMPTY, // Some entries exist, but all of those are empty.
+    NON_EMPTY  // Some entry is non-empty.
+  };
+  static ArrayEntriesState checkArrayEntries(sInt16 arridx, TMultiFieldItem &aItem, const std::vector<sInt16> &aFields)
+  {
+    ArrayEntriesState state = ALL_UNSET;
+    for (size_t i = 0; state != NON_EMPTY && i < aFields.size() && aFields[i] >= 0; i++) {
+      TItemField *elemP = aItem.getArrayField(aFields[i],arridx,true);
+      if (elemP && state == ALL_UNSET) {
+        state = elemP->isEmpty() ? ALL_EMPTY : NON_EMPTY;
+      }
+    }
+    return state;
+  }
+
+  // string RELAXEDCOMPARE(mainfield1, mainfield2, mainfield3, "", addfield1, addfield2, ...)
+  // Returns "" if a relaxed comparison of the given fields in the winning and loosing
+  // item finds no differences and string with all given field names concatenated together
+  // with space at the beginning and and the end.
+  //
+  // The intended usage is:
+  // ignorefields = ignorefields + RELAXEDCOMPARE("TEL", "", "TEL_FLAGS", "LABEL");
+  // ignorefields = ignorefields + RELAXEDCOMPARE("ADR", "ADR_STREET", "ADR_CITY", "", "LABEL");
+  // MERGEFIELDS(mode, ignorefields);
+  //
+  // All fields must be arrays. Only entries with non-empty main fields are considered.
+  // However, if the main fields are non-empty, the additional ones must also match.
+  // The order of entries in loosing and winning item does not matter, a difference
+  // is only reported if an entry has no exact match in the other item.
+  static void func_RelaxedCompare(TItemField *&aTermP, TScriptContext *aFuncContextP)
+  {
+    TMultiFieldItemType *mfitP = static_cast<TMultiFieldItemType *>(aFuncContextP->getCallerContext());
+    bool difference = false;
+    std::string fieldnames;
+    if (mfitP->fFirstItemP && mfitP->fSecondItemP) {
+      // Determine field index of the fields we need to compare.
+      std::vector<sInt16> fields;
+      TFieldListConfig *fieldlist = mfitP->fFirstItemP->getFieldDefinitions();
+      for (int i = 0; ; i++) {
+        TItemField *argP = aFuncContextP->getLocalVar(i);
+        if (!argP || !argP->isAssigned()) {
+          break;
+        }
+        std::string fieldname;
+        argP->getAsString(fieldname);
+        if (fieldname.empty()) {
+          // Separator between main and additional fields.
+          fields.push_back(-1);
+        } else {
+          for (sInt16 e=0; e<fieldlist->numFields(); e++) {
+            if (fieldlist->fFields[e].fieldname == fieldname) {
+              fieldnames.append(" ");
+              fieldnames.append(fieldname);
+              fields.push_back(e);
+              break;
+            }
+          }
+          // TODO (?): error for unknown field
+        }
+      }
+
+      if (!fields.empty()) {
+        // Determine which entries in second item are non-empty.
+        // We only need to check those when looking for matches, and none
+        // are allowed to be left when done with the first item.
+        std::set<sInt16> second;
+        for (sInt16 arridx=0; ; arridx++) {
+          ArrayEntriesState state = checkArrayEntries(arridx, *mfitP->fSecondItemP, fields);
+          if (state == ALL_UNSET) {
+            break;
+          } else if (state == NON_EMPTY) {
+            second.insert(arridx);
+          }
+        }
+
+        // Now compare entries.
+        for (sInt16 arridx1=0; ; arridx1++) {
+          ArrayEntriesState state = checkArrayEntries(arridx1, *mfitP->fFirstItemP, fields);
+          if (state == ALL_UNSET) {
+            break;
+          } else if (state == NON_EMPTY) {
+            bool found = false;
+            for (std::set<sInt16>::iterator it = second.begin();
+                 it != second.end();
+                 ++it) {
+              sInt16 arridx2 = *it;
+              bool equal = true;
+              for (size_t i=0; equal && i<fields.size(); i++) {
+                sInt16 fid = fields[i];
+                if (fid == -1) {
+                  continue;
+                }
+                TItemField *firstP = mfitP->fFirstItemP->getArrayField(fid, arridx1, true);
+                TItemField *secondP = mfitP->fSecondItemP->getArrayField(fid, arridx2, true);
+                if (firstP && secondP) {
+                  if (firstP->isAssigned() != secondP->isAssigned() ||
+                      *firstP != *secondP) {
+                    equal = false;
+                  }
+                } else if ((firstP && firstP->isAssigned()) ||
+                           (secondP && secondP->isAssigned())) {
+                  equal = false;
+                }
+              }
+              if (equal) {
+                found = true;
+                second.erase(it);
+                break;
+              }
+            }
+            if (!found) {
+              difference = true;
+              break;
+            }
+          }
+        }
+
+        // If there are remaining unmatched entries in the second item, we have
+        // a difference.
+        if (!second.empty()) {
+          difference = true;
+        }
+      } else {
+        // TODO (?): error if no fields specified.
+      }
+    } else {
+      difference = true;
+    }
+
+    aTermP->setAsString(difference ? "" : fieldnames);
+  }; // func_RelaxedCompare
 
   // integer WINNINGCHANGED()
   // returns true if winning was changed
@@ -355,6 +507,8 @@ static void* DataTypeChainFunc(void *&aNextCallerContext)
 
 const uInt8 param_StrArg[] = { VAL(fty_string) };
 const uInt8 param_IntArg[] = { VAL(fty_integer) };
+const uInt8 param_RelaxedCompare[] = { OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string), OPTVAL(fty_string),};
+const uInt8 param_MergeFields[] = { OPTVAL(fty_integer), OPTVAL(fty_string) };
 
 // builtin functions for datastore-context table
 const TBuiltInFuncDef DataTypeFuncDefs[] = {
@@ -371,7 +525,8 @@ const TBuiltInFuncDef DataTypeFuncDefs[] = {
   { "DELETEWINS", TMFTypeFuncs::func_DeleteWins, fty_none, 0, NULL },
   { "PREVENTADD", TMFTypeFuncs::func_PreventAdd, fty_none, 0, NULL },
   { "IGNOREUPDATE", TMFTypeFuncs::func_IgnoreUpdate, fty_none, 0, NULL },
-  { "MERGEFIELDS", TMFTypeFuncs::func_MergeFields, fty_none, 1, param_oneOptInteger },
+  { "MERGEFIELDS", TMFTypeFuncs::func_MergeFields, fty_none, sizeof(param_MergeFields)/sizeof(param_MergeFields[0]), param_MergeFields },
+  { "RELAXEDCOMPARE", TMFTypeFuncs::func_RelaxedCompare, fty_string, sizeof(param_RelaxedCompare)/sizeof(param_RelaxedCompare[0]), param_RelaxedCompare },
   { "WINNINGCHANGED", TMFTypeFuncs::func_WinningChanged, fty_integer, 0, NULL },
   { "LOOSINGCHANGED", TMFTypeFuncs::func_LoosingChanged, fty_integer, 0, NULL },
   { "SETWINNINGCHANGED", TMFTypeFuncs::func_SetWinningChanged, fty_none, 1, param_IntArg },
