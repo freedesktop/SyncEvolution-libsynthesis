@@ -238,6 +238,22 @@ public:
     return state;
   }
 
+  // Increments arridx until it runs into ALL_UNSET or NON_EMPTY.
+  static ArrayEntriesState nextArrayEntries(sInt16 &arridx, TMultiFieldItem &aItem, const std::vector<sInt16> &aFields)
+  {
+    while (true) {
+      ++arridx;
+      ArrayEntriesState state = checkArrayEntries(arridx, aItem, aFields);
+      switch (state) {
+      case ALL_UNSET:
+      case NON_EMPTY:
+        return state;
+      case ALL_EMPTY:
+        break;
+      }
+    }
+  }
+
   // string RELAXEDCOMPARE(mainfield1, mainfield2, mainfield3, "", addfield1, addfield2, ...)
   // Returns "" if a relaxed comparison of the given fields in the winning and loosing
   // item finds no differences and string with all given field names concatenated together
@@ -250,7 +266,7 @@ public:
   //
   // All fields must be arrays. Only entries with non-empty main fields are considered.
   // However, if the main fields are non-empty, the additional ones must also match.
-  // The order of entries in loosing and winning item does not matter, a difference
+  // The order of entries in loosing and winning item *does* matter, a difference
   // is only reported if an entry has no exact match in the other item.
   static void func_RelaxedCompare(TItemField *&aTermP, TScriptContext *aFuncContextP)
   {
@@ -285,64 +301,41 @@ public:
       }
 
       if (!fields.empty()) {
-        // Determine which entries in second item are non-empty.
-        // We only need to check those when looking for matches, and none
-        // are allowed to be left when done with the first item.
-        std::set<sInt16> second;
-        for (sInt16 arridx=0; ; arridx++) {
-          ArrayEntriesState state = checkArrayEntries(arridx, *mfitP->fSecondItemP, fields);
-          if (state == ALL_UNSET) {
-            break;
-          } else if (state == NON_EMPTY) {
-            second.insert(arridx);
-          }
-        }
+        // Walk through both array sets in parallel. Skip empty
+        // entries and compare non-empty ones.
+        sInt16 firstArrIdx = -1;
+        ArrayEntriesState firstState = nextArrayEntries(firstArrIdx, *mfitP->fFirstItemP, fields);
+        sInt16 secondArrIdx = -1;
+        ArrayEntriesState secondState = nextArrayEntries(secondArrIdx, *mfitP->fSecondItemP, fields);
 
-        // Now compare entries.
-        for (sInt16 arridx1=0; ; arridx1++) {
-          ArrayEntriesState state = checkArrayEntries(arridx1, *mfitP->fFirstItemP, fields);
-          if (state == ALL_UNSET) {
-            break;
-          } else if (state == NON_EMPTY) {
-            bool found = false;
-            for (std::set<sInt16>::iterator it = second.begin();
-                 it != second.end();
-                 ++it) {
-              sInt16 arridx2 = *it;
-              bool equal = true;
-              for (size_t i=0; equal && i<fields.size(); i++) {
-                sInt16 fid = fields[i];
-                if (fid == -1) {
-                  continue;
-                }
-                TItemField *firstP = mfitP->fFirstItemP->getArrayField(fid, arridx1, true);
-                TItemField *secondP = mfitP->fSecondItemP->getArrayField(fid, arridx2, true);
-                if (firstP && secondP) {
-                  if (firstP->isAssigned() != secondP->isAssigned() ||
-                      *firstP != *secondP) {
-                    equal = false;
-                  }
-                } else if ((firstP && firstP->isAssigned()) ||
-                           (secondP && secondP->isAssigned())) {
-                  equal = false;
-                }
-              }
-              if (equal) {
-                found = true;
-                second.erase(it);
+        while (firstState == NON_EMPTY &&
+               secondState == NON_EMPTY) {
+          // Compare entries.
+          for (size_t i=0; i<fields.size(); i++) {
+            sInt16 fid = fields[i];
+            if (fid == -1) {
+              continue;
+            }
+            TItemField *firstP = mfitP->fFirstItemP->getArrayField(fid, firstArrIdx, true);
+            TItemField *secondP = mfitP->fSecondItemP->getArrayField(fid, secondArrIdx, true);
+            if (firstP && secondP) {
+              if (firstP->isAssigned() != secondP->isAssigned() ||
+                  *firstP != *secondP) {
+                difference = true;
                 break;
               }
-            }
-            if (!found) {
+            } else if ((firstP && firstP->isAssigned()) ||
+                       (secondP && secondP->isAssigned())) {
               difference = true;
               break;
             }
           }
+          firstState = nextArrayEntries(firstArrIdx, *mfitP->fFirstItemP, fields);
+          secondState = nextArrayEntries(secondArrIdx, *mfitP->fSecondItemP, fields);
         }
 
-        // If there are remaining unmatched entries in the second item, we have
-        // a difference.
-        if (!second.empty()) {
+        if (firstState != secondState) {
+          // One side has data that the other hasn't.
           difference = true;
         }
       } else {
