@@ -2369,7 +2369,7 @@ sInt16 TMimeDirProfileHandler::generateValue(
             // parameters (like TYPE).
             //
             // We pick the simple string option only if the value
-            // contains only alphanumeric characters plus hyphen and
+            // contains only alphanumeric characters plus hyphen, slash and
             // underscore. Spaces are allowed by the RFC, but are
             // known to cause issues in other parsers (EDS before
             // 3.10) unless used in a quoted string, therefore we
@@ -2378,6 +2378,7 @@ sInt16 TMimeDirProfileHandler::generateValue(
             if (aParamValue) {
               for (const char *p=val.c_str();(c=*p)!=0;p++) {
                 if (!(isalnum(c) ||
+                      c == '/' || // for TZID=Europe/Paris - Funambol OneMedia does not handle quoting that.
                       c == '-' ||
                       c == '_')) {
                   quotedstring = true;
