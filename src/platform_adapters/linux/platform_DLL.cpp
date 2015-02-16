@@ -152,7 +152,7 @@ public:
   bool destroy()
   {
     bool ok  = true;
-    if (this) {
+    if (true /* this */) {
       if (aDLL) {
         int err = dlclose(aDLL);
         ok = !err;
