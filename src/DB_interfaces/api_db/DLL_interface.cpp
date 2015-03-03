@@ -208,7 +208,7 @@ TSyError ConnectFunctions( appPointer aMod, appPointer aField, memSize aFieldSiz
 
     m++;
   } // while
-  if (err) return err;
+  if (err) goto done;
 
   // check if table is too small or too long
   while (ii*sizeof(p)<aFieldSize) {
@@ -220,9 +220,10 @@ TSyError ConnectFunctions( appPointer aMod, appPointer aField, memSize aFieldSiz
   } // while
   tooMany= (p!=NULL);
 
-  va_end( args );
 
-  if (notEnough || tooMany) return LOCERR_WRONGUSAGE;
+  if (notEnough || tooMany) err = LOCERR_WRONGUSAGE;
+ done:
+  va_end( args );
   return err;
 } // ConnectFunctions
 
