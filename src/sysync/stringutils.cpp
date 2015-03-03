@@ -823,9 +823,10 @@ void vStringObjPrintf(string &aStringObj, const char *aFormat, bool aAppend, va_
   #endif
   {
     // small default buffer was big enough, add it
-    if (actualsize<0) return; // abort, error
+    if (actualsize<0) goto done; // abort, error
     aStringObj += buf;
   }
+ done:
   #ifndef NO_VSNPRINTF
   va_end(args);
   #endif
