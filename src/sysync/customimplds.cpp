@@ -3409,11 +3409,10 @@ localstatus TCustomImplDS::zapSyncSetOneByOne(void)
 
 // private helper: get item with data from sync set list. Retrieves item if not already
 // there from loading the sync set
-// Note: can be called with aSyncSetItemP==NULL, which causes directly loading from DB
-//       in all cases.
+// Note: cannot be called with aSyncSetItemP==NULL; only aSyncSetItemP->itemP may be NULL
 localstatus TCustomImplDS::getItemFromSyncSetItem(TSyncSetItem *aSyncSetItemP, TSyncItem *&aItemP)
 {
-  if (aSyncSetItemP && aSyncSetItemP->itemP) {
+  if (aSyncSetItemP->itemP) {
     // already fetched - pass it to caller and remove link in syncsetitem
     aItemP = aSyncSetItemP->itemP;
     aSyncSetItemP->itemP = NULL; // syncsetitem does not own it any longer
