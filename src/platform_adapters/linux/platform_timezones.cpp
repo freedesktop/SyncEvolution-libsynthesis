@@ -171,6 +171,11 @@ void finalizeSystemZoneDefinitions(GZones* aGZones)
   PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
                    ("runtime check: libical %s",
                     icalcontext.icaltimezone_get_builtin_timezones_p ? "available" : "unavailable"))
+#elif defined(USE_ICALTZUTIL_SET_EXACT_VTIMEZONES_SUPPORT)
+  // We want interoperable timezones with one entry for summer time and one for winter time.
+  // That's what libsynthesis and other devices can handle, and not the exact definitions
+  // with the full set of transitions.
+  icaltzutil_set_exact_vtimezones_support(0);
 #endif
   if (!builtin) {
     PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_ERROR,
