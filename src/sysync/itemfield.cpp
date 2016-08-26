@@ -1487,8 +1487,8 @@ void TTimestampField::getAsRFC822date(string &aRFC822String, timecontext_t aTarg
       aRFC822String,
       " %c%02hd%02hd",
       moffs>=0 ? '+' : '-',
-      (uInt16)(abs(moffs) / MinsPerHour),
-      (uInt16)(abs(moffs) % MinsPerHour)
+      (uInt16)(abs((int)moffs) / MinsPerHour),
+      (uInt16)(abs((int)moffs) % MinsPerHour)
     );
   }
 } // TTimestampField::getAsRFC822date
