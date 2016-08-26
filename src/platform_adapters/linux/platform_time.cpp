@@ -11,8 +11,8 @@
  */
 
 // For tm_gmtoff on Linux.
-#ifndef _BSD_SOURCE
-# define _BSD_SOURCE 1
+#ifndef _STANDARD_SOURCE
+# define _STANDARD_SOURCE 1
 #endif
 #include <time.h>
 
