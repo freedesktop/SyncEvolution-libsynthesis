@@ -19,7 +19,7 @@
 # include <config.h>
 #endif
 
-#if defined(HAVE_LIBICAL) && defined(EVOLUTION_COMPATIBILITY)
+#if defined(HAVE_LIBICAL) && defined(ICAL_COMPATIBILITY)
 # ifndef _GNU_SOURCE
 #  define _GNU_SOURCE 1
 # endif
@@ -45,7 +45,7 @@
   extern int   daylight;
 #endif
 
-#ifdef EVOLUTION_COMPATIBILITY
+#ifdef ICAL_COMPATIBILITY
 // Avoid calling libical directly. This way libsynthesis does not
 // depend on a specific version of libecal (which changed its soname
 // frequently, without affecting libical much!) or libical. The user
@@ -58,6 +58,7 @@ static struct {
   void *(* icalarray_element_at_p)(icalarray *array, unsigned index);
   icalcomponent *(* icaltimezone_get_component_p)(icaltimezone *zone);
   char *(* icalcomponent_as_ical_string_p)(icalcomponent *comp);
+  void (* icaltzutil_set_exact_vtimezones_support)(int on);
   bool must_free_strings;
 } icalcontext;
 
@@ -86,6 +87,8 @@ static icalarray *ICALTIMEZONE_GET_BUILTIN_TIMEZONES()
       (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
     icalcontext.must_free_strings = dlsym(RTLD_DEFAULT, "ical_memfixes") != NULL;
   }
+  icalcontext.icaltzutil_set_exact_vtimezones_support =
+    (typeof(icalcontext.icaltzutil_set_exact_vtimezones_support))dlsym(RTLD_DEFAULT, "icaltzutil_set_exact_vtimezones_support");
 
   return icalcontext.icaltimezone_get_builtin_timezones_p ?
     icalcontext.icaltimezone_get_builtin_timezones_p() :
@@ -97,6 +100,31 @@ static void *ICALARRAY_ELEMENT_AT(icalarray *array, unsigned index)
   return icalcontext.icalarray_element_at_p ?
     icalcontext.icalarray_element_at_p(array, index) :
     NULL;
+}
+
+static size_t ICALARRAY_NUM_ELEMENTS(icalarray *array)
+{
+  struct icalarray_traditional {
+    unsigned int         element_size;
+    unsigned int         increment_size;
+    unsigned int         num_elements;
+    unsigned int         space_allocated;
+    void                *data;
+  };
+  // libical v2 changed to size_t
+  struct icalarray_v2 {
+    size_t         element_size;
+    size_t         increment_size;
+    size_t         num_elements;
+    size_t         space_allocated;
+    void **chunks;
+  };
+  // distinguish between v2 and older based on
+  // icaltzutil_set_exact_vtimezones_support, which was introduced in
+  // v2
+  return icalcontext.icaltzutil_set_exact_vtimezones_support ?
+    reinterpret_cast<icalarray_v2 *>(array)->num_elements :
+    reinterpret_cast<icalarray_traditional *>(array)->num_elements;
 }
 
 static icalcomponent *ICALTIMEZONE_GET_COMPONENT(icaltimezone *zone)
@@ -119,26 +147,22 @@ static void ICAL_FREE(char *str)
     free(str);
 }
 
+static void ICALTZUTIL_SET_EXACT_VTIMEZONES_SUPPORT(int on)
+{
+  if (icalcontext.icaltzutil_set_exact_vtimezones_support)
+    icalcontext.icaltzutil_set_exact_vtimezones_support(on);
+}
+
 #else
 // call functions directly
 # define ICALTIMEZONE_GET_BUILTIN_TIMEZONES icaltimezone_get_builtin_timezones
 # define ICALARRAY_ELEMENT_AT icalarray_element_at
+# define ICALARRAY_NUM_ELEMENTS(_array) (size_t)((_array)->num_elements)
 # define ICALTIMEZONE_GET_COMPONENT icaltimezone_get_component
 
-# if defined(HAVE_LIBICAL) && !defined(HAVE_LIBECAL)
-#  // new-style libical _r version which requires freeing the string
-#  define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string_r
-#  define ICAL_FREE(_x) free(_x)
-# else
-#  define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string
-#  ifdef LIBICAL_MEMFIXES
-   // new-style Evolution libical: memory must be freed by caller
-#   define ICAL_FREE(_x) free(_x)
-#  else
-    // old-style libical: memory is stored in buffers owned by libical
-#   define ICAL_FREE(_x)
-#  endif
-# endif
+// not-so-new-style libical _r version which requires freeing the string
+# define ICALCOMPONENT_AS_ICAL_STRING icalcomponent_as_ical_string_r
+# define ICAL_FREE(_x) free(_x)
 #endif
 
 
@@ -167,10 +191,22 @@ void finalizeSystemZoneDefinitions(GZones* aGZones)
 #ifdef HAVE_LIBICAL
   PLOGDEBUGBLOCKDESCCOLL(aGZones->getDbgLogger, "loadSystemZoneDefinitions", "Linux system time zones");
   icalarray *builtin = ICALTIMEZONE_GET_BUILTIN_TIMEZONES();
-#ifdef EVOLUTION_COMPATIBILITY
+#ifdef ICAL_COMPATIBILITY
   PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
-                   ("runtime check: libical %s",
-                    icalcontext.icaltimezone_get_builtin_timezones_p ? "available" : "unavailable"))
+                   ("runtime check: libical %s, %s icaltzutil_set_exact_vtimezones_support",
+                    icalcontext.icaltimezone_get_builtin_timezones_p ? "available" : "unavailable",
+                    icalcontext.icaltzutil_set_exact_vtimezones_support ? "with" : "without"));
+  // If we end up using the libical code (and not some replacement
+  // provided by SyncEvolution, which is the solution for distros with
+  // a libical that doesn't have the API), then enable timezones in the
+  // format more useful for us.
+  //
+  // We want interoperable timezones with one entry for summer time and one for winter time.
+  // That's what libsynthesis and other devices can handle, and not the exact definitions
+  // with the full set of transitions.
+  ICALTZUTIL_SET_EXACT_VTIMEZONES_SUPPORT(0);
+#elif defined(USE_ICALTZUTIL_SET_EXACT_VTIMEZONES_SUPPORT)
+  icaltzutil_set_exact_vtimezones_support(0);
 #endif
   if (!builtin) {
     PLOGDEBUGPUTSX(aGZones->getDbgLogger, DBG_PARSE+DBG_ERROR,
@@ -178,8 +214,8 @@ void finalizeSystemZoneDefinitions(GZones* aGZones)
     return;
   }
   PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
-                   ("%d time zones from libical", builtin->num_elements));
-  for (unsigned i = 0; builtin && i < builtin->num_elements; i++) {
+                   ("%lu time zones from libical", (unsigned long)ICALARRAY_NUM_ELEMENTS(builtin)));
+  for (size_t i = 0; builtin && i < ICALARRAY_NUM_ELEMENTS(builtin); i++) {
     icaltimezone *zone = (icaltimezone *)ICALARRAY_ELEMENT_AT(builtin, i);
     if (!zone)
       continue;
