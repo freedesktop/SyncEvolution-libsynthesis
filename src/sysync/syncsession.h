@@ -350,7 +350,7 @@ public:
   void DatastoreHadErrors(void) { fErrorItemDatastores++; }; // let session know that sync was ok, but some items had errors
   bool outgoingMessageFull(void) { return fOutgoingMessageFull; }; // test if outgoing full
   bool isInterrupedCmdPending(void) { return fInterruptedCommandP!=NULL; };
-  bool getIncomingState(void) { return fIncomingState; };
+  TPackageStates getIncomingState(void) { return fIncomingState; };
   // stop processing commands in this message
   void AbortCommandProcessing(TSyError aStatusCode); // all further commands in message will be answered with given status
   // returns remaining time for request processing [seconds]
