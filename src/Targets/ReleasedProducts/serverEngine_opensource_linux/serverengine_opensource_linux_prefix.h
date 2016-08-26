@@ -12,7 +12,7 @@
 // required before time.h to get tm_gmtoff in struct tm:
 // this is used to find standard and daylight saving offset
 // of the system, see timezones.cpp
-#define _BSD_SOURCE 1
+#define _STANDARD_SOURCE 1
 #define USE_TM_GMTOFF 1
 
 #ifdef __cplusplus
