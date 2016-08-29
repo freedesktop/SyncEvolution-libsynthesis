@@ -5540,6 +5540,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsServer(
     aux->fChangedExisting = changedexisting;
     // cppcheck-suppress uninitvar
     aux->fRemainsVisible = remainsvisible;
+    // cppcheck-suppress uninitvar
     aux->fSyncOp = syncop;
     aux->fItemTypeID = itemtypeid;
     aux->fRemoteID = remoteid;
@@ -6557,6 +6558,7 @@ bool TLocalEngineDS::engProcessRemoteItemAsClient(
 
     // cppcheck-suppress uninitvar
     aux->fRemainsVisible = remainsvisible;
+    // cppcheck-suppress uninitvar
     aux->fSyncOp = syncop;
     aux->fRemoteID = remoteid;
     // cppcheck-suppress uninitvar
