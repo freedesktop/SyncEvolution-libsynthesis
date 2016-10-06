@@ -1937,6 +1937,26 @@ static void decodeValue(
         uInt16 code;
         const char *s;
         char hex[2];
+
+        // The Nokia N9 vCalendar implementation sends ==0A=0D= at the end of
+        // the line when it should send just the =. Apparently the CRLF octets
+        // get inserted before quoted-printable encoding and then get encoded.
+        // Such a sequence is invalid because = cannot be used literally
+        // and must be followed by characters representing the hex value,
+        // i.e. == is already invalid.
+        //
+        // We must skip over the entire sequence and then move forward to the
+        // next valid character, i.e. skip over the soft line break that
+        // follows the ==0A=0D.
+        //
+        // Without this special case, the code below would insert additional
+        // characters into the decoded text.
+        if (!strcmp(p, "==0A=0D=")) {
+          p += strlen("==0A=0D=") - 1;
+          p=nextunfolded(p,aMimeMode,true);
+          continue;
+        }
+
         s=nextunfolded(p,aMimeMode,true);
         if (*s==0) break; // end of string
         hex[0]=*s; // first digit
