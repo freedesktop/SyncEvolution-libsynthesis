@@ -1173,7 +1173,7 @@ Ret_t xltEncPcdata(XltTagID_t tagId, XltRO_t reqOptFlag, const VoidPtr_t pConten
               p=((SmlPcdataPtr_t)pContent)->content;
               len=((SmlPcdataPtr_t)pContent)->length;
               n=0;
-              while (n<len-2) {
+              while (n+2<len) {
                 if (p[n]==']' && p[n+1]==']' && p[n+2]=='>') {
                   // we must substitute "]]>" with "]]>]<![CDATA[]>"
                   // - copy what we have so far (includes ]]>)
