@@ -658,7 +658,7 @@ void TStringField::pullFromProxy(void)
       fString="Server error while getting data from proxy object: ";
       fString+=e.what();
     SYSYNC_ENDCATCH
-    delete bufP;
+    delete [] bufP;
     // proxy is no longer needed
     TBlobProxy::unlink(fBlobProxyP);
   }
