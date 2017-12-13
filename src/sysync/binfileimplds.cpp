@@ -1932,7 +1932,7 @@ bool TBinfileImplDS::implRetrieveItemByID(
   TStatusCommand &aStatusCommand
 )
 {
-  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return false; // must be active when called at all
   // %%% not so nice as we need to copy it once
   TSyncItem *itemP=NULL;
   // read item by local ID
@@ -1966,7 +1966,7 @@ bool TBinfileImplDS::implProcessItem(
   TStatusCommand &aStatusCommand
 )
 {
-  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return false; // must be active when called at all
 
   localid_out_t newid;
   TSyError statuscode;
@@ -2393,7 +2393,7 @@ localstatus TBinfileImplDS::implSaveEndOfSession(bool aUpdateAnchors)
 // - end write with commit
 bool TBinfileImplDS::implEndDataWrite(void)
 {
-  if (!binfileDSActive()) return LOCERR_WRONGUSAGE; // must be active when called at all
+  if (!binfileDSActive()) return false; // must be active when called at all
 
   // Call apiEndDataWrite variant which is possibly implemented in
   // datastores which were designed as direct derivates of binfileds.

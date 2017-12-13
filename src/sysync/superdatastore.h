@@ -242,7 +242,7 @@ protected:
     TSmlCommandPContainer &aNextMessageCommands,
     TSmlCommand * &aInterruptedCommandP,
     const char *aLocalIDPrefix=NULL
-  ) { return LOCERR_NOTIMP; };
+  ) { return false; };
   // Client only: called to mark maps confirmed, that is, we have received ok status for them
   virtual void engMarkMapConfirmed(cAppCharP aLocalID, cAppCharP aRemoteID);
   #endif // SYSYNC_CLIENT
@@ -255,7 +255,7 @@ protected:
     TSmlCommandPContainer &aNextMessageCommands,
     TSmlCommand * &aInterruptedCommandP,
     const char *aLocalIDPrefix=NULL
-  ) { return LOCERR_NOTIMP; };
+  ) { return false; };
   // - only dummy, creates error if called
   virtual localstatus logicProcessMap(cAppCharP aRemoteID, cAppCharP aLocalID) { return false; }; // dummy, should never be called
   // - called at end of request processing in server
