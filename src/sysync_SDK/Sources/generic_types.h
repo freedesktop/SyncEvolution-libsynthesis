@@ -26,6 +26,7 @@
 
 
 #ifdef __cplusplus
+  // cppcheck-suppress syntaxError
   namespace sysync {
 #endif
 

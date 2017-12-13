@@ -5252,6 +5252,7 @@ bool TLocalEngineDS::engProcessSyncOpItem(
   // the block because of the try/catch, so some checks
   // for resuming are necessary.
  process:
+  // cppcheck-suppress uninitvar
   if (localTypeP && remoteTypeP) {
     // create the item (might have empty data in case of delete)
     if (!syncitemP)

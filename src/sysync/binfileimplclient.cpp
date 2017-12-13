@@ -1709,6 +1709,8 @@ sInt32 TBinfileClientConfig::newProfile(const char *aProfileName, bool aSetDefau
         target.limit1=templatetarget.limit1;
         target.limit2=templatetarget.limit2;
         target.extras=templatetarget.extras;
+        target.enabled=false;
+        target.forceSlowSync=false;
       }
     }
     // save target record

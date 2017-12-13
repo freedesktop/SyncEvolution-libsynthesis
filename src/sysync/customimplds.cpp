@@ -1298,6 +1298,7 @@ void TCustomImplDS::modifyMap(TMapEntryType aEntryType, const char *aLocalID, co
       entry.entrytype=aEntryType;
       entry.added=true;
       entry.changed=true;
+      entry.deleted=false;
       entry.localid=aLocalID;
       AssignString(entry.remoteid,aRemoteID); // if NULL, remoteID will be empty
       entry.savedmark=false;
@@ -2770,7 +2771,7 @@ bool TCustomImplDS::implProcessItem(
   bool ok=true;
   localstatus sta=LOCERR_OK;
   string localID;
-  const char *remoteID;
+  const char *remoteID = NULL;
   // %%% bool RemoteIDKnown=false;
   TMapContainer::iterator mappos;
   TSyncOperation sop=sop_none;
