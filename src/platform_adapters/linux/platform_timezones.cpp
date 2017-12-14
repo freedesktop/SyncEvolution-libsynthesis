@@ -59,6 +59,7 @@ static struct {
   icalcomponent *(* icaltimezone_get_component_p)(icaltimezone *zone);
   char *(* icalcomponent_as_ical_string_p)(icalcomponent *comp);
   void (* icaltzutil_set_exact_vtimezones_support)(int on);
+  int (* icalrecur_iterator_set_start)(icalrecur_iterator *impl, struct icaltimetype start);
   bool must_free_strings;
 } icalcontext;
 
@@ -89,6 +90,8 @@ static icalarray *ICALTIMEZONE_GET_BUILTIN_TIMEZONES()
   }
   icalcontext.icaltzutil_set_exact_vtimezones_support =
     (typeof(icalcontext.icaltzutil_set_exact_vtimezones_support))dlsym(RTLD_DEFAULT, "icaltzutil_set_exact_vtimezones_support");
+  icalcontext.icalrecur_iterator_set_start =
+    (typeof(icalcontext.icalrecur_iterator_set_start))dlsym(RTLD_DEFAULT, "icalrecur_iterator_set_start");
 
   return icalcontext.icaltimezone_get_builtin_timezones_p ?
     icalcontext.icaltimezone_get_builtin_timezones_p() :
@@ -121,8 +124,8 @@ static size_t ICALARRAY_NUM_ELEMENTS(icalarray *array)
   };
   // distinguish between v2 and older based on
   // icaltzutil_set_exact_vtimezones_support, which was introduced in
-  // v2
-  return icalcontext.icaltzutil_set_exact_vtimezones_support ?
+  // v2, or icalrecur_iterator_set_start, which was introduced in v3
+  return (icalcontext.icaltzutil_set_exact_vtimezones_support || icalcontext.icalrecur_iterator_set_start) ?
     reinterpret_cast<icalarray_v2 *>(array)->num_elements :
     reinterpret_cast<icalarray_traditional *>(array)->num_elements;
 }
@@ -193,9 +196,10 @@ void finalizeSystemZoneDefinitions(GZones* aGZones)
   icalarray *builtin = ICALTIMEZONE_GET_BUILTIN_TIMEZONES();
 #ifdef ICAL_COMPATIBILITY
   PLOGDEBUGPRINTFX(aGZones->getDbgLogger, DBG_PARSE+DBG_EXOTIC,
-                   ("runtime check: libical %s, %s icaltzutil_set_exact_vtimezones_support",
+                   ("runtime check: libical %s, %s icaltzutil_set_exact_vtimezones_support, %s icalrecur_iterator_set_start",
                     icalcontext.icaltimezone_get_builtin_timezones_p ? "available" : "unavailable",
-                    icalcontext.icaltzutil_set_exact_vtimezones_support ? "with" : "without"));
+                    icalcontext.icaltzutil_set_exact_vtimezones_support ? "with" : "without",
+                    icalcontext.icalrecur_iterator_set_start ? "with" : "without"));
   // If we end up using the libical code (and not some replacement
   // provided by SyncEvolution, which is the solution for distros with
   // a libical that doesn't have the API), then enable timezones in the
