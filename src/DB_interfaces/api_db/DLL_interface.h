@@ -105,7 +105,7 @@ TSyError ConnectModule( appPointer &aMod, cAppCharP aModName, bool is_jni= false
  *  <aParamInfo> must be true, if each element contains a second param with parameter info.
  */
 TSyError ConnectFunctions( appPointer aMod, appPointer aField, memSize aFieldSize,
-                           bool aParamInfo, ... );
+                           int aParamInfo, ... );
 
 
 /*! Disconnect a connected unit

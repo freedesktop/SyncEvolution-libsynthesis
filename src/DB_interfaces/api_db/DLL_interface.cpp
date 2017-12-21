@@ -169,7 +169,7 @@ TSyError ConnectModule( appPointer &aMod, cAppCharP aModName, bool is_jni )
 
 
 TSyError ConnectFunctions( appPointer aMod, appPointer aField, memSize aFieldSize,
-                           bool aParamInfo, ... )
+                           int aParamInfo, ... )
 /* Connect to DLL <aDLLname> (or LIB if <aDLLname> = "") */
 {
   TSyError    err      = LOCERR_OK;
