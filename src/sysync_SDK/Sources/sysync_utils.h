@@ -626,6 +626,11 @@ template <class T> void FREEPROTOELEMENT(T *&p)
 }
 #endif
 
+// Declaring this instead of making it a static variable is
+// a workaround for clang 4.8 reporting:
+// sysync_utils.cpp:168:21: error: unused variable 'Ansi_80_to_9F_to_UCS4' [-Werror,-Wunused-const-variable]
+extern const uInt32 Ansi_80_to_9F_to_UCS4[0x20];
+
 } // namespace sysync
 
 #endif

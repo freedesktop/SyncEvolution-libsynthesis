@@ -165,79 +165,12 @@ int charConv(int argc, const char *argv[])
 
 
 // conversion table from ANSI 0x80..0x9F to UCS4
-static const uInt32 Ansi_80_to_9F_to_UCS4[0x20] = {
+const uInt32 Ansi_80_to_9F_to_UCS4[0x20] = {
   0x20AC,   0  ,0x201A,0x0192, 0x201E,0x2026,0x2020,0x2021, // 0x80..0x87
   0x02C6,0x2030,0x0160,0x2039, 0x0152,   0  ,0x017D,   0  , // 0x88..0x8F
      0  ,0x2018,0x2019,0x201C, 0x201D,0x2022,0x2013,0x2014, // 0x90..0x97
   0x02DC,0x2122,0x0161,0x203A, 0x0153,   0  ,0x017E,0x0178  // 0x98..0x9F
 };
-
-
-// ASCIIfy table to convert umlauts etc. to nearest plain ASCII
-typedef struct {
-  uInt32 ucs4;
-  uInt8 ascii;
-} TASCIIfyEntry;
-
-static const TASCIIfyEntry ASCIIfyTable[] = {
-  { 0x000000C4, 'A' }, // Adieresis
-  { 0x000000C5, 'A' }, // Aring
-  { 0x000000C7, 'C' }, // Ccedilla
-  { 0x000000C9, 'E' }, // Eacute
-  { 0x000000D1, 'N' }, // Ntilde
-  { 0x000000D6, 'O' }, // Odieresis
-  { 0x000000DC, 'U' }, // Udieresis
-  { 0x000000E1, 'a' }, // aacute
-  { 0x000000E0, 'a' }, // agrave
-  { 0x000000E2, 'a' }, // acircumflex
-  { 0x000000E4, 'a' }, // adieresis
-  { 0x000000E3, 'a' }, // atilde
-  { 0x000000E5, 'a' }, // aring
-  { 0x000000E7, 'c' }, // ccedilla
-  { 0x000000E9, 'e' }, // eacute
-  { 0x000000E8, 'e' }, // egrave
-  { 0x000000EA, 'e' }, // ecircumflex
-  { 0x000000EB, 'e' }, // edieresis
-  { 0x000000ED, 'i' }, // iacute
-  { 0x000000EC, 'i' }, // igrave
-  { 0x000000EE, 'i' }, // icircumflex
-  { 0x000000EF, 'i' }, // idieresis
-  { 0x000000F1, 'n' }, // ntilde
-  { 0x000000F3, 'o' }, // oacute
-  { 0x000000F2, 'o' }, // ograve
-  { 0x000000F4, 'o' }, // ocircumflex
-  { 0x000000F6, 'o' }, // odieresis
-  { 0x000000F5, 'o' }, // otilde
-  { 0x000000FA, 'u' }, // uacute
-  { 0x000000F9, 'u' }, // ugrave
-  { 0x000000FB, 'u' }, // ucircumflex
-  { 0x000000FC, 'u' }, // udieresis
-  { 0x000000DF, 's' }, // germandoubles
-  { 0x000000D8, 'O' }, // Oslash
-  { 0x000000F8, 'o' }, // oslash
-  { 0x000000C0, 'A' }, // Agrave
-  { 0x000000C3, 'A' }, // Atilde
-  { 0x000000D5, 'O' }, // Otilde
-  { 0x00000152, 'O' }, // OE
-  { 0x00000153, 'o' }, // oe
-  { 0x000000C6, 'A' }, // AE
-  { 0x000000E6, 'a' }, // ae
-  { 0x000000C2, 'A' }, // Acircumflex
-  { 0x000000CA, 'E' }, // Ecircumflex
-  { 0x000000C1, 'A' }, // Aacute
-  { 0x000000CB, 'E' }, // Edieresis
-  { 0x000000C8, 'E' }, // Egrave
-  { 0x000000CD, 'I' }, // Iacute
-  { 0x000000CC, 'I' }, // Igrave
-  { 0x000000CE, 'i' }, // Icircumflex
-  { 0x000000CF, 'i' }, // Odieresis
-  { 0x000000D3, 'O' }, // Oacute
-  { 0x000000D2, 'O' }, // Ograve
-  { 0x000000D4, 'O' }, // Ocircumflex
-  // terminator
-  { 0,0 }
-};
-
 
 // line end mode names
 const char * const lineEndModeNames[numLineEndModes] = {
@@ -1193,6 +1126,71 @@ bool appendUTF8ToString(
               case chs_ascii:
                 // explicit ASCII: convert some special chars to plain ASCII
                 if ((ucs4 & 0xFFFFFF80) !=0) {
+                  // ASCIIfy table to convert umlauts etc. to nearest plain ASCII
+                  typedef struct {
+                    uInt32 ucs4;
+                    uInt8 ascii;
+                  } TASCIIfyEntry;
+
+                  static const TASCIIfyEntry ASCIIfyTable[] = {
+                    { 0x000000C4, 'A' }, // Adieresis
+                    { 0x000000C5, 'A' }, // Aring
+                    { 0x000000C7, 'C' }, // Ccedilla
+                    { 0x000000C9, 'E' }, // Eacute
+                    { 0x000000D1, 'N' }, // Ntilde
+                    { 0x000000D6, 'O' }, // Odieresis
+                    { 0x000000DC, 'U' }, // Udieresis
+                    { 0x000000E1, 'a' }, // aacute
+                    { 0x000000E0, 'a' }, // agrave
+                    { 0x000000E2, 'a' }, // acircumflex
+                    { 0x000000E4, 'a' }, // adieresis
+                    { 0x000000E3, 'a' }, // atilde
+                    { 0x000000E5, 'a' }, // aring
+                    { 0x000000E7, 'c' }, // ccedilla
+                    { 0x000000E9, 'e' }, // eacute
+                    { 0x000000E8, 'e' }, // egrave
+                    { 0x000000EA, 'e' }, // ecircumflex
+                    { 0x000000EB, 'e' }, // edieresis
+                    { 0x000000ED, 'i' }, // iacute
+                    { 0x000000EC, 'i' }, // igrave
+                    { 0x000000EE, 'i' }, // icircumflex
+                    { 0x000000EF, 'i' }, // idieresis
+                    { 0x000000F1, 'n' }, // ntilde
+                    { 0x000000F3, 'o' }, // oacute
+                    { 0x000000F2, 'o' }, // ograve
+                    { 0x000000F4, 'o' }, // ocircumflex
+                    { 0x000000F6, 'o' }, // odieresis
+                    { 0x000000F5, 'o' }, // otilde
+                    { 0x000000FA, 'u' }, // uacute
+                    { 0x000000F9, 'u' }, // ugrave
+                    { 0x000000FB, 'u' }, // ucircumflex
+                    { 0x000000FC, 'u' }, // udieresis
+                    { 0x000000DF, 's' }, // germandoubles
+                    { 0x000000D8, 'O' }, // Oslash
+                    { 0x000000F8, 'o' }, // oslash
+                    { 0x000000C0, 'A' }, // Agrave
+                    { 0x000000C3, 'A' }, // Atilde
+                    { 0x000000D5, 'O' }, // Otilde
+                    { 0x00000152, 'O' }, // OE
+                    { 0x00000153, 'o' }, // oe
+                    { 0x000000C6, 'A' }, // AE
+                    { 0x000000E6, 'a' }, // ae
+                    { 0x000000C2, 'A' }, // Acircumflex
+                    { 0x000000CA, 'E' }, // Ecircumflex
+                    { 0x000000C1, 'A' }, // Aacute
+                    { 0x000000CB, 'E' }, // Edieresis
+                    { 0x000000C8, 'E' }, // Egrave
+                    { 0x000000CD, 'I' }, // Iacute
+                    { 0x000000CC, 'I' }, // Igrave
+                    { 0x000000CE, 'i' }, // Icircumflex
+                    { 0x000000CF, 'i' }, // Odieresis
+                    { 0x000000D3, 'O' }, // Oacute
+                    { 0x000000D2, 'O' }, // Ograve
+                    { 0x000000D4, 'O' }, // Ocircumflex
+                    // terminator
+                    { 0,0 }
+                  };
+
                   // search in ASCIIfy table
                   uInt16 k=0;
                   while (ASCIIfyTable[k].ucs4!=0) {
