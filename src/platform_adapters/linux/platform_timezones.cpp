@@ -26,6 +26,8 @@
 # include <dlfcn.h>
 #endif
 
+#include <boost/typeof/typeof.hpp>
+
 #include "timezones.h"
 #include "vtimezone.h"
 #include "sysync_debug.h"
@@ -70,13 +72,13 @@ static icalarray *ICALTIMEZONE_GET_BUILTIN_TIMEZONES()
   // because we won't reuse stale pointers.
   memset(&icalcontext, 0, sizeof(icalcontext));
   icalcontext.icaltimezone_get_builtin_timezones_p =
-    (typeof(icalcontext.icaltimezone_get_builtin_timezones_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_builtin_timezones");
+    (BOOST_TYPEOF(icalcontext.icaltimezone_get_builtin_timezones_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_builtin_timezones");
   icalcontext.icalarray_element_at_p =
-    (typeof(icalcontext.icalarray_element_at_p))dlsym(RTLD_DEFAULT, "icalarray_element_at");
+    (BOOST_TYPEOF(icalcontext.icalarray_element_at_p))dlsym(RTLD_DEFAULT, "icalarray_element_at");
   icalcontext.icaltimezone_get_component_p =
-    (typeof(icalcontext.icaltimezone_get_component_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_component");
+    (BOOST_TYPEOF(icalcontext.icaltimezone_get_component_p))dlsym(RTLD_DEFAULT, "icaltimezone_get_component");
   icalcontext.icalcomponent_as_ical_string_p =
-    (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string_r");
+    (BOOST_TYPEOF(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string_r");
   if (icalcontext.icalcomponent_as_ical_string_p) {
     // found icalcomponent_as_ical_string_r() which always requires freeing
     icalcontext.must_free_strings = TRUE;
@@ -85,13 +87,13 @@ static icalarray *ICALTIMEZONE_GET_BUILTIN_TIMEZONES()
     // require freeing the returned string; this can be determined by checking
     // for "ical_memfixes" (EDS libical)
     icalcontext.icalcomponent_as_ical_string_p =
-      (typeof(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
+      (BOOST_TYPEOF(icalcontext.icalcomponent_as_ical_string_p))dlsym(RTLD_DEFAULT, "icalcomponent_as_ical_string");
     icalcontext.must_free_strings = dlsym(RTLD_DEFAULT, "ical_memfixes") != NULL;
   }
   icalcontext.icaltzutil_set_exact_vtimezones_support =
-    (typeof(icalcontext.icaltzutil_set_exact_vtimezones_support))dlsym(RTLD_DEFAULT, "icaltzutil_set_exact_vtimezones_support");
+    (BOOST_TYPEOF(icalcontext.icaltzutil_set_exact_vtimezones_support))dlsym(RTLD_DEFAULT, "icaltzutil_set_exact_vtimezones_support");
   icalcontext.icalrecur_iterator_set_start =
-    (typeof(icalcontext.icalrecur_iterator_set_start))dlsym(RTLD_DEFAULT, "icalrecur_iterator_set_start");
+    (BOOST_TYPEOF(icalcontext.icalrecur_iterator_set_start))dlsym(RTLD_DEFAULT, "icalrecur_iterator_set_start");
 
   return icalcontext.icaltimezone_get_builtin_timezones_p ?
     icalcontext.icaltimezone_get_builtin_timezones_p() :
